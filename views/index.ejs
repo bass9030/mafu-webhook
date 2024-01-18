@@ -1,17 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
   <head>
-    <title>마후마후 트위터 웹훅</title>
+    <meta charset="UTF-8">
+    <title>마훅 - 마후마후 트위터 웹훅</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://kit.fontawesome.com/c29a40570f.js" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400&family=Noto+Serif+KR&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <style>
-        
-        .main > div > h4 {
-            color: #cfcfcf
+        * {
+            font-family: 'Noto Sans KR', sans-serif;
+            /* box-sizing: border-box; */
         }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        /* ==========
+        main page
+        ============= */
 
         .main div button {
             margin-top: 10px;
             padding: 10px 15px;
+            font-weight: bold;
+        }
+
+        .main > div > h4 {
+            color: #cfcfcf;
+            font-family: 'Noto Serif KR', sans-serif;
+            font-weight: bold;
+        }
+
+        .main > div > h1 {
+            font-family: 'Black Han Sans', sans-serif;
+        }
+
+        .main > div > * {
+            margin: 10px 0;
         }
 
         .main > div {
@@ -19,20 +48,10 @@
             margin: 0 auto;
             text-align: center;
             color: white;
-            font-weight: bold;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 50px;
+            border-radius: 50px;
             z-index: 1;
-        }
-        .main > img {
-            position: absolute;
-            top: -2.5dvh;
-            left: -2.5dvw;
-            right: 0;
-            bottom: 0;
-            object-fit: cover;
-            width: 105dvw;
-            height: 105dvh;
-
-            filter: blur(10px);
         }
 
         .main {
@@ -49,32 +68,166 @@
         .main::before {
             background-image: url('/images/bg.png');
             background-repeat: no-repeat;
-            background-position: 50% 50%;
-            background-size: cover;
-            width: inherit;
-            height: 100%;
+            background-position: 15% 50%;
+            background-size:cover;
+            width: 105dvw;
+            height: 105dvh;
             filter: blur(8px);
             content: "";
             position: absolute;
-            top: 0;
+            top: -2.5%;
+            left: -2.5%;
             z-index: -1;
+        }
+
+        .noti {
+            padding: 10px;
+            background: #6e6e6e;
+            color: #dddddd;
+        }
+
+        .noti > p {
+            margin: 0;
+            margin-bottom: 10px;
+        }
+
+
+        /* ==========
+        webhook register popup
+        ============= */
+        .register {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            
+            display: flex;            
+            align-items: center;
+            justify-content: center;
+
+            background: rgba(0,0,0,0.7);
+
+            z-index: 10;
+        }
+
+        .register .container {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            height: 300px;
+            width: 500px;
+            padding: 50px;
+        }
+
+        .title {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .title > * {
+            margin: 0;
+        }
+
+        .title > h3 {
+            font-size: 25px;
+            display: inline-block;
+        }
+
+        .title > button {
+            position: absolute;
+            right: 0;
+            top: -9px;
+
+        }
+
+        .title > button > i {
+            font-size: 25px;
+            vertical-align: middle;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .buttons {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+        }
+
+        .buttons > button {
+            margin-left: 10px;
+        }
+
+        .alerts {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 11;
+            margin: 10px;
+            animation: all 0.2s;
+            z-index: 9;
         }
     </style>
   </head>
   <body>
+    <div class="register hidden">
+        <div class="container">
+            <div class="title">
+                <h3>디스코드 웹후크 구독</h3>
+                <button onclick="closeRegister()" class="btn"><i class="fa-solid fa-xmark"></i></button>                
+                <br>
+                <a href="/howto" target="_blank">웹후크 생성방법</a>
+            </div>
+            <input id="webhookURL" type="text" class="form-control" placeholder="디스코드 웹후크 URL">
+            <div class="buttons">
+                <button onclick="unregisterWebhook()" class="btn btn-danger">구독취소</button>
+                <button onclick="registerWebhook()" class="btn btn-success">구독</button>
+            </div>
+        </div>
+    </div>
+    <div class="alerts">
+        <div class="alert alert-success hidden" role="alert">
+            웹후크가 성공적으로 구독되었습니다
+        </div>
+        <div class="alert alert-danger hidden" role="alert">
+            웹후크 구독 취소 실패: 등록된 웹후크가 없습니다
+        </div>
+    </div>    
     <div class="main">
-        <!-- <img src="/images/bg.png" alt="background image"> -->
         <div>
-            <h1>마후 트윗 번역봇</h1>
-            <h4>마후 트윗을 디스코드에서 한글로 즐겨보시겠습니까?</h4>
-            <button class="btn btn-primary">디스코드로 알림 받아보기</button>
+            <h1>마훅 - 마후 트윗 번역봇</h1>
+            <h4>“마후 트윗을 디스코드에서 한글로 즐겨보시겠습니까?”</h4>
+            <button onclick="showRegister()" class="btn btn-primary">디스코드로 알림 받아보기</button>
             <p>현재 <span id="server-count">0</span>개의 서버에서 한국어 마후 트윗을 즐기고 있습니다.</p>
         </div>
     </div>
     <div class="noti">
-        <p>해당 서비스는 DeepL 번역 API를 이용하여 제공됩니다.<br>따라서 해당 서비스는 DeepL 기계 번역 시스템에 의해 작성된 번역의 정확성에 대해 어떠한 보증도 하지 않습니다.</p>
-        <p>해당 서비스는 X(구 Twitter)의 공식적인 API를 사용하여 개발되지 않았습니다.<br>따라서 일부 서비스에 예기치 못한 장애가 발생할 수 있습니다.</p>
+        <p>마훅은 DeepL 번역 API를 이용하여 제공됩니다.<br>DeepL 약관에 따라 <strong>DeepL은 기계 번역 시스템에 의해 작성된 번역의 정확성에 대해 어떠한 보증도 하지 않습니다.</strong></p>
+        <p>마훅은 <strong>X(구 Twitter)의 공식적인 API를 사용하여 개발되지 않았습니다.</strong><br>따라서 <strong>서비스에 예기치 못한 장애가 발생할 수 있으며, X(구 Twitter)사의 요청에 따라 서비스 운영이 종료될 수 있습니다.</strong></p>
+        <p>Contant: contact@bass9030.dev</p>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script>
+        let registerElement = document.getElementsByClassName('register')[0];
+
+        async function registerWebhook() {
+            
+        }
+
+        async function unregisterWebhook() {
+
+        }
+
+        function showRegister() {
+            registerElement.classList.remove('hidden');
+        }
+
+        function closeRegister() {
+            registerElement.classList.add('hidden');
+        }
+    </script>
   </body>
 </html>
