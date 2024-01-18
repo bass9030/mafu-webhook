@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>마후마후 트위터 웹훅</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <style>
+        
+        .main > div > h4 {
+            color: #cfcfcf
+        }
+
+        .main div button {
+            margin-top: 10px;
+            padding: 10px 15px;
+        }
+
+        .main > div {
+            display: block;
+            margin: 0 auto;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            z-index: 1;
+        }
+        .main > img {
+            position: absolute;
+            top: -2.5dvh;
+            left: -2.5dvw;
+            right: 0;
+            bottom: 0;
+            object-fit: cover;
+            width: 105dvw;
+            height: 105dvh;
+
+            filter: blur(10px);
+        }
+
+        .main {
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-self: center;
+            width: 100dvw;
+            height: 100dvh;
+            background: none;
+            position: relative;
+        }
+
+        .main::before {
+            background-image: url('/images/bg.png');
+            background-repeat: no-repeat;
+            background-position: 50% 50%;
+            background-size: cover;
+            width: inherit;
+            height: 100%;
+            filter: blur(8px);
+            content: "";
+            position: absolute;
+            top: 0;
+            z-index: -1;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="main">
+        <!-- <img src="/images/bg.png" alt="background image"> -->
+        <div>
+            <h1>마후 트윗 번역봇</h1>
+            <h4>마후 트윗을 디스코드에서 한글로 즐겨보시겠습니까?</h4>
+            <button class="btn btn-primary">디스코드로 알림 받아보기</button>
+            <p>현재 <span id="server-count">0</span>개의 서버에서 한국어 마후 트윗을 즐기고 있습니다.</p>
+        </div>
+    </div>
+    <div class="noti">
+        <p>해당 서비스는 DeepL 번역 API를 이용하여 제공됩니다.<br>따라서 해당 서비스는 DeepL 기계 번역 시스템에 의해 작성된 번역의 정확성에 대해 어떠한 보증도 하지 않습니다.</p>
+        <p>해당 서비스는 X(구 Twitter)의 공식적인 API를 사용하여 개발되지 않았습니다.<br>따라서 일부 서비스에 예기치 못한 장애가 발생할 수 있습니다.</p>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  </body>
+</html>
