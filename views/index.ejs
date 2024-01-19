@@ -181,7 +181,7 @@
                 <br>
                 <a href="/howto" target="_blank">웹후크 생성방법</a>
             </div>
-            <form action="javascript:void(0)" class="was-validated" id="registerForm">
+            <div action="javascript:void(0)" id="registerForm">
                 <div class="input-group has-validation">
                     <input id="webhookURL" type="text" class="form-control is-invaild" placeholder="디스코드 웹후크 URL">
                     <div class="invalid-feedback">
@@ -189,10 +189,10 @@
                     </div>
                 </div>
                 <div class="buttons">
-                    <input type="submit" onclick="unregisterWebhook()" class="btn btn-danger" value="구독취소"/>
-                    <input type="submit" onclick="registerWebhook()" class="btn btn-success" value="구독">
+                    <input type="button" onclick="unregisterWebhook()" class="btn btn-danger" value="구독취소"/>
+                    <input type="button" onclick="registerWebhook()" class="btn btn-success" value="구독">
                 </div>
-            </form>
+            </div>
         </div>
     </div>
     <div class="alerts">
@@ -221,36 +221,44 @@
         let registerElement = document.getElementsByClassName('register')[0];
         let formElement = document.getElementById('registerForm');
         let webhookInputElement = document.getElementById('webhookURL');
-        
-        formElement.addEventListener('submit', event => {
-            if (!formElement.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-            formElement.classList.add('was-validated')
-        }, false)
+
+        // formElement.addEventListener('submit', event => {
+        //     if (!formElement.checkValidity()) {
+        //         event.preventDefault()
+        //         event.stopPropagation()
+        //     }
+
+        //     if(!!!webhookInputElement.value.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/))
+        //         webhookInputElement.setCustomValidity('aw');
+        //     else
+        //         webhookInputElement.setCustomValidity('');
+
+        // }, false)
 
         webhookInputElement.addEventListener('input', event => {
             let webhookURL = event.target.value;
-            if(!!!webhookURL.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
-                webhookInputElement.setCustomValidity('aw')
-            }else{
-                webhookInputElement.setCustomValidity('')
-            }
+            if(!!!webhookURL.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/))
+                webhookInputElement.setCustomValidity('aw');
+            else
+                webhookInputElement.setCustomValidity('');
+            
+            formElement.classList.add('was-validated')
         })
 
         async function registerWebhook() {
             let webhookURL = webhookInputElement.value;
             if(!!!webhookURL.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
-                webhookInputElement.setCustomValidity('aw')
-            }
-
+                webhookInputElement.setCustomValidity('aw');
+                return;
+            } else
+                webhookInputElement.setCustomValidity('');
+                        
             let response = await (await fetch('/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({
+                body: JSON.stringify({
                     'url': webhookURL
                 })
             })).json();
@@ -272,12 +280,19 @@
         }
 
         async function unregisterWebhook() {
+            let webhookURL = webhookInputElement.value;
+            if(!!!webhookURL.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
+                webhookInputElement.setCustomValidity('aw');
+                return;
+            } else
+                webhookInputElement.setCustomValidity('');
+
             let response = await (await fetch('/api/unregister', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify({
+                body: JSON.stringify({
                     'url': webhookURL
                 })
             })).json();
