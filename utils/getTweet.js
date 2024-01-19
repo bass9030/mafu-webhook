@@ -147,3 +147,5 @@ async function checkNewTweet(webhookURL) {
         }
     }
 }
+
+module.exports = checkNewTweet;
