@@ -3,7 +3,7 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
 
 db.exec('CREATE TABLE IF NOT EXISTS webhooks (' + 
             'id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ' +
-            'webhookURL TEXT PRIMARY KEY NOT NULL' +
+            'webhookURL TEXT NOT NULL UNIQUE' +
         ');');
 
 class webhookManager {
