@@ -3,7 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const checkNewTweet = require('./utils/getTweet')
+const { checkNewTweet } = require('./utils/getTweet')
 
 var indexRouter = require('./routes/index');
 var howtoRouter = require('./routes/howto');
@@ -42,6 +42,6 @@ app.use(function(err, req, res, next) {
 });
 
 checkNewTweet();
-setInterval(checkNewTweet, 1000 * 60 * 10)
+setInterval(checkNewTweet, 1000 * 60 * 5)
 
 module.exports = app;

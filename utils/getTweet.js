@@ -1,14 +1,19 @@
 /* ===== 마후 트윗 번역봇 재가동!! ===== */
 let cheerio = require('cheerio')
+const path = require('path')
+const appRoot = require('app-root-path').path;
 require('dotenv').config({
-    path: '../.env'
+    path: path.join(appRoot, '.env')
 });
 const fs = require('fs')
 const { MessageBuilder } = require('discord-webhook-node');
-let webhookURL = '';
 const DEBUG = false;
 const webhookManager = require('./webhookManager');
 
+let profileURL = {
+    value: '',
+    lastUpdate: 0
+};
 let prevLastTweetID;
 if(fs.existsSync('./lastTweet.txt')) prevLastTweetID = BigInt(fs.readFileSync('./lastTweet.txt'));
 
@@ -44,6 +49,13 @@ async function translateTextKakaoI(source, target, query) {
     return translatedText;
 }
 
+
+function convertToHalf(e) {
+    return e.replace(/[！-～]/g, (halfwidthChar) =>
+      String.fromCharCode(halfwidthChar.charCodeAt(0) - 0xfee0)
+    );
+}
+
 /**
  * 번역 (DeepL 번역)
  * @param {string} source 번역할 언어(auto: 자동인식)
@@ -54,7 +66,7 @@ async function translateTextDeepL(source, target, query) {
     let reqBody = new FormData();
     if(source == 'auto' || !!source) reqBody.append('sourge_lang', source);
     reqBody.append('target_lang', target);
-    reqBody.append('text', query);
+    reqBody.append('text', convertToHalf(query));
     let response = await (await fetch('https://api-free.deepl.com/v2/translate', {
         method: 'POST',
         headers: {
@@ -69,13 +81,16 @@ async function translateTextDeepL(source, target, query) {
 /**
  * userID 트위터 타임라인 반환
  * @param {string} userID 사용자 ID
- * @param {string} authToekn 사용자 로그인 토큰(쿠키 auth_token, 제대로된 작동 위해 필요)
+ * @param {string} authToken 사용자 로그인 토큰(쿠키 auth_token, 제대로된 작동 위해 필요)
  */
-async function getTimelineByUserID(userID, authToekn) {
+async function getTimelineByUserID(userID, authToken) {
+    if(!!!authToken)
+        console.warn('authToken is undefined. new tweet may not detect');
+    
     let response = await (await fetch(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${encodeURIComponent(userID)}?hl=kr`, {
         method: 'GET',
         headers: {
-            'Cookie': `auth_token=${authToekn};`
+            'Cookie': `auth_token=${authToken};`
         }
     })).text()
     let $ = cheerio.load(response);
@@ -102,9 +117,11 @@ async function sendHook(tweetInfo) {
         // DeepL 번역
         let translatedText = await translateTextDeepL('auto', 'ko', content.full_text);
 
-        const hook = new Webhook(webhookURL);
-        hook.setAvatar(content.user.profile_image_url_https);
-        hook.setUsername('마훅');
+        // const hook = new Webhook(webhookURL);
+        // hook.setUsername('마훅');
+        let profile = content.user.profile_image_url_https;
+        profileURL.value = profile;
+        profileURL.lastUpdate = new Date().getTime();
         let originalLink = 'https://twitter.com/uni_mafumafu/status/' + content.id_str;
     
         // 번역된 문장을 메시지로 만든다.
@@ -119,7 +136,19 @@ async function sendHook(tweetInfo) {
     
         if(!!content.entities.media.length) embed.setImage(content.entities.media[0].media_url_https);
         // await hook.send(embed)
-        webhookManager.sendWebhook(embed);
+        webhookManager.sendWebhook(embed, profileURL.value);
+}
+
+async function getProfileURL() {
+    if(!!profileURL.value && new Date().getTime() - profileURL.lastUpdate < 1000 * 60 * 2) {
+        return profileURL.value
+    }else{
+        let tweetInfo = await getTimelineByUserID('uni_mafumafu', process.env.TWITTER_TOKEN_KEY);
+        let profile = tweetInfo.timeline[0].content.tweet.user.profile_image_url_https;
+        profileURL.value = profile;
+        profileURL.lastUpdate = new Date().getTime();
+        return profile;
+    }
 }
 
 function sleep(ms) {
@@ -129,7 +158,7 @@ function sleep(ms) {
 /**
  * 새 트윗 감지
  */
-async function checkNewTweet(webhookURL) {
+async function checkNewTweet() {
     let timelineInfo = await getTimelineByUserID('uni_mafumafu', process.env.TWITTER_TOKEN_KEY);
     let lastTweetID = BigInt(timelineInfo.last_tweet_id);
 
@@ -148,4 +177,9 @@ async function checkNewTweet(webhookURL) {
     }
 }
 
-module.exports = checkNewTweet;
+async function sendRecentTweet() {
+    let timelineInfo = (await getTimelineByUserID('uni_mafumafu', process.env.TWITTER_TOKEN_KEY)).timeline;
+    await sendHook(timelineInfo[0]);
+}
+
+module.exports = { checkNewTweet, getProfileURL, sendRecentTweet };
