@@ -146,7 +146,12 @@
             vertical-align: middle;
         }
 
+        .vhidden {
+            opacity: 0;
+        }
+
         .hidden {
+            /* transform: scaleY(0); */
             display: none;
         }
 
@@ -160,6 +165,10 @@
             margin-left: 10px;
         }
 
+        .alert {
+            transition: all 0.2s linear;
+        }
+
         .alerts {
             position: fixed;
             top: 0;
@@ -167,7 +176,6 @@
             transform: translateX(-50%);
             z-index: 11;
             margin: 10px;
-            animation: all 0.2s;
             z-index: 9;
         }
     </style>
@@ -196,10 +204,10 @@
         </div>
     </div>
     <div class="alerts">
-        <div id="success" class="alert alert-success hidden" role="alert">
+        <div id="success" class="alert alert-success hidden vhidden" role="alert">
             웹후크가 성공적으로 구독되었습니다
         </div>
-        <div id="error" class="alert alert-danger hidden" role="alert">
+        <div id="error" class="alert alert-danger hidden vhidden" role="alert">
             웹후크 구독 취소 실패: 등록된 웹후크가 없습니다
         </div>
     </div>    
@@ -228,16 +236,27 @@
         //         event.stopPropagation()
         //     }
 
-        //     if(!!!webhookInputElement.value.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/))
+        //     if(!!!webhookInputElement.value.match(/https:\/\/discord.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/))
         //         webhookInputElement.setCustomValidity('aw');
         //     else
         //         webhookInputElement.setCustomValidity('');
 
         // }, false)
 
+        function showAlert(alertElement) {
+            alertElement.classList.remove('hidden');
+            setTimeout(() => {
+                alertElement.classList.remove('vhidden');
+                setTimeout(() => {
+                    alertElement.classList.add('vhidden');
+                    setTimeout(() => alertElement.classList.remove('hidden'), 500);
+                }, 2500)
+            }, 10);
+        }
+
         webhookInputElement.addEventListener('input', event => {
             let webhookURL = event.target.value;
-            if(!!!webhookURL.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/))
+            if(!!!webhookURL.match(/https:\/\/discord.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/))
                 webhookInputElement.setCustomValidity('aw');
             else
                 webhookInputElement.setCustomValidity('');
@@ -247,7 +266,7 @@
 
         async function registerWebhook() {
             let webhookURL = webhookInputElement.value;
-            if(!!!webhookURL.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
+            if(!!!webhookURL.match(/https:\/\/discord.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
                 webhookInputElement.setCustomValidity('aw');
                 return;
             } else
@@ -262,17 +281,19 @@
                     'url': webhookURL
                 })
             })).json();
-
-            if(response.status != 0) {
+            console.log(response.status);
+            if(response.status == -1) {
                 let alertElement = document.getElementById('error')
-                alertElement.innerText = '웹후크 등록해 실패했습니다. 잠시후 다시 시도해주세요'
-                alertElement.classList.remove('hidden');
-                setTimeout(() => alertElement.classList.add('hidden'), 3000)
+                alertElement.innerText = '웹후크 등록해 실패했습니다. 올바른 웹후크 주소인지 확인해주세요.'
+                showAlert(alertElement);
+            }else if(response.status == -2) {
+                let alertElement = document.getElementById('error')
+                alertElement.innerText = '이미 등록된 웹후크입니다.'
+                showAlert(alertElement);
             }else{
                 let alertElement = document.getElementById('success')  
-                alertElement.innerText = '웹후크 등록에 성공했습니다! 디스코드에서 확인해보세요'
-                alertElement.classList.remove('hidden');
-                setTimeout(() => alertElement.classList.add('hidden'), 3000)
+                alertElement.innerText = '웹후크 등록에 성공했습니다! 디스코드에서 확인해보세요.'
+                showAlert(alertElement);
             }
 
 
@@ -281,7 +302,7 @@
 
         async function unregisterWebhook() {
             let webhookURL = webhookInputElement.value;
-            if(!!!webhookURL.match(/https:\/\/discordapp.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
+            if(!!!webhookURL.match(/https:\/\/discord.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
                 webhookInputElement.setCustomValidity('aw');
                 return;
             } else
@@ -297,16 +318,14 @@
                 })
             })).json();
 
-            if(response.status != 0) {
+            if(response.status == -1) {
                 let alertElement = document.getElementById('error')
                 alertElement.innerText = '웹후크 구독 취소 실패: 등록된 웹후크가 없습니다'
-                alertElement.classList.remove('hidden');
-                setTimeout(() => alertElement.classList.add('hidden'), 3000)
+                showAlert(alertElement);
             }else{
                 let alertElement = document.getElementById('success')  
                 alertElement.innerText = '웹후크 구독 취소가 완료되었습니다'
-                alertElement.classList.remove('hidden');
-                setTimeout(() => alertElement.classList.add('hidden'), 3000)
+                showAlert(alertElement);
             }
     
             closeRegister()
