@@ -32,6 +32,19 @@ router.post('/register', async function(req, res, next) {
     }
 });
 
+router.get('/count', (req, res) => {
+    try {
+        res.json({
+            status: 0,
+            data: webhookManager.getWebhookCount()
+        });
+    }catch{
+        res.json({
+            status: -1
+        })
+    }    
+})
+
 router.post('/unregister', (req, res, next) => {
     let data = req.body;
     if(!!!req.body && !!!req.body.url) {

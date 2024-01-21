@@ -17,8 +17,8 @@ class webhookManager {
     }
 
     static getWebhookCount() {
-        let count = db.prepare('SELECT COUNT(*) FROM webhookURL;').get();
-        console.log(count);
+        let count = db.prepare('SELECT COUNT(*) FROM webhooks;').get();
+        return count['COUNT(*)'];
     }
 
     /**

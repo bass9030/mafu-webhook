@@ -233,19 +233,15 @@
         let registerElement = document.getElementsByClassName('register')[0];
         let formElement = document.getElementById('registerForm');
         let webhookInputElement = document.getElementById('webhookURL');
-
-        // formElement.addEventListener('submit', event => {
-        //     if (!formElement.checkValidity()) {
-        //         event.preventDefault()
-        //         event.stopPropagation()
-        //     }
-
-        //     if(!!!webhookInputElement.value.match(/https:\/\/discord.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/))
-        //         webhookInputElement.setCustomValidity('aw');
-        //     else
-        //         webhookInputElement.setCustomValidity('');
-
-        // }, false)
+        let serverCountElement = document.getElementById('server-count');
+        
+        window.addEventListener('load', () => {
+            fetch('/api/count').then(async res => {
+                let data = await res.json();
+                if(data.status == 0)
+                    serverCountElement.innerText = data.data;
+            })
+        })
 
         function showAlert(alertElement) {
             alertElement.classList.remove('hidden');
@@ -257,7 +253,7 @@
                 }, 2500)
             }, 10);
         }
-
+        
         webhookInputElement.addEventListener('input', event => {
             let webhookURL = event.target.value;
             if(!!!webhookURL.match(/https:\/\/discord.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/))
@@ -269,12 +265,14 @@
         })
 
         async function registerWebhook() {
+            formElement.classList.add('was-validated')
             let webhookURL = webhookInputElement.value;
             if(!!!webhookURL.match(/https:\/\/discord.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
                 webhookInputElement.setCustomValidity('aw');
                 return;
             } else
                 webhookInputElement.setCustomValidity('');
+            
                         
             let response = await (await fetch('/api/register', {
                 method: 'POST',
@@ -285,7 +283,7 @@
                     'url': webhookURL
                 })
             })).json();
-            console.log(response.status);
+
             if(response.status == -1) {
                 let alertElement = document.getElementById('error')
                 alertElement.innerText = '웹후크 등록해 실패했습니다. 올바른 웹후크 주소인지 확인해주세요.'
@@ -305,6 +303,7 @@
         }
 
         async function unregisterWebhook() {
+            formElement.classList.add('was-validated')
             let webhookURL = webhookInputElement.value;
             if(!!!webhookURL.match(/https:\/\/discord.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/)) {
                 webhookInputElement.setCustomValidity('aw');
