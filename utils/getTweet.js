@@ -14,8 +14,9 @@ let profileURL = {
     value: '',
     lastUpdate: 0
 };
-let prevLastTweetID;
+let prevLastTweetID = 0;
 if(fs.existsSync('./lastTweet.txt')) prevLastTweetID = BigInt(fs.readFileSync('./lastTweet.txt'));
+else fs.writeFileSync('./lastTweet.txt', '0');
 
 /**
  * 번역 (Kakao I 번역)
