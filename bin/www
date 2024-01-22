@@ -7,6 +7,9 @@
 var app = require('../app');
 var debug = require('debug')('mafu-webhook:server');
 var http = require('http');
+const appRoot = require('app-root-path').path;
+const path = require('path');
+require('dotenv').config({path: path.join(appRoot, '.env')});
 
 /**
  * Get port from environment and store in Express.
