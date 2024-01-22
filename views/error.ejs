@@ -1,3 +1,34 @@
-<h1><%= message %></h1>
-<h2><%= error.status %></h2>
-<pre><%= error.stack %></pre>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: "Noto Sans KR", sans-serif;
+        }
+
+        div {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+    </style>
+    <title>마훅 - :(</title>
+</head>
+<body>
+    <div>
+        <h1><%= !!statusCode ? statusCode : '500' %></h1>
+        <p>여기엔 아무것도 없는거 같네요 :(</p>
+        <a href="/">메인으로 돌아가기</a>
+    </div>
+    <% if(!!Object.keys(error).length) { %>
+        <p>디버그용 정보 (만약 이게 프로덕션 서버에서 보인다면 난 좆된거야)</p>
+        <pre><%= error.stack %></pre>
+    <% } %>
+</body>
+</html>
