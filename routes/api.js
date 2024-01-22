@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 let reqlib = require('app-root-path').require;
 const webhookManager = reqlib('/utils/webhookManager');
+var createError = require('http-errors');
 const { getProfileURL, sendRecentTweet } = reqlib('/utils/getTweet');
 const { Webhook, MessageBuilder } = require('discord-webhook-node');
 
@@ -61,6 +62,10 @@ router.post('/unregister', (req, res, next) => {
 })
 
 router.get('/testWebhook', (req, res, next) => {
+    if(req.app.get('env') !== 'development') {
+        next(createError(404));
+        return;
+    }
     sendRecentTweet();
     res.send('');
 })
