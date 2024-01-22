@@ -45,7 +45,7 @@ class webhookManager {
 
 setInterval(() => {
     db.backup(`./backup/${new Date().getTime()}_webhooks.db`);
-}, 1000 * 60 * 60 * 2)
+}, 1000 * 60 * 60 * 12)
 
 process.on('exit', () => {
     db.close();
