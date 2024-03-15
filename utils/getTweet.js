@@ -19,39 +19,6 @@ let prevLastTweetID = 0;
 if(fs.existsSync('./lastTweet.txt')) prevLastTweetID = BigInt(fs.readFileSync('./lastTweet.txt'));
 else fs.writeFileSync('./lastTweet.txt', '0');
 
-/**
- * @deprecated
- * 번역 (Kakao I 번역)
- * @param {string} source 번역할 언어(auto: 자동인식)
- * @param {string} target 번역될 언어
- * @param {string} query 번역할 텍스트
- */
-async function translateTextKakaoI(source, target, query) {
-    let reqBody = new FormData();
-    reqBody.append('queryLanguage', source);
-    reqBody.append('targetLanguage', target);
-    reqBody.append('q', query);
-    let response = (await (await fetch('https://translate.kakao.com/translator/translate.json', {
-        method: 'POST',
-        headers: {
-            'Referer': 'https://translate.kakao.com/'
-        },
-        body: reqBody
-    })).json()).result.output
-
-    let originalTextArr = source.split('\n');
-    let translatedText = '';
-    let translateIdx = 0;
-    for(let i = 0; i < originalTextArr.length; i++) {
-        if(!!originalTextArr[i].trim()) {
-            translatedText += response[translateIdx] + '\n';
-            translateIdx++;
-        }else translatedText += '\n';
-    }
-
-    return translatedText;
-}
-
 
 function convertToHalf(e) {
     return e.replace(/[！-～]/g, (halfwidthChar) =>
