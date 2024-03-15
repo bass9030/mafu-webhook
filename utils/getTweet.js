@@ -11,10 +11,7 @@ const { MessageBuilder } = require('discord-webhook-node');
 const DEBUG = false;
 const webhookManager = require('./webhookManager');
 
-let profileURL = {
-    value: '',
-    lastUpdate: 0
-};
+let profileURL = '';
 let prevLastTweetID = 0;
 if(fs.existsSync('./lastTweet.txt')) prevLastTweetID = BigInt(fs.readFileSync('./lastTweet.txt'));
 else fs.writeFileSync('./lastTweet.txt', '0');
@@ -62,6 +59,7 @@ async function getTimelineByUserID(userID, authToken) {
     // quoted_status: 인용 트윗 내용
     let twitterInfo = JSON.parse($('script#__NEXT_DATA__').html()).props.pageProps;
     let timeline = twitterInfo.timeline.entries;
+    fs.writeFileSync('./timeline.json', JSON.stringify(timeline, null, 4));
     let last_tweet_id = twitterInfo.latest_tweet_id
     return {timeline, last_tweet_id};
 }
@@ -71,47 +69,41 @@ async function getTimelineByUserID(userID, authToken) {
  * @param {object} tweetInfo 트윗 정보 Object
  */
 async function sendHook(tweetInfo) {
-        // 트위터에서 본문을 읽어온다.
+        // 트위터 본문
         let content = tweetInfo.content.tweet;
-
         let created_at = new Date(content.created_at);
-
-        // Kakao i 번역
-        // let translatedText = await translateText('auto', 'kr', content.full_text);
 
         // DeepL 번역
         let translatedText = await translateTextDeepL('ja', 'ko', content.full_text);
 
-        // const hook = new Webhook(webhookURL);
-        // hook.setUsername('마훅');
-        let profile = content.user.profile_image_url_https;
-        profileURL.value = profile;
-        profileURL.lastUpdate = new Date().getTime();
+        profileURL = content.user.profile_image_url_https;
         let originalLink = 'https://twitter.com/uni_mafumafu/status/' + content.id_str;
+
+        // 인용 트윗 처리
+        if(content?.is_quote_status) {
+            translatedText += `\n\nhttps://twitter.com${content.quoted_status.permalink}`
+        }
     
         // 번역된 문장을 메시지로 만든다.
 	    // await hook.send('<@&757040827620130896>')
         let embed = new MessageBuilder()
             .setTitle('New Tweet Release!')
             .setURL(originalLink)
-            .setFooter(originalLink, content.user.profile_image_url_https)
+            .setFooter(originalLink, profileURL)
             .setTimestamp(created_at)
             .setDescription(translatedText.trim())
             .setColor('#1da1f2');
-    
+        
         if(!!content.entities.media.length) embed.setImage(content.entities.media[0].media_url_https);
-        // await hook.send(embed)
-        webhookManager.sendWebhook(embed, profileURL.value);
+        webhookManager.sendWebhook(embed, profileURL);
 }
 
 async function getProfileURL() {
-    if(!!profileURL.value && new Date().getTime() - profileURL.lastUpdate < 1000 * 60 * 2) {
-        return profileURL.value
+    if(!!profileURL) {
+        return profileURL;
     }else{
         let tweetInfo = await getTimelineByUserID('uni_mafumafu', process.env.TWITTER_TOKEN_KEY);
-        let profile = tweetInfo.timeline[0].content.tweet.user.profile_image_url_https;
-        profileURL.value = profile;
-        profileURL.lastUpdate = new Date().getTime();
+        profileURL = tweetInfo.timeline[0].content.tweet.user.profile_image_url_https;
         return profile;
     }
 }
