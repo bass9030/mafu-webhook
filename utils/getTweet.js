@@ -1,6 +1,7 @@
 /* ===== 마후 트윗 번역봇 재가동!! ===== */
 let cheerio = require('cheerio')
 const path = require('path')
+const deepl = require('deepl-node');
 const appRoot = require('app-root-path').path;
 require('dotenv').config({
     path: path.join(appRoot, '.env')
@@ -19,6 +20,7 @@ if(fs.existsSync('./lastTweet.txt')) prevLastTweetID = BigInt(fs.readFileSync('.
 else fs.writeFileSync('./lastTweet.txt', '0');
 
 /**
+ * @deprecated
  * 번역 (Kakao I 번역)
  * @param {string} source 번역할 언어(auto: 자동인식)
  * @param {string} target 번역될 언어
@@ -64,19 +66,12 @@ function convertToHalf(e) {
  * @param {string} query 번역할 텍스트
  */
 async function translateTextDeepL(source, target, query) {
-    let reqBody = new FormData();
-    if(source == 'auto' || !!source) reqBody.append('sourge_lang', source);
-    reqBody.append('target_lang', target);
-    reqBody.append('text', convertToHalf(query));
-    let response = await (await fetch('https://api-free.deepl.com/v2/translate', {
-        method: 'POST',
-        headers: {
-            'Authorization': 'DeepL-Auth-Key ' + process.env.DEEPL_API_KEY
-        },
-        body: reqBody
-    })).json()
+    const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
+    const response = await translator.translateText(convertToHalf(query), (source == 'auto' || !!source) ? source : null, target, {
+        glossary: '0e46d5a2-c745-41c7-8ccd-d29b986de309'
+    });
 
-    return response.translations[0].text;
+    return response.text;
 }
 
 /**
@@ -96,6 +91,8 @@ async function getTimelineByUserID(userID, authToken) {
     })).text()
     let $ = cheerio.load(response);
 
+    // is_quote_status: 인용 여부
+    // quoted_status: 인용 트윗 내용
     let twitterInfo = JSON.parse($('script#__NEXT_DATA__').html()).props.pageProps;
     let timeline = twitterInfo.timeline.entries;
     let last_tweet_id = twitterInfo.latest_tweet_id
@@ -116,7 +113,7 @@ async function sendHook(tweetInfo) {
         // let translatedText = await translateText('auto', 'kr', content.full_text);
 
         // DeepL 번역
-        let translatedText = await translateTextDeepL('auto', 'ko', content.full_text);
+        let translatedText = await translateTextDeepL('ja', 'ko', content.full_text);
 
         // const hook = new Webhook(webhookURL);
         // hook.setUsername('마훅');
