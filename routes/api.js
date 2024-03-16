@@ -1,10 +1,10 @@
 var express = require('express');
 var router = express.Router();
-let reqlib = require('app-root-path').require;
+// let reqlib = require('app-root-path').require;
 const crypto = require('crypto');
-const webhookManager = reqlib('/utils/webhookManager');
+const webhookManager = require('../utils/webhookManager');
 var createError = require('http-errors');
-const { getProfileURL, sendRecentTweet } = reqlib('/utils/getTweet');
+const { getProfileURL, sendRecentTweet } = require('/utils/getTweet');
 const { Webhook, MessageBuilder } = require('discord-webhook-node');
 
 router.post('/register', async function(req, res, next) {
@@ -71,7 +71,7 @@ router.post('/sendNoti', (req, res, next) => {
                 return;
             }
 
-            webhookManager.sendWebhook()
+            webhookManager.sendWebhook(req.body.content, )
         }else{
             res.status(403).json({status:-99});
         }    
