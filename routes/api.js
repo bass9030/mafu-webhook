@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 let reqlib = require('app-root-path').require;
+const crypto = require('crypto');
 const webhookManager = reqlib('/utils/webhookManager');
 var createError = require('http-errors');
 const { getProfileURL, sendRecentTweet } = reqlib('/utils/getTweet');
@@ -59,6 +60,25 @@ router.post('/unregister', (req, res, next) => {
     }catch(e) {
         res.json({status: -1})
     }
+})
+
+router.post('/sendNoti', (req, res, next) => {
+    try {
+        const hashedHeader = crypto.createHash('sha512').update(req.headers['authorization']).digest('hex')
+        if(hashedHeader == process.env.NOTICE_TOKEN_KEY.toLowerCase()) {
+            if(!!!req.body.content) {
+                res.status(400).json({status: -1});
+                return;
+            }
+
+            webhookManager.sendWebhook()
+        }else{
+            res.status(403).json({status:-99});
+        }    
+    }catch(e) {
+        res.status(500).json({status: -1})
+    }
+    
 })
 
 router.get('/testWebhook', (req, res, next) => {
