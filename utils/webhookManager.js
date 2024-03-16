@@ -4,6 +4,8 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
 db.exec('CREATE TABLE IF NOT EXISTS webhooks (' + 
             'id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ' +
             'webhookURL TEXT NOT NULL UNIQUE' +
+            'isMention INTEGER' +
+            'sendNoticeMessage INTEGER' +
         ');');
 
 class webhookManager {
@@ -31,6 +33,7 @@ class webhookManager {
             try {
                 new Promise(async () => {
                     const hook = new Webhook(e.webhookURL);
+                    // message.getJSON
                     hook.setAvatar(profileURL);
                     hook.setUsername('마훅 - 마후 트윗 번역봇');
                     await hook.send(message);
