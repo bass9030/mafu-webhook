@@ -41,16 +41,12 @@ async function translateTextDeepL(source, target, query) {
 /**
  * userID 트위터 타임라인 반환
  * @param {string} userID 사용자 ID
- * @param {string} authToken 사용자 로그인 토큰(쿠키 auth_token, 제대로된 작동 위해 필요)
  */
-async function getTimelineByUserID(userID, authToken) {
-    if(!!!authToken)
-        console.warn('authToken is undefined. new tweet may not detect');
-    
+async function getTimelineByUserID(userID) {
     let response = await (await fetch(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${encodeURIComponent(userID)}?hl=kr`, {
         method: 'GET',
         headers: {
-            'Cookie': `auth_token=${authToken};`
+            'Cookie': `auth_token=${process.env.TWITTER_AUTH_TOKEN};`
         }
     })).text()
     let $ = cheerio.load(response);
@@ -102,7 +98,7 @@ async function getProfileURL() {
     if(!!profileURL) {
         return profileURL;
     }else{
-        let tweetInfo = await getTimelineByUserID('uni_mafumafu', process.env.TWITTER_TOKEN_KEY);
+        let tweetInfo = await getTimelineByUserID('uni_mafumafu');
         profileURL = tweetInfo.timeline[0].content.tweet.user.profile_image_url_https;
         return profile;
     }
@@ -116,7 +112,7 @@ function sleep(ms) {
  * 새 트윗 감지
  */
 async function checkNewTweet() {
-    let timelineInfo = await getTimelineByUserID('uni_mafumafu', process.env.TWITTER_TOKEN_KEY);
+    let timelineInfo = await getTimelineByUserID('uni_mafumafu');
     let lastTweetID = BigInt(timelineInfo.last_tweet_id);
 
     if(lastTweetID > prevLastTweetID || DEBUG) {
@@ -135,7 +131,7 @@ async function checkNewTweet() {
 }
 
 async function sendRecentTweet() {
-    let timelineInfo = (await getTimelineByUserID('uni_mafumafu', process.env.TWITTER_TOKEN_KEY)).timeline;
+    let timelineInfo = (await getTimelineByUserID('uni_mafumafu')).timeline;
     await sendHook(timelineInfo[0]);
 }
 
