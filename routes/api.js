@@ -4,7 +4,7 @@ var router = express.Router();
 const crypto = require('crypto');
 const webhookManager = require('../utils/webhookManager');
 var createError = require('http-errors');
-const { getProfileURL, sendRecentTweet } = require('/utils/getTweet');
+const { getProfileURL, sendRecentTweet } = require('../utils/getTweet_new');
 const { Webhook, MessageBuilder } = require('discord-webhook-node');
 
 router.post('/register', async function(req, res, next) {
@@ -26,6 +26,7 @@ router.post('/register', async function(req, res, next) {
         await hook.send(embed);
         res.json({status: 0})
     }catch(e) {
+        console.error(e)
         if(e.code == 'SQLITE_CONSTRAINT_UNIQUE') res.json({status: -2});
         else {
             webhookManager.removeWebhook(data.url)
