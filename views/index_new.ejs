@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <%- include('header') %>
+    <script src="https://unpkg.com/hangul-js" type="text/javascript"></script>
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        .blinking {
+            animation: blink 0.5s infinite;
+            /* font-size: 2.5rem; */
+        }
+
+        @keyframes blink {
+            to {
+                opacity: 0;
+            }
+        }
+
+        .introduce {
+            /* padding: 15px 0; */
+            background-color: #313338;
+            height: 50dvh;
+            width: 50dvw;
+            color: white;
+        }
+
+        .introduce::before {
+            background-image: url('/images/bg.png');
+            background-repeat: no-repeat;
+            background-position: 15% 50%;
+            background-size:cover;
+            width: 105dvw;
+            height: 105dvh;
+            overflow: hidden;
+            filter: blur(8px);
+            content: "";
+            position: absolute;
+            top: -2.5%;
+            left: -2.5%;
+            z-index: -1;
+        }
+
+        .introduce > div {
+            /* display: inline-block; */
+        }
+
+        .introduce_text {
+            /* margin: 0 auto; */
+            font-size: 2.5rem;
+        }
+
+        #text_title, #text_description {
+            white-space: break-spaces;
+        }
+
+        .introduce_img {
+            vertical-align: top;
+            float:left;
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="introduce">
+            <div class="introduce_text">
+                <span id="text_title"></span><span id="cursor1" class="blinking">|</span><br>
+                <span id="text_description"></span><span id="cursor2" class="blinking hidden">|</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        const title_disassemble = Hangul.d('마훅')
+        const description_disassemble = Hangul.d('한글 번역된 마후마후 트윗을\n디스코드에서')
+
+        window.addEventListener('load', page_onLoad)
+
+        let title_interval;
+        let desc_interval;
+
+        let char_idx = 0;
+        
+        const title_span = document.getElementById('text_title');
+        const title_cursor = document.getElementById('cursor1');
+        const description_span = document.getElementById('text_description');
+        const description_cursor = document.getElementById('cursor2');
+        
+        function page_onLoad() {
+            title_interval = setInterval(title_typing, 200);
+        }
+
+        function title_typing() {
+            title_span.innerText = Hangul.a(title_disassemble.slice(0,char_idx));
+            char_idx++;
+            if(char_idx >= title_disassemble.length + 1) {
+                clearInterval(title_interval);
+                title_cursor.classList.add('hidden')
+                description_cursor.classList.remove('hidden');
+                char_idx = 0;
+                setTimeout(() => desc_interval = setInterval(desc_typing, 30), 500);
+            }
+        }
+
+        function desc_typing() {
+            description_span.innerText = Hangul.a(description_disassemble.slice(0, char_idx));
+            char_idx++;
+            if (char_idx >= description_disassemble.length + 1) {
+                clearInterval(desc_interval);
+                setTimeout(() => description_cursor.classList.add('hidden'), 500);
+            }
+        }
+    </script>
+</body>
+</html>
