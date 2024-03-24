@@ -41,12 +41,16 @@
             }
             
             .text_area {
-                font-size: 1.5em !important;
+                font-size: 1.7em !important;
             }
             
             .introduce_img {
-                height: 100dvh;
+                width: 100dvw !important;
             }
+        }
+
+        .introduce {
+            overflow: hidden;
         }
 
         .introduce_box {
@@ -55,6 +59,7 @@
             justify-content: center;
             background-color: #1c1d22;
             height: 60dvh;
+            width: 100dvw;
             color: white;
         }
 
@@ -62,7 +67,7 @@
             display: flex;
             align-items: center;
             float: right;
-            width: 100dvw;
+            min-width: 35em;
             padding: 50px;
         }
 
@@ -107,6 +112,8 @@
                 </div>
             </div>
         </div>
+
+        <a style="color: #1c1d22; text-decoration: line-through;" href="https://youtu.be/ucbx9we6EHk?si=VRZfMeluYT70_gZ_" target="_blank">온나노코니나리타이</a>
     </div>
     <script>
         const title_disassemble = Hangul.d('마훅');
@@ -134,7 +141,7 @@
             setInterval(() => {
                 image_element.style.transform = `translateY(-${pos}%)`;
                 pos = (pos + 5) % 100;
-            }, 2500)
+            }, 3000)
         }
 
         function title_typing() {
