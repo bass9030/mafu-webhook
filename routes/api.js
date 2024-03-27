@@ -15,7 +15,7 @@ router.post('/register', async function(req, res, next) {
         return;
     }
     try {
-        webhookManager.addWebhook(data.url)
+        webhookManager.addWebhook(data.url, data.roleID, data.sendNoti)
         let embed = new MessageBuilder()
             .setTitle('마훅 구독 완료!')
             .setDescription('마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!')
@@ -48,14 +48,29 @@ router.get('/count', (req, res) => {
     }    
 })
 
-router.post('/unregister', (req, res, next) => {
+router.delete('/unregister', (req, res, next) => {
+    let data = req.query;
+    if(!!!req.query?.url) {
+        res.status(400).json({status: -99});
+        return;
+    }
+    try {
+        let changeCnt = webhookManager.removeWebhook(decodeURIComponent(data.url)).changes;
+        if(changeCnt <= 0) throw new Error();
+        res.json({status: 0})
+    }catch(e) {
+        res.json({status: -1})
+    }
+})
+
+router.post('/edit', (req, res, next) => {
     let data = req.body;
     if(!!!req.body && !!!req.body.url) {
         res.status(400).json({status: -99});
         return;
     }
     try {
-        let changeCnt = webhookManager.removeWebhook(data.url).changes;
+        let changeCnt = webhookManager.editWebhook(data.url, data.roleID, data.sendNoti).changes;
         if(changeCnt <= 0) throw new Error();
         res.json({status: 0})
     }catch(e) {
@@ -72,7 +87,7 @@ router.post('/sendNoti', (req, res, next) => {
                 return;
             }
 
-            webhookManager.sendWebhook(req.body.content, )
+            webhookManager.sendWebhook(req.body.content)
         }else{
             res.status(403).json({status:-99});
         }    

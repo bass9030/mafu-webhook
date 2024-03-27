@@ -10,10 +10,11 @@
 
         body {
             background-color: #1c1d22;
+            color: white;
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         .blinking {
@@ -47,6 +48,20 @@
             .introduce_img {
                 width: 100dvw !important;
             }
+        }
+
+        .alert {
+            transition: all 0.2s linear;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            left: 20px;
+
+            z-index: 9;
+        }
+
+        .alert-hidden {
+            opacity: 0;
         }
 
         .introduce {
@@ -91,10 +106,106 @@
             width: 100%;
             transition: cubic-bezier(.29,.08,.29,1) 1s;
         }
+
+        .popup_dim {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100dvw;
+            height: 100dvh;
+            position: fixed;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 10;
+        }
+
+        .popup_box {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            min-width: 400px;
+            max-width: 680px;
+            width: 80dvw;
+            padding: 50px;
+        }
+
+        .popup_box {
+            color:black;
+        }
+
+        .popup_box > .title > h3 {
+            display: inline-block;
+        }
+
+        .popup_box > .title > .close {
+            float: right;
+        }
+
+        .buttons {
+            width: 100%;
+        }
+
+        #webhookURL {
+            margin-top: 20px;
+        }
+
+        .btn.delete {
+            float: right;
+        }
+
+        .options {
+            margin-top: 20px;
+        }
+
+        .options > div {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="main">
+        <div class="popup_dim">
+            <div class="popup_box">
+                <div class="title">
+                    <h3>디스코드 웹후크 구독</h3>
+                    <button onclick="closeRegister()" class="btn close"><i class="fa-solid fa-xmark"></i></button>
+                    <br>
+                    <a href="/howto" target="_blank">웹후크 생성방법</a>
+                </div>
+                <div action="javascript:void(0)" id="registerForm">
+                    <div class="input-group has-validation">
+                        <input id="webhookURL" type="text" class="form-control is-invaild" placeholder="디스코드 웹후크 URL">
+                        <div class="invalid-feedback">
+                            올바른 웹후크 URL을 입력해주세요.
+                        </div>
+                    </div>
+                    <div class="options">
+                        <input onchange="changeRoleIDStatus(event)" type="checkbox" class="form-check-input" id="allowMention">
+                        <label for="allowMention" class="form-check-label">특정 역할 맨션하기</label>
+                        <div class="input-group has-validation">
+                            <input type="text" value="@everyone" disabled class="form-control" id="roleId" placeholder="역할 ID 입력">
+                            <div class="invalid-feedback">
+                                역할 ID는 @everyone, @here 혹은 숫자로 이루어저있어야합니다.
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="allowReceiveNoti" class="form-check-input" value="공지사항 수신하기">
+                            <label for="allowReceiveNoti" class="form-check-label">공지사항 수신하기</label>
+                        </div>
+                    </div>
+                    <div class="buttons">
+                        <input type="button" onclick="registerWebhook()" class="btn btn-success subscribe" value="구독">
+                        <input type="button" onclick="editWebhook()" class="btn btn-primary edit" value="수정">
+                        <input type="button" onclick="unregisterWebhook()" class="btn btn-danger delete" value="구독취소" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="success" class="alert alert-success alert-hidden" role="alert">
+            웹후크가 성공적으로 구독되었습니다
+        </div>
+        <div id="error" class="alert alert-danger alert-hidden" role="alert">
+            웹후크 구독 취소 실패: 등록된 웹후크가 없습니다
+        </div>
         <div class="introduce">
             <div class="introduce_box">
                 <div class="introduce_img">
@@ -107,15 +218,20 @@
                             <span id="text_description1"></span><span id="cursor2" class="blinking hidden">|</span><br>
                             <span id="text_description2"></span><span id="cursor3" class="blinking hidden">|</span><br>
                         </div>
-                        <button class="btn btn-primary">웹후크 등록 · 수정</button>
+                        <button class="btn btn-primary" onclick="javascript:openRegister()">웹후크 등록 · 수정</button>
                     </div>
                 </div>
             </div>
         </div>
-
+        <div class="content">
+            여기에 무언갈 넣어야하는데 뭘 넣어야 할지 모르겟다
+        </div>
         <a style="color: #1c1d22; text-decoration: line-through;" href="https://youtu.be/ucbx9we6EHk?si=VRZfMeluYT70_gZ_" target="_blank">온나노코니나리타이</a>
     </div>
     <script>
+        const WEBHOOK_REGEX = /https:\/\/discord(app)?.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/;
+        const ROLEID_REGEX = /^[0-9]+$/;
+
         const title_disassemble = Hangul.d('마훅');
         const desc_disassemble1 = Hangul.d('한글 번역된 마후마후 트윗을,')
         const desc_disassemble2 = Hangul.d('디스코드에서');
@@ -133,8 +249,147 @@
         const description2_span = document.getElementById('text_description2');
         const description1_cursor = document.getElementById('cursor2');
         const description2_cursor = document.getElementById('cursor3');
-        const image_element = document.getElementById('image')
+
+        const image_element = document.getElementById('image');
+
+        const popup_element = document.getElementsByClassName('popup_dim')[0];
+        const webhookInputElement = document.getElementById('webhookURL');
+        const mentionIdInputElement = document.getElementById('roleId');
+        const formElement = document.getElementById('registerForm');
+        const allowMentionElement = document.getElementById('allowMention');
+        const allowReceiveNotiElement = document.getElementById('allowReceiveNoti');
+
         let pos = 5;
+
+        webhookInputElement.addEventListener('input', on_formChanged)
+        mentionIdInputElement.addEventListener('input', on_formChanged)
+
+        function changeRoleIDStatus(event) {
+            mentionIdInputElement.disabled = !event.target.checked;
+        }
+
+        function vaildateValue() {
+            let roleID = mentionIdInputElement.value;
+            let webhookURL = webhookInputElement.value;
+            let isVaildate = true;
+
+            if (!!!webhookURL.match(WEBHOOK_REGEX)) {
+                webhookInputElement.setCustomValidity('aw');
+                isVaildate = false;
+            } else {
+                webhookInputElement.setCustomValidity('');
+
+            }
+
+            if (roleID.trim() == '@everyone' || 
+                roleID.trim() == '@here' || 
+                !!roleID.match(ROLEID_REGEX)) {
+                mentionIdInputElement.setCustomValidity('');
+            } else {
+                mentionIdInputElement.setCustomValidity('aw');
+                isVaildate = false;
+            }
+
+            formElement.classList.add('was-validated')
+
+            return isVaildate;
+        }
+
+        function on_formChanged() {
+            vaildateValue();
+        }
+
+        function openRegister() {
+            popup_element.classList.remove('hidden');
+        }
+
+        function closeRegister() {
+            popup_element.classList.add('hidden');
+        }
+
+        function showSuccess(text) {
+            document.getElementById('success').innerText = text;
+            document.getElementById('success').classList.remove('alert-hidden');
+            setTimeout(() => document.getElementById('success').classList.add('alert-hidden'), 1500);
+        }
+
+        function showError(text) {
+            document.getElementById('error').innerText = text;
+            document.getElementById('error').classList.remove('alert-hidden');
+            setTimeout(() => document.getElementById('error').classList.add('alert-hidden'), 1500);
+        }
+
+        async function registerWebhook() {
+            let webhookURL = webhookInputElement.value;
+            let roleID = allowMentionElement.checked ? mentionIdInputElement.value : undefined;
+            let allowSendNoti = allowReceiveNotiElement.checked;
+
+            if(!vaildateValue()) return;
+
+            try {
+                let response = await (await fetch('/api/register', {
+                    method: 'POST',
+                    body: {
+                        url: webhookURL,
+                        roleID: roleID,
+                        sendNoti: allowSendNoti
+                    }
+                })).json();
+
+                if (response.status != 0) throw new Error();
+                showSuccess('웹후크 등록 성공!');
+            }catch {
+                showError('웹후크 등록에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')
+            }
+        }
+
+        async function editWebhook() {
+            let webhookURL = webhookInputElement.value;
+            let roleID = allowMentionElement.checked ? mentionIdInputElement.value : undefined;
+            let allowSendNoti = allowReceiveNotiElement.checked;
+
+            if (!vaildateValue()) return;
+
+            //TODO: 수정 요청 구현
+            try {
+                let response = await (await fetch('/api/edit', {
+                    method: 'POST',
+                    body: {
+                        url: webhookURL,
+                        roleID: roleID,
+                        sendNoti: allowSendNoti
+                    }
+                })).json();
+
+                if(response.status != 0) throw new Error();
+                showSuccess('웹후크 수정 성공!');
+            } catch {
+                showError('웹후크 수정에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')
+            }
+        }
+
+        async function unregisterWebhook() {
+            let webhookURL = webhookInputElement.value;
+
+            if (!!!webhookURL.match(WEBHOOK_REGEX)) {
+                webhookInputElement.setCustomValidity('aw');
+                formElement.classList.add('was-validate');
+                return;
+            } else
+                webhookInputElement.setCustomValidity('');
+
+            //TODO 삭제 요청 구현
+            try {
+                let response = await(await fetch('/api/edit?url=' + encodeURIComponent(webhookURL), {
+                    method: 'DELETE'
+                })).json();
+
+                if (response.status != 0) throw new Error();
+                showSuccess('웹후크 삭제 성공!');
+            } catch {
+                showError('웹후크 삭제에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')
+            }
+        }
         
         function page_onLoad() {
             title_interval = setInterval(title_typing, 200);
