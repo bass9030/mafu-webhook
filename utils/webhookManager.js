@@ -4,17 +4,24 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
 db.exec('CREATE TABLE IF NOT EXISTS webhooks (' + 
             'id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ' +
             'webhookURL TEXT NOT NULL UNIQUE,' +
-            'isMention INTEGER,' +
+            'roleID TEXT,' +
             'sendNoticeMessage INTEGER' +
         ');');
 
 class webhookManager {
-    static addWebhook(url) {
-        db.prepare('INSERT INTO webhooks (webhookURL) VALUES (?);').run(url);
+    static addWebhook(url, roleID, sendNoti) {
+        db.prepare('INSERT INTO webhooks (webhookURL, roleID, sendNoticeMessage) VALUES (?, ?, ?);')
+            .run(url, roleID, sendNoti ? 1 : 0);
     }
 
     static removeWebhook(url) {
         let result = db.prepare('DELETE FROM webhooks WHERE webhookURL = ?;').run(url);
+        return {changes: result.changes}
+    }
+
+    static editWebhook(url, roleID, sendNoti) {
+        let result = db.prepare('UPDATE SET roleID = ?, sendNoticeMessage = ? FROM webhooks WHERE webhookURL = ?;')
+            .run(roleID, sendNoti ? 1 : 0, url);
         return {changes: result.changes}
     }
 
@@ -26,14 +33,14 @@ class webhookManager {
     /**
      * @param {MessageBuilder} message 
      */
-    static async sendWebhook(message, profileURL) {
+    static async sendWebhook(message) {
         const webhooks = db.prepare('SELECT * FROM webhooks;').all()
         for(let i = 0; i < webhooks.length; i++) {
             let e = webhooks[i];
             try {
                 new Promise(async () => {
                     const hook = new Webhook(e.webhookURL);
-                    // message.getJSON
+                    let profileURL = message.getJSON()['footer']['icon_url'];
                     hook.setAvatar(profileURL);
                     hook.setUsername('마훅 - 마후 트윗 번역봇');
                     await hook.send(message);
