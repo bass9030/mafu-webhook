@@ -65,7 +65,7 @@ else fs.writeFileSync('./lastTweet.txt', '0');
 function convertToHalf(e) {
     return e.replace(/[！-～]/g, (halfwidthChar) =>
       String.fromCharCode(halfwidthChar.charCodeAt(0) - 0xfee0)
-    );
+    ).replace(/、/g, ', ').replace(/。/g, '.');
 }
 
 /**
@@ -97,7 +97,6 @@ async function getTimelineByUserID(userId) {
                         e.content.itemContent.tweet_results.result.core.user_results.result.id == 'VXNlcjoyNjg3NTg0NjE=';
                     })
                     .map(e => e.content.itemContent.tweet_results.result);
-        // fs.writeFileSync('./timeline.json', JSON.stringify(tweets, null, 4))
         return tweets;
     }catch(e) {
         console.error(e)
@@ -112,11 +111,17 @@ async function getTimelineByUserID(userId) {
  */
 async function translateTextDeepL(source, target, query) {
     const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
-    const response = await translator.translateText(convertToHalf(query), (source == 'auto' || !!source) ? source : null, target, {
-        glossary: '0e46d5a2-c745-41c7-8ccd-d29b986de309'
-    });
+    query = convertToHalf(query);
+    let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ ]+/g);
+    let result = query;
+    for(let e of querys) {
+        let response = await translator.translateText(e, (source == 'auto' || !!source) ? source : null, target, {
+            glossary: '0e46d5a2-c745-41c7-8ccd-d29b986de309'
+        });
+        result = result.replace(e, response.text);
+    }
 
-    return response.text;
+    return result;
 }
 
 /**
@@ -192,5 +197,14 @@ async function getProfileURL() {
         return profileURL;
     }
 }
+
+// translateTextDeepL('ja', 'ko', `【ご報告】
+// 僕が裁判で訴えている相手の方から、自分も訴え返されたりしているのですが、「告訴状がきたら警察は受理して捜査する義務があるのです」と警察の方よりうかがいましたし、ご心配にはおよびません！（当たり前だけど逮捕されたりもしないよ）
+// 自分が話したことはもちろん根拠も証拠もありますし、自分が起こした裁判等もつつがなく進行しているのでご安心ください！
+// 情報開示の裁判は簡単には通らないので、開示されたなら違法であるケースが多いと弁護士さんから聞いてます。
+
+// 今回は心配してくれる方が多くいらしたので触れました！
+// またこんな暗い話題を申し訳ないです...
+// たくさん時間はかかると思うけど、決着がついたら報告するね！`).then(console.log);
 
 module.exports = { checkNewTweet, getProfileURL, sendRecentTweet };
