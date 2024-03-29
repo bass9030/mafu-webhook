@@ -15,6 +15,12 @@ router.post('/register', async function(req, res, next) {
         return;
     }
     try {
+        if(data.roleID != '@everyone' ||
+           data.roleID != '@here' ||
+           !!!data.roleID.match(/[0-9]+/g)) {
+            res.json({status: -2, message: "역할 ID가 올바르지 않습니다.<br>역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다."});
+            return
+        }
         webhookManager.addWebhook(data.url, data.roleID, data.sendNoti)
         let embed = new MessageBuilder()
             .setTitle('마훅 구독 완료!')
@@ -69,6 +75,14 @@ router.post('/edit', (req, res, next) => {
         res.status(400).json({status: -99});
         return;
     }
+
+    if(data.roleID != '@everyone' ||
+       data.roleID != '@here' ||
+       !!!data.roleID.match(/[0-9]+/g)) {
+        res.json({status: -2, message: "역할 ID가 올바르지 않습니다.<br>역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다."});
+        return;
+    }
+
     try {
         let changeCnt = webhookManager.editWebhook(data.url, data.roleID, data.sendNoti).changes;
         if(changeCnt <= 0) throw new Error();

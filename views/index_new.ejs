@@ -329,14 +329,19 @@
             try {
                 let response = await (await fetch('/api/register', {
                     method: 'POST',
-                    body: {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
                         url: webhookURL,
                         roleID: roleID,
                         sendNoti: allowSendNoti
-                    }
+                    })
                 })).json();
-
-                if (response.status != 0) throw new Error();
+                if (response.status == -2) {
+                    showError('웹후크 등록에 실패했습니다: ' + response.message);
+                    return;    
+                } else if (response.status != 0) throw new Error();
                 showSuccess('웹후크 등록 성공!');
             }catch {
                 showError('웹후크 등록에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')
@@ -354,11 +359,14 @@
             try {
                 let response = await (await fetch('/api/edit', {
                     method: 'POST',
-                    body: {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
                         url: webhookURL,
                         roleID: roleID,
                         sendNoti: allowSendNoti
-                    }
+                    })
                 })).json();
 
                 if(response.status != 0) throw new Error();
