@@ -40,9 +40,15 @@ class webhookManager {
             try {
                 new Promise(async () => {
                     const hook = new Webhook(e.webhookURL);
-                    let profileURL = message.getJSON()['footer']['icon_url'];
+                    // console.log(message.getJSON()['embeds'][0]['footer'])
+                    let profileURL = message.getJSON()['embeds'][0]['footer']['icon_url'];
+                    
                     hook.setAvatar(profileURL);
                     hook.setUsername('마훅 - 마후 트윗 번역봇');
+                    if(!!e.roleID) {
+                        if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
+                        else await hook.send('<@&' + e.roleID + '>');
+                    }
                     await hook.send(message);
                 });
             }catch(e){
