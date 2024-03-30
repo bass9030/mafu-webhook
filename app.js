@@ -8,6 +8,7 @@ const { checkNewTweet } = require('./utils/getTweet_new')
 var indexRouter = require('./routes/index');
 var howtoRouter = require('./routes/howto');
 var apiRouter = require('./routes/api');
+var sendNotiRouter = require('./routes/sendNoti');
 
 var app = express();
 
@@ -24,6 +25,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/howto', howtoRouter);
 app.use('/api', apiRouter);
+app.use('/api/wa-you-know-sans-wa-papyrus', sendNotiRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
