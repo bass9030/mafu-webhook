@@ -188,7 +188,7 @@
                             </div>
                         </div>
                         <div>
-                            <input type="checkbox" id="allowReceiveNoti" class="form-check-input" value="공지사항 수신하기">
+                            <input type="checkbox" id="allowReceiveNoti" class="form-check-input" value="공지사항 수신하기" checked>
                             <label for="allowReceiveNoti" class="form-check-label">공지사항 수신하기</label>
                         </div>
                     </div>
@@ -301,6 +301,11 @@
 
         function openRegister() {
             popup_element.classList.remove('hidden');
+            webhookInputElement.value = '';
+            allowMentionElement.checked = false;
+            mentionIdInputElement.value = '@everyone';
+            mentionIdInputElement.disabled = true;
+            allowReceiveNotiElement.checked = true;
         }
 
         function closeRegister() {
@@ -321,7 +326,7 @@
 
         async function registerWebhook() {
             let webhookURL = webhookInputElement.value;
-            let roleID = allowMentionElement.checked ? mentionIdInputElement.value : undefined;
+            let roleID = allowMentionElement.checked ? mentionIdInputElement.value : -1;
             let allowSendNoti = allowReceiveNotiElement.checked;
 
             if(!vaildateValue()) return;
@@ -338,19 +343,18 @@
                         sendNoti: allowSendNoti
                     })
                 })).json();
-                if (response.status == -2) {
-                    showError('웹후크 등록에 실패했습니다: ' + response.message);
-                    return;    
-                } else if (response.status != 0) throw new Error();
-                showSuccess('웹후크 등록 성공!');
+                if (response.status == -2) showError('웹후크 등록에 실패했습니다: ' + response.message);
+                else if (response.status != 0) throw new Error();
+                else showSuccess('웹후크 등록 성공!');
             }catch {
                 showError('웹후크 등록에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')
             }
+            closeRegister();
         }
 
         async function editWebhook() {
             let webhookURL = webhookInputElement.value;
-            let roleID = allowMentionElement.checked ? mentionIdInputElement.value : undefined;
+            let roleID = allowMentionElement.checked ? mentionIdInputElement.value : -1;
             let allowSendNoti = allowReceiveNotiElement.checked;
 
             if (!vaildateValue()) return;
@@ -374,6 +378,7 @@
             } catch {
                 showError('웹후크 수정에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')
             }
+            closeRegister();
         }
 
         async function unregisterWebhook() {
@@ -388,7 +393,7 @@
 
             //TODO 삭제 요청 구현
             try {
-                let response = await(await fetch('/api/edit?url=' + encodeURIComponent(webhookURL), {
+                let response = await(await fetch('/api/unregister?url=' + encodeURIComponent(webhookURL), {
                     method: 'DELETE'
                 })).json();
 
@@ -397,6 +402,7 @@
             } catch {
                 showError('웹후크 삭제에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')
             }
+            closeRegister();
         }
         
         function page_onLoad() {
