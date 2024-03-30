@@ -44,7 +44,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-// checkNewTweet();
-// setInterval(checkNewTweet, 1000 * 60 * 5)
+checkNewTweet();
+setInterval(checkNewTweet, 1000 * 60 * 5)
 
 module.exports = app;
