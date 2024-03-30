@@ -14,11 +14,16 @@ router.post('/register', async function(req, res, next) {
         res.status(400).json({status: -99});
         return;
     }
+
+    // console.log((data.roleID == '@everyone' &&
+    //        data.roleID == '@here' &&
+    //        !!data.roleID.match(/[0-9]+/g)));
+    console.log(data.roleID);
     try {
-        if(data.roleID != '@everyone' ||
-           data.roleID != '@here' ||
-           !!!data.roleID.match(/[0-9]+/g)) {
-            res.json({status: -2, message: "역할 ID가 올바르지 않습니다.<br>역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다."});
+        if((data.roleID != '@everyone' &&
+           data.roleID != '@here' &&
+           !!!String(data.roleID).match(/[0-9]+/g)) && data.roleID != -1) {
+            res.json({status: -2, message: "역할 ID가 올바르지 않습니다.\n역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다."});
             return
         }
         webhookManager.addWebhook(data.url, data.roleID, data.sendNoti)
@@ -32,26 +37,41 @@ router.post('/register', async function(req, res, next) {
         await hook.send(embed);
         res.json({status: 0})
     }catch(e) {
-        console.error(e)
-        if(e.code == 'SQLITE_CONSTRAINT_UNIQUE') res.json({status: -2});
+        console.error(e);
+        if(e.code == 'SQLITE_CONSTRAINT_UNIQUE') res.json({status: -2, message: '이미 등록된 웹후크 URL 입니다.'});
         else {
             webhookManager.removeWebhook(data.url)
-            res.json({status: -1});
+            if(e.message.includes('Error sending webhook')) 
+                res.json({status: -2, message: '올바르지 않은 웹후크 URL 입니다.'})
+            else
+                res.json({status: -1});
         }
     }
 });
 
-router.get('/count', (req, res) => {
+
+router.post('/edit', (req, res, next) => {
+    let data = req.body;
+    if(!!!req.body && !!!req.body.url) {
+        res.status(400).json({status: -99});
+        return;
+    }
+
+    if(data.roleID != '@everyone' &&
+       data.roleID != '@here' &&
+       !!!data.roleID.match(/[0-9]+/g)) {
+        res.json({status: -2, message: "역할 ID가 올바르지 않습니다.\n역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다."});
+        return;
+    }
+
     try {
-        res.json({
-            status: 0,
-            data: webhookManager.getWebhookCount()
-        });
-    }catch{
-        res.json({
-            status: -1
-        })
-    }    
+        let changeCnt = webhookManager.editWebhook(data.url, data.roleID, data.sendNoti).changes;
+        if(changeCnt <= 0) throw new Error();
+        res.json({status: 0})
+    }catch(e) {
+        console.error(e);
+        res.json({status: -1})
+    }
 })
 
 router.delete('/unregister', (req, res, next) => {
@@ -69,27 +89,17 @@ router.delete('/unregister', (req, res, next) => {
     }
 })
 
-router.post('/edit', (req, res, next) => {
-    let data = req.body;
-    if(!!!req.body && !!!req.body.url) {
-        res.status(400).json({status: -99});
-        return;
-    }
-
-    if(data.roleID != '@everyone' ||
-       data.roleID != '@here' ||
-       !!!data.roleID.match(/[0-9]+/g)) {
-        res.json({status: -2, message: "역할 ID가 올바르지 않습니다.<br>역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다."});
-        return;
-    }
-
+router.get('/count', (req, res) => {
     try {
-        let changeCnt = webhookManager.editWebhook(data.url, data.roleID, data.sendNoti).changes;
-        if(changeCnt <= 0) throw new Error();
-        res.json({status: 0})
-    }catch(e) {
-        res.json({status: -1})
-    }
+        res.json({
+            status: 0,
+            data: webhookManager.getWebhookCount()
+        });
+    }catch{
+        res.json({
+            status: -1
+        })
+    }    
 })
 
 router.post('/sendNoti', (req, res, next) => {
@@ -101,7 +111,7 @@ router.post('/sendNoti', (req, res, next) => {
                 return;
             }
 
-            webhookManager.sendWebhook(req.body.content)
+            webhookManager.sendWebhook(req.body.content, true)
         }else{
             res.status(403).json({status:-99});
         }    

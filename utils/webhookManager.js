@@ -20,7 +20,7 @@ class webhookManager {
     }
 
     static editWebhook(url, roleID, sendNoti) {
-        let result = db.prepare('UPDATE SET roleID = ?, sendNoticeMessage = ? FROM webhooks WHERE webhookURL = ?;')
+        let result = db.prepare('UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE webhookURL = ?;')
             .run(roleID, sendNoti ? 1 : 0, url);
         return {changes: result.changes}
     }
@@ -31,29 +31,38 @@ class webhookManager {
     }
 
     /**
-     * @param {MessageBuilder} message 
+     * @param {MessageBuilder | string} message 
      */
-    static async sendWebhook(message) {
-        const webhooks = db.prepare('SELECT * FROM webhooks;').all()
+    static async sendWebhook(message, isNoti) {
+        const webhooks = isNoti ? db.prepare('SELECT * FROM webhooks WHERE sendNoticeMessage = ?;').all(1) : db.prepare('SELECT * FROM webhooks;').all();
         for(let i = 0; i < webhooks.length; i++) {
             let e = webhooks[i];
             try {
                 new Promise(async () => {
-                    const hook = new Webhook(e.webhookURL);
-                    // console.log(message.getJSON()['embeds'][0]['footer'])
-                    let profileURL = message.getJSON()['embeds'][0]['footer']['icon_url'];
-                    
-                    hook.setAvatar(profileURL);
-                    hook.setUsername('마훅 - 마후 트윗 번역봇');
-                    if(!!e.roleID) {
-                        if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
-                        else await hook.send('<@&' + e.roleID + '>');
+                    try {
+                        const hook = new Webhook(e.webhookURL);
+                        // console.log(message.getJSON()['embeds'][0]['footer'])
+                        if(typeof message == 'string')
+                            hook.setAvatar('https://mahook.bass9030.dev/logo.png');
+                        else{
+                            let profileURL = message.getJSON()['embeds'][0]['footer']['icon_url'];
+                            if(!!profileURL) hook.setAvatar(profileURL);
+                        } 
+                        hook.setUsername('마훅 - 마후 트윗 번역봇');
+                        if(!!e.roleID) {
+                            if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
+                            else await hook.send('<@&' + e.roleID + '>');
+                        }
+                        if(isNoti) await hook.info('마훅 공지사항', '', message);
+                        else await hook.send(message);
+                    }catch(err){
+                        console.error(`Failed to send webhook to ${e.webhookURL}`)
+                        console.error(err)
                     }
-                    await hook.send(message);
                 });
-            }catch(e){
+            }catch(err){
                 console.error(`Failed to send webhook to ${e.webhookURL}`)
-                console.error(e)
+                console.error(err)
             }
         }
     }
