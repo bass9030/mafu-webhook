@@ -185,7 +185,7 @@ async function sendHook(tweetInfo) {
     // 미디어 처리
     if(!!tweetInfo.legacy.entities.media?.length && tweetInfo.legacy.entities.media[0].type == 'photo') embed.setImage(tweetInfo.legacy.entities.media[0].media_url_https);
     
-    webhookManager.sendWebhook(embed, profileURL);
+    webhookManager.sendWebhook(embed);
 }
 
 async function getProfileURL() {
