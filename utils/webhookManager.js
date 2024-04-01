@@ -38,28 +38,21 @@ class webhookManager {
         for(let i = 0; i < webhooks.length; i++) {
             let e = webhooks[i];
             try {
-                new Promise(async () => {
-                    try {
-                        const hook = new Webhook(e.webhookURL);
-                        // console.log(message.getJSON()['embeds'][0]['footer'])
-                        if(typeof message == 'string')
-                            hook.setAvatar('https://mahook.bass9030.dev/logo.png');
-                        else{
-                            let profileURL = message.getJSON()['embeds'][0]['footer']['icon_url'];
-                            if(!!profileURL) hook.setAvatar(profileURL);
-                        } 
-                        hook.setUsername('마훅 - 마후 트윗 번역봇');
-                        if(!!e.roleID) {
-                            if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
-                            else await hook.send('<@&' + e.roleID + '>');
-                        }
-                        if(isNoti) await hook.info('마훅 공지사항', '', message);
-                        else await hook.send(message);
-                    }catch(err){
-                        console.error(`Failed to send webhook to ${e.webhookURL}`)
-                        console.error(err)
-                    }
-                });
+                const hook = new Webhook(e.webhookURL);
+                // console.log(message.getJSON()['embeds'][0]['footer'])
+                if(typeof message == 'string')
+                    hook.setAvatar('https://mahook.bass9030.dev/logo.png');
+                else{
+                    let profileURL = message.getJSON()['embeds'][0]['footer']['icon_url'];
+                    if(!!profileURL) hook.setAvatar(profileURL);
+                } 
+                hook.setUsername('마훅 - 마후 트윗 번역봇');
+                if(!!e.roleID) {
+                    if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
+                    else await hook.send('<@&' + e.roleID + '>');
+                }
+                if(isNoti) await hook.info('마훅 공지사항', '', message);
+                else await hook.send(message);
             }catch(err){
                 console.error(`Failed to send webhook to ${e.webhookURL}`)
                 console.error(err)
