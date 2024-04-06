@@ -1,33 +1,71 @@
-const db = require('better-sqlite3')('./webhooks.db');
+// const db = require('better-sqlite3')('./webhooks.db');
+const appRoot = require('app-root-path').path;
+const path = require('path');
+require('dotenv').config({
+    path: path.join(appRoot, '.env')
+});
+
+const mariadb = require('mariadb')
+const core = mariadb.createPool({
+    host: process.env.DB_HOST,
+    port: 3306,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    connectionLimit: 10
+});
 const { Webhook, MessageBuilder } = require('discord-webhook-node');
 
-db.exec('CREATE TABLE IF NOT EXISTS webhooks (' + 
-            'id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ' +
-            'webhookURL TEXT NOT NULL UNIQUE,' +
-            'roleID TEXT,' +
-            'sendNoticeMessage INTEGER' +
+core.getConnection().then((db) => {
+    try {
+        db.execute('CREATE TABLE IF NOT EXISTS webhooks (' + 
+            'id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, ' +
+            'webhookURL VARCHAR(2048) NOT NULL UNIQUE,' +
+            'roleID VARCHAR(19),' +
+            'sendNoticeMessage BOOLEAN' +
         ');');
+    }finally{
+        db.release();
+    }
+})
 
 class webhookManager {
-    static addWebhook(url, roleID, sendNoti) {
-        db.prepare('INSERT INTO webhooks (webhookURL, roleID, sendNoticeMessage) VALUES (?, ?, ?);')
-            .run(url, roleID, sendNoti ? 1 : 0);
+    static async addWebhook(url, roleID, sendNoti) {
+        let db;
+        try {
+            db = await core.getConnection();
+            db.query('INSERT INTO webhooks (webhookURL, roleID, sendNoticeMessage) VALUES (?, ?, ?);', [url, roleID, sendNoti ? 1 : 0]);
+        }finally{
+            db?.release();
+        }
     }
 
-    static removeWebhook(url) {
-        let result = db.prepare('DELETE FROM webhooks WHERE webhookURL = ?;').run(url);
-        return {changes: result.changes}
+    static async removeWebhook(url) {
+        let db;
+        try {
+            let db = await core.getConnection();
+            let result = db.query('DELETE FROM webhooks WHERE webhookURL = ?;', [url]);
+            return {changes: result.affectedRows};
+        }finally{
+            db?.release();
+        }
     }
 
-    static editWebhook(url, roleID, sendNoti) {
-        let result = db.prepare('UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE webhookURL = ?;')
-            .run(roleID, sendNoti ? 1 : 0, url);
-        return {changes: result.changes}
+    static async editWebhook(url, roleID, sendNoti) {
+        let db;
+        try {
+            let db = await core.getConnection();
+            let result = db.query('UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE webhookURL = ?;', [roleID, sendNoti ? 1 : 0, url])
+            return {changes: result.affectedRows}
+        }finally{
+            db?.release();
+        }
     }
 
-    static getWebhookCount() {
-        let count = db.prepare('SELECT COUNT(*) FROM webhooks;').get();
-        return count['COUNT(*)'];
+    static async getWebhookCount() {
+        let db = await core.getConnection();
+        let count = await db.query('SELECT COUNT(*) FROM webhooks;');
+        return count[0]['COUNT(*)'];
     }
 
     /**
