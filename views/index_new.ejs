@@ -47,6 +47,7 @@
             
             .introduce_img {
                 width: 100dvw !important;
+                height: 50dvh !important;
             }
         }
 
@@ -73,7 +74,7 @@
             flex-direction: row;
             justify-content: center;
             background-color: #1c1d22;
-            height: 60dvh;
+            height: 100dvh;
             width: 100dvw;
             color: white;
         }
@@ -98,7 +99,7 @@
 
         .introduce_img {
             float: left;
-            height: 60dvh;
+            height: 100dvh;
             overflow-y: hidden;
         }
 
@@ -158,6 +159,26 @@
 
         .options > div {
             margin-bottom: 20px;
+        }
+
+        .easteregg {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        .content {
+            margin-top: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+            height: 20dvh;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .content > p > a {
+            color: white;
+            text-decoration: none;
         }
     </style>
 </head>
@@ -224,9 +245,22 @@
             </div>
         </div>
         <div class="content">
-            여기에 무언갈 넣어야하는데 뭘 넣어야 할지 모르겟다
+            <hr/>
+            <p>
+                마훅의 한국어 번역은 DeepL 번역 API를 이용하여 제공됩니다.
+            </p>
+            <p>
+                마훅은 X(구 Twitter)의 <strong>비공식 API를 사용하여 개발</strong>되었습니다.<br>
+                따라서 <strong>서비스에 예기치 못한 장애가 발생</strong>할 수 있으며, <strong>X(구 Twitter)사의 요청에 따라 서비스 운영이 종료될 수 있습니다.</strong>
+            </p>
+            <p>Contact: contact@bass9030.dev</p>
+            <p>
+                깃허브<br>
+                <a class="community" href="https://github.com/bass9030/mafu-webhook" target="_blank"><i
+                        class="fa-brands fa-github"></i></a>
+            </p>
         </div>
-        <a style="color: #1c1d22; text-decoration: line-through;" href="https://youtu.be/ucbx9we6EHk?si=VRZfMeluYT70_gZ_" target="_blank">온나노코니나리타이</a>
+        <a class="easteregg" style="color: #1c1d22; text-decoration: line-through;" href="https://youtu.be/ucbx9we6EHk?si=VRZfMeluYT70_gZ_" target="_blank">온나노코니나리타이</a>
     </div>
     <script>
         const WEBHOOK_REGEX = /https:\/\/discord(app)?.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/;
