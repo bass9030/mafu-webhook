@@ -74,7 +74,9 @@ function convertToHalf(e) {
  */
 async function getTimelineByUserID(userId) {
     const reqURL = `https://twitter.com/i/api/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets?variables=${encodeURIComponent(JSON.stringify(Object.assign(default_variables, {userId: userId})))}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
-    // console.log(reqURL);
+    
+    
+    try {
     let response = await fetch(reqURL,
     {
         method: 'GET',
@@ -88,8 +90,6 @@ async function getTimelineByUserID(userId) {
             "x-twitter-client-language": "en"
         }
     });
-
-    try {
         let res_json = await response.json();
         let tweets = res_json.data.user.result.timeline_v2.timeline.instructions.filter(e => e.type == "TimelineAddEntries")[0]
                     .entries.filter(e => {
