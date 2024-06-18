@@ -11,7 +11,7 @@ const core = mariadb.createPool({
     port: 3306,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    database: 'mahook',
     connectionLimit: 10
 });
 const { Webhook, MessageBuilder } = require('discord-webhook-node');
@@ -74,8 +74,9 @@ class webhookManager {
      * @param {MessageBuilder | string} message 
      */
     static async sendWebhook(message, isNoti) {
+        let db;
         try {
-            let db = await core.getConnection();
+            db = await core.getConnection();
             const webhooks = isNoti ? await db.query('SELECT * FROM webhooks WHERE sendNoticeMessage = ?;', [1]) : await db.query('SELECT * FROM webhooks;');
              for(let i = 0; i < webhooks.length; i++) {
                 let e = webhooks[i];
