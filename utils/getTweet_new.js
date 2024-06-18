@@ -111,17 +111,20 @@ async function getTimelineByUserID(userId) {
  */
 async function translateTextDeepL(source, target, query) {
     const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
-    query = convertToHalf(query);
     let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ ]+/g);
     let result = query;
-    for(let e of querys) {
-        let response = await translator.translateText(e, (source == 'auto' || !!source) ? source : null, target, {
-            glossary: '0e46d5a2-c745-41c7-8ccd-d29b986de309'
-        });
-        result = result.replace(e, response.text);
+    let response = await translator.translateText(querys, (source == 'auto' || !!source) ? source : null, target, {
+        glossary: process.env.DEEPL_GLOSSARY_ID
+    });
+
+    // console.log(querys, response)
+
+    for(let i in querys) {
+        console.log(querys[i], "|", response[i]['text']);
+        result = result.replace(querys[i], response[i]['text']);
     }
 
-    return result;
+    return convertToHalf(result);
 }
 
 /**
@@ -185,7 +188,7 @@ async function sendHook(tweetInfo) {
     // 미디어 처리
     if(!!tweetInfo.legacy.entities.media?.length && tweetInfo.legacy.entities.media[0].type == 'photo') embed.setImage(tweetInfo.legacy.entities.media[0].media_url_https);
     
-    webhookManager.sendWebhook(embed);
+    await webhookManager.sendWebhook(embed);
 }
 
 async function getProfileURL() {
