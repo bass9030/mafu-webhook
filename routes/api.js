@@ -18,7 +18,6 @@ router.post('/register', async function(req, res, next) {
     // console.log((data.roleID == '@everyone' &&
     //        data.roleID == '@here' &&
     //        !!data.roleID.match(/[0-9]+/g)));
-    console.log(data.roleID);
     try {
         if((data.roleID != '@everyone' &&
            data.roleID != '@here' &&
@@ -37,7 +36,7 @@ router.post('/register', async function(req, res, next) {
         await hook.send(embed);
         res.json({status: 0})
     }catch(e) {
-        console.error(e);
+        // console.error(e.no);
         if(e.code == 'SQLITE_CONSTRAINT_UNIQUE') res.json({status: -2, message: '이미 등록된 웹후크 URL 입니다.'});
         else {
             webhookManager.removeWebhook(data.url)
