@@ -149,8 +149,9 @@
             margin-top: 20px;
         }
 
-        .btn.delete {
+        .btn.edit, .btn.subscribe {
             float: right;
+            margin: 0 2px;
         }
 
         .options {
@@ -214,9 +215,9 @@
                         </div>
                     </div>
                     <div class="buttons">
-                        <input type="button" onclick="registerWebhook()" class="btn btn-success subscribe" value="구독">
-                        <input type="button" onclick="editWebhook()" class="btn btn-primary edit" value="수정">
                         <input type="button" onclick="unregisterWebhook()" class="btn btn-danger delete" value="구독취소" />
+                        <input type="button" onclick="registerWebhook()" class="btn btn-success subscribe" value="구독"/>
+                        <input type="button" onclick="editWebhook()" class="btn btn-primary edit" value="수정" />
                     </div>
                 </div>
             </div>
@@ -308,7 +309,7 @@
             let isVaildate = true;
 
             if (!!!webhookURL.match(WEBHOOK_REGEX)) {
-                webhookInputElement.setCustomValidity('aw');
+                webhookInputElement.setCustomValidity('올바른 웹후크 URL이 아님');
                 isVaildate = false;
             } else {
                 webhookInputElement.setCustomValidity('');
@@ -320,7 +321,7 @@
                 !!roleID.match(ROLEID_REGEX)) {
                 mentionIdInputElement.setCustomValidity('');
             } else {
-                mentionIdInputElement.setCustomValidity('aw');
+                mentionIdInputElement.setCustomValidity('올바른 맨션 형식이 아님');
                 isVaildate = false;
             }
 
