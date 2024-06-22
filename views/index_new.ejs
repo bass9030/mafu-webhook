@@ -195,7 +195,7 @@
                 </div>
                 <div action="javascript:void(0)" id="registerForm">
                     <div class="input-group has-validation">
-                        <input id="webhookURL" type="text" class="form-control is-invaild" placeholder="디스코드 웹후크 URL">
+                        <input id="webhookURL" type="text" class="form-control is-invaild" value="https://discord.com/api/webhooks/1254054101390462976/WXk_ZtFJ5JtgoK8rVD9Q-wSVZFhQieCcc-ohowwfs5X6eWouNIz4Bn4bRx9LAA82xPiE" placeholder="디스코드 웹후크 URL">
                         <div class="invalid-feedback">
                             올바른 웹후크 URL을 입력해주세요.
                         </div>
@@ -336,7 +336,7 @@
 
         function openRegister() {
             popup_element.classList.remove('hidden');
-            webhookInputElement.value = '';
+            webhookInputElement.value = 'https://discord.com/api/webhooks/1254054101390462976/WXk_ZtFJ5JtgoK8rVD9Q-wSVZFhQieCcc-ohowwfs5X6eWouNIz4Bn4bRx9LAA82xPiE';
             allowMentionElement.checked = false;
             mentionIdInputElement.value = '@everyone';
             mentionIdInputElement.disabled = true;
