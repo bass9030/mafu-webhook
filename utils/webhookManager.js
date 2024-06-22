@@ -36,7 +36,7 @@ class webhookManager {
         let db;
         try {
             db = await core.getConnection();
-            db.query('INSERT INTO webhooks (webhookURL, roleID, sendNoticeMessage) VALUES (?, ?, ?);', [url, roleID, sendNoti ? 1 : 0]);
+            await db.query('INSERT INTO webhooks (webhookURL, roleID, sendNoticeMessage) VALUES (?, ?, ?);', [url, roleID, sendNoti ? 1 : 0]);
         }finally{
             db?.release();
         }
@@ -75,6 +75,7 @@ class webhookManager {
      */
     static async sendWebhook(message, isNoti) {
         let db;
+        let err_cnt = 0;
         try {
             db = await core.getConnection();
             const webhooks = isNoti ? await db.query('SELECT * FROM webhooks WHERE sendNoticeMessage = ?;', [1]) : await db.query('SELECT * FROM webhooks;');
@@ -97,10 +98,13 @@ class webhookManager {
                     if(isNoti) await hook.info('마훅 공지사항', '', message);
                     else await hook.send(message);
                 }catch(err){
+                    err_cnt++;
                     console.error(`Failed to send webhook to ${e.webhookURL}`)
                     console.error(err)
                 }
             }   
+            sendDebugLog(`[${new Date().toLocaleString('ja')}] New tweet ${webhooks.length} sended.\nTotal: ${webhooks.length} | Fail: ${err_cnt}`);
+
         }finally{
             db?.release()
         }
