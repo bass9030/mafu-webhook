@@ -31,6 +31,11 @@ core.getConnection().then((db) => {
     }
 })
 
+async function sendDebugLog(message) {
+    const hook = new Webhook(process.env.DEBUG_WEBHOOK_URL);
+    await hook.send(message);
+}
+
 class webhookManager {
     static async addWebhook(url, roleID, sendNoti) {
         let db;
@@ -76,6 +81,7 @@ class webhookManager {
     static async sendWebhook(message, isNoti) {
         let db;
         let err_cnt = 0;
+        let success_cnt = 0;
         try {
             db = await core.getConnection();
             const webhooks = isNoti ? await db.query('SELECT * FROM webhooks WHERE sendNoticeMessage = ?;', [1]) : await db.query('SELECT * FROM webhooks;');
@@ -91,19 +97,20 @@ class webhookManager {
                         if(!!profileURL) hook.setAvatar(profileURL);
                     } 
                     hook.setUsername('마훅 - 마후 트윗 번역봇');
-                    if(!!e.roleID) {
-                        if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
-                        else await hook.send('<@&' + e.roleID + '>');
-                    }
+                    // if(!!e.roleID) {
+                    //     if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
+                    //     else await hook.send('<@&' + e.roleID + '>');
+                    // }
                     if(isNoti) await hook.info('마훅 공지사항', '', message);
-                    else await hook.send(message);
+                    else await hook.send({content:'@everyone', embeds: [message]});
+                    success_cnt++;
                 }catch(err){
                     err_cnt++;
                     console.error(`Failed to send webhook to ${e.webhookURL}`)
                     console.error(err)
                 }
             }   
-            sendDebugLog(`[${new Date().toLocaleString('ja')}] New tweet ${webhooks.length} sended.\nTotal: ${webhooks.length} | Fail: ${err_cnt}`);
+            sendDebugLog(`[${new Date().toLocaleString('ja')}] New tweet ${webhooks.length} sended.\nTotal: ${webhooks.length} | Success: ${success_cnt} | Fail: ${err_cnt}`);
 
         }finally{
             db?.release()
