@@ -68,11 +68,6 @@ function convertToHalf(e) {
     ).replace(/、/g, ', ').replace(/。/g, '.');
 }
 
-async function sendDebugLog(message) {
-    const hook = new Webhook(process.env.DEBUG_WEBHOOK_URL);
-    await hook.send(message);
-}
-
 /**
  * 
  * @param {BigInt|String} userId userId is not username!!
