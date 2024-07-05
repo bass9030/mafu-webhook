@@ -9,7 +9,7 @@
         }
 
         body {
-            background-color: #1c1d22;
+            background-color: #2E3035;
             color: white;
         }
 
@@ -17,28 +17,10 @@
             display: none !important;
         }
 
-        .blinking {
-            animation: blink 0.5s infinite;
-        }
-
-        @keyframes blink {
-            0% {
-                opacity: 1;
-            }
-
-
-            50% {
-                opacity: 0;
-            }
-
-            100% {
-                opacity: 1;
-            }
-        }
-
         @media (max-width: 800px) {
             .introduce_box {
                 flex-direction: column !important;
+                justify-self: unset !important;
             }
             
             .text_area {
@@ -47,7 +29,19 @@
             
             .introduce_img {
                 width: 100dvw !important;
-                height: 50dvh !important;
+            }
+
+            .embed-box {
+                width: 70%;
+            }
+
+            .introduce_text {
+                width: 100vw !important;
+                justify-content: center !important;
+            }
+
+            .introduce_text > div {
+                margin: 0 !important;
             }
         }
 
@@ -73,7 +67,7 @@
             display: flex;
             flex-direction: row;
             justify-content: center;
-            background-color: #1c1d22;
+            background-color: #2E3035;
             height: 100dvh;
             width: 100dvw;
             color: white;
@@ -82,9 +76,13 @@
         .introduce_text {
             display: flex;
             align-items: center;
+            justify-content: flex-start;
             float: right;
-            min-width: 35em;
-            padding: 50px;
+            flex: 4;
+        }
+
+        .introduce_text > div {
+            margin-left: 50px;
         }
 
         .text_area {
@@ -99,13 +97,14 @@
 
         .introduce_img {
             float: left;
+            width: 50%;
             height: 100dvh;
             overflow-y: hidden;
-        }
-
-        .introduce_img > img {
-            width: 100%;
-            transition: cubic-bezier(.29,.08,.29,1) 1s;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 6;
         }
 
         .popup_dim {
@@ -164,11 +163,13 @@
 
         .easteregg {
             position: absolute;
-            top: 0;
-            right: 0;
+            bottom: 5px;
+            right: 5px;
+            color: #2E3035; text-decoration: line-through;
+            font-size: 15px;
         }
 
-        .content {
+        .footer {
             margin-top: 5px;
             margin-bottom: 10px;
             width: 100%;
@@ -177,15 +178,78 @@
             text-align: center;
         }
 
-        .content > p > a {
+        .footer > p > a {
             color: white;
             text-decoration: none;
+        }
+
+        .profile {
+            clip-path: circle(20px at 20px 20px);
+        }
+
+        .nickname {
+            margin-left: 10px;
+            vertical-align: top;
+            font-size: 1.1em;
+            font-weight: 400;
+            font-family: sans-serif;
+        }
+
+        .discord-embed {
+            margin-left: 50px;
+            padding: 20px;
+            background-color: #2B2D31;
+            max-width: 700px;
+            max-height: 80vh;
+            width: auto;
+            border-left: 5px solid #1DA0F2;
+            border-radius: 5px;
+            transition: opacity .25s ease-in-out, max-height .5s ease-in-out;
+        }
+
+        .discord-embed > a {
+            text-decoration: none;
+            color: #00A8FC;
+        }
+
+        .embed-content {
+            max-height: 100vh;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            transition: opacity .25s ease-in-out, max-height .5s ease-in-out;
+        }
+
+        .embed-footer {
+            font-size: .75rem;
+        }
+
+        .embed-footer > * {
+            vertical-align: middle;
+        }
+
+        .embed-footer > img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+
+        .profile {
+            width: 40px;
+            height: 40px;
+        }
+
+        .notice {
+            padding: 10px
+        }
+
+        .notice-list {
+            max-height: 500px;
         }
     </style>
 </head>
 <body>
     <div class="main">
-        <div class="popup_dim">
+        <div class="popup_dim hidden">
             <div class="popup_box">
                 <div class="title">
                     <h3>디스코드 웹후크 구독</h3>
@@ -231,22 +295,41 @@
         <div class="introduce">
             <div class="introduce_box">
                 <div class="introduce_img">
-                    <img id="image" src="/discord.png">
+                    <div class="embed-box">
+                        <div class="profile-box">
+                            <img class="profile" src="/profile.jpg">
+                            <span class="nickname">마훅 - 마후 트윗 번역봇</span>
+                        </div>
+                        <div class="discord-embed">
+                            <a href="https://x.com/uni_mafumafu" target="_blank"><strong>New Tweet Release!</strong></a>
+                            <div class="embed-content">
+                            </div>
+                            <div class="embed-footer">
+                                <img src="/logo.png">
+                                <span>마훅 - 마후마후 트윗을 한국어로, 디스코드에서</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="introduce_text">
                     <div>
                         <div class="text_area">
-                            <span id="text_title"></span><span id="cursor1" class="blinking">|</span><br>
-                            <span id="text_description1"></span><span id="cursor2" class="blinking hidden">|</span><br>
-                            <span id="text_description2"></span><span id="cursor3" class="blinking hidden">|</span><br>
+                            <span id="text_title">마훅</span><br>
+                            <span id="text_description1">한글 번역된 마후마후 트윗을,</span><br>
+                            <span id="text_description2">디스코드에서.</span>
                         </div>
                         <button class="btn btn-primary" onclick="javascript:openRegister()">웹후크 등록 · 수정</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="content">
-            <hr/>
+        <hr>
+        <div class="notice">
+            <h2>공지사항</h2><br>
+            <div class="notice-list"></div>
+        </div>
+        <hr>
+        <div class="footer">
             <p>
                 마훅의 한국어 번역은 DeepL 번역 API를 이용하여 제공됩니다.
             </p>
@@ -257,44 +340,33 @@
             <p>Contact: contact@bass9030.dev</p>
             <p>
                 깃허브<br>
-                <a class="community" href="https://github.com/bass9030/mafu-webhook" target="_blank"><i
-                        class="fa-brands fa-github"></i></a>
+                <a class="community" href="https://github.com/bass9030/mafu-webhook" target="_blank"><i class="fa-brands fa-github"></i></a>
             </p>
         </div>
-        <a class="easteregg" style="color: #1c1d22; text-decoration: line-through;" href="https://youtu.be/ucbx9we6EHk?si=VRZfMeluYT70_gZ_" target="_blank">온나노코니나리타이</a>
+        <a class="easteregg" href="https://youtu.be/ucbx9we6EHk?si=VRZfMeluYT70_gZ_" target="_blank">女の子になりたい</a>
     </div>
     <script>
         const WEBHOOK_REGEX = /https:\/\/discord(app)?.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/;
         const ROLEID_REGEX = /^[0-9]+$/;
 
-        const title_disassemble = Hangul.d('마훅');
-        const desc_disassemble1 = Hangul.d('한글 번역된 마후마후 트윗을,')
-        const desc_disassemble2 = Hangul.d('디스코드에서');
+        const EMBED_TEXT = [
+            '가끔씩 낮잠을 자다가 총 12시간 정도 잠을 자는 경우가 있는데, 친구에게「수면의 질을 높이는 보충제를 먹으면, 두 번 자지 않고 상쾌하게 일어날 수 있게 될 거야.」라는 말을 듣고 시도해보니, 최고 품질의 12시간 수면에 성공했습니다!!!좋은 아침입니다!!오늘 아무것도 하지 않습니다!!!',
+            '오랜만에 여름을 느낄 수 있는 곡을 쓸 수 있었어요.<br>역시 일본풍의 곡을 좋아한다.여름이 끝날 때까지 기다릴 수 있을까?.',
+            '마후사카에서 놀고 왔습니다<br><br>마후「오늘 아침까지 일했어! 하지만 노는 재미로 열심히 놀 수 있었어요 ദ്ദി ˃ ᵕ ˂ )」<br><br>사카타 「잠을 푹 자야 머리가 돌아가지 않겠지~!오늘은 많이 놀자( ˶ˊᵕˋ˶)˶」<br><br>마후 「그래~!사카타는 항상 잘 자지 않는 것 같아!」<br><br>사카타 「하 ?」',
+            '우라타 씨와의 콜라보레이션 영상이 올라왔습니다!<br><br>곡의 편곡을 담당했습니다!<br><br>그리고 언어화하기는 어렵지만, 공주님으로 노래하고 있습니다.비교적 귀엽다고 생각합니다.',
+            '택시 내릴 때 실수로 "잘 먹었습니다."라고 말해 버려서, 부끄러워서 당황해서 내렸는데 발이 걸려 낮 신주쿠역 앞에서 공중제비를 했다.안녕히 계십시요。',
+            '치과에서<br><br>선생님「다른 궁금한 점이 있나요??」<br>복「아, ..... ぉお...」<br>선생님「사랑니가 있네요~!!큰 병원의  소개장을 발급해드리겠습니다.!다음 예약이 가능한가요??」<br>복「예.. 아......ｯ네〃ｯ!!!」<br>선생님「인터넷 예약이군요~!! 알겠습니다!」<br><br>한심한<br>',
+        ]
 
         window.addEventListener('load', page_onLoad)
-
-        let title_interval;
-        let desc_interval;
-
-        let char_idx = 0;
         
-        const title_span = document.getElementById('text_title');
-        const title_cursor = document.getElementById('cursor1');
-        const description1_span = document.getElementById('text_description1');
-        const description2_span = document.getElementById('text_description2');
-        const description1_cursor = document.getElementById('cursor2');
-        const description2_cursor = document.getElementById('cursor3');
-
-        const image_element = document.getElementById('image');
-
         const popup_element = document.getElementsByClassName('popup_dim')[0];
         const webhookInputElement = document.getElementById('webhookURL');
         const mentionIdInputElement = document.getElementById('roleId');
         const formElement = document.getElementById('registerForm');
         const allowMentionElement = document.getElementById('allowMention');
         const allowReceiveNotiElement = document.getElementById('allowReceiveNoti');
-
-        let pos = 5;
+        const embedContent = document.getElementsByClassName('embed-content')[0];
 
         webhookInputElement.addEventListener('input', on_formChanged)
         mentionIdInputElement.addEventListener('input', on_formChanged)
@@ -394,7 +466,6 @@
 
             if (!vaildateValue()) return;
 
-            //TODO: 수정 요청 구현
             try {
                 let response = await (await fetch('/api/edit', {
                     method: 'POST',
@@ -426,7 +497,6 @@
             } else
                 webhookInputElement.setCustomValidity('');
 
-            //TODO 삭제 요청 구현
             try {
                 let response = await(await fetch('/api/unregister?url=' + encodeURIComponent(webhookURL), {
                     method: 'DELETE'
@@ -439,45 +509,53 @@
             }
             closeRegister();
         }
+
+        let embed_idx = 0;
         
         function page_onLoad() {
-            title_interval = setInterval(title_typing, 200);
-            setInterval(() => {
-                image_element.style.transform = `translateY(-${pos}%)`;
-                pos = (pos + 5) % 100;
-            }, 3000)
+            embedContent.innerHTML = EMBED_TEXT[embed_idx];
+            setInterval(transform_embed_text, 5000)
+
+            getNoticeList();
         }
 
-        function title_typing() {
-            title_span.innerText = Hangul.a(title_disassemble.slice(0,char_idx));
-            char_idx++;
-            if(char_idx >= title_disassemble.length + 1) {
-                clearInterval(title_interval);
-                title_cursor.classList.add('hidden')
-                description1_cursor.classList.remove('hidden');
-                char_idx = 0;
-                setTimeout(() => desc_interval = setInterval(desc_typing, 30), 500);
-            }
+        function transform_embed_text() {
+            embedContent.style.maxHeight = '0vh';
+            embedContent.style.opacity = '0';
+            embed_idx = (embed_idx + 1) % EMBED_TEXT.length
+            setTimeout(() => embedContent.innerHTML = EMBED_TEXT[embed_idx], 500);
+            setTimeout(() => { embedContent.style.maxHeight = '100vh'; embedContent.style.opacity = '1'; }, 750);
         }
 
-        function desc_typing() {
-            description1_span.innerText = Hangul.a(desc_disassemble1.slice(0, char_idx));
-            char_idx++;
-            if (char_idx >= desc_disassemble1.length + 1) {
-                clearInterval(desc_interval);
-                description1_cursor.classList.add('hidden')
-                description2_cursor.classList.remove('hidden');
-                char_idx = 0;
-                setTimeout(() => desc_interval = setInterval(desc2_typing, 30), 500);
-            }
+        function createNoticeItem(title, date, content) {
+            const noticeItem = document.createElement('div');
+            const titleItem = document.createElement('h4')
+            const dateItem = document.createElement('span');
+            const contentItem = document.createElement('p');
+            const splitLine = document.createElement('hr');
+            noticeItem.classList.add('notice-item');
+            titleItem.textContent = title;
+            dateItem.textContent = date;
+            contentItem.textContent = content;
+            noticeItem.appendChild(titleItem);
+            noticeItem.appendChild(dateItem);
+            noticeItem.appendChild(contentItem);
+            noticeItem.appendChild(splitLine);
+
+            return noticeItem;
         }
 
-        function desc2_typing() {
-            description2_span.innerText = Hangul.a(desc_disassemble2.slice(0, char_idx));
-            char_idx++;
-            if (char_idx >= desc_disassemble2.length + 1) {
-                clearInterval(desc_interval);
-                char_idx = 0;
+        async function getNoticeList() {
+            const noticeList = document.getElementsByClassName('notice-list')[0];
+            try {
+                let res = await fetch('/api/getNotices');
+                let notices = await res.json();
+
+                for(let i of notices) {
+                    (createNoticeItem(i.title, i.date, i.content));
+                }
+            }catch{
+                noticeList.innerHTML = '<span>공지사항을 불러오는데 실패하였습니다.</span>';
             }
         }
     </script>
