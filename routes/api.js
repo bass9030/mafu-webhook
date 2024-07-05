@@ -103,18 +103,20 @@ router.get('/count', (req, res) => {
 
 router.post('/sendNoti', (req, res, next) => {
     try {
-        const hashedHeader = crypto.createHash('sha512').update(req.headers['authorization']).digest('hex')
+        const hashedHeader = crypto.createHash('sha512').update(req.body['amazing-something']).digest('hex')
         if(hashedHeader == process.env.NOTICE_TOKEN_KEY.toLowerCase()) {
-            if(!!!req.body.content) {
+            if(!!!req.body.content || !!!req.body.title) {
                 res.status(400).json({status: -1});
                 return;
             }
 
-            webhookManager.sendWebhook(req.body.content, true)
+            webhookManager.sendNotice(req.body.title, req.body.content);
+            res.send('');
         }else{
             res.status(403).json({status:-99});
         }    
     }catch(e) {
+        console.error(e)
         res.status(500).json({status: -1})
     }
     

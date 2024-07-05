@@ -24,6 +24,12 @@ core.getConnection().then((db) => {
             'roleID VARCHAR(19),' +
             'sendNoticeMessage BOOLEAN' +
         ');');
+        db.execute('CREATE TABLE IF NOT EXISTS notices (' + 
+            'id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, ' +
+            'date DATE NOT NULL,' +
+            'title TEXT,' +
+            'content TEXT' +
+        ');');
     }catch(e){
         console.error(e);
     }finally{
@@ -75,8 +81,23 @@ class webhookManager {
         return count[0]['COUNT(*)'];
     }
 
+    static async sendNotice(title, content) {
+        let db;
+        try {
+            db = await core.getConnection();
+            let now = new Date();
+            await db.query('INSERT INTO notices (date, title, content) VALUES (?, ?, ?);',
+                [`${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`, title, content]
+            );
+
+            this.sendWebhook({title, content}, true);
+        }finally{
+            db?.release()
+        }
+    }
+
     /**
-     * @param {MessageBuilder | string} message 
+     * @param {MessageBuilder | object} message 
      */
     static async sendWebhook(message, isNoti) {
         let db;
@@ -90,7 +111,7 @@ class webhookManager {
                 try {
                     const hook = new Webhook(e.webhookURL);
                     // console.log(message.getJSON()['embeds'][0]['footer'])
-                    if(typeof message == 'string')
+                    if(isNoti)
                         hook.setAvatar('https://mahook.bass9030.dev/logo.png');
                     else{
                         let profileURL = message.getJSON()['embeds'][0]['footer']['icon_url'];
@@ -101,7 +122,7 @@ class webhookManager {
                     //     if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
                     //     else await hook.send('<@&' + e.roleID + '>');
                     // }
-                    if(isNoti) await hook.info('마훅 공지사항', '', message);
+                    if(isNoti) await hook.info('마훅 공지사항', message.title, message.content);
                     else await hook.send({content:'@everyone', embeds: [message]});
                     success_cnt++;
                 }catch(err){

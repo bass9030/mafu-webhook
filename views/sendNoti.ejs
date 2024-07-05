@@ -1,12 +1,13 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<form action="javascript:submit()">
-    <textarea placeholder="공지사항 입력" id="content"></textarea>
-    <input type="password" placeholder="개쩌는 무언가 입력" id="amazing-something">
+<form action="/api/sendNoti" method="post" enctype="application/x-www-form-urlencoded">
+    <input type="text" placeholder="공지사항 제목 입력" name="title"></input>
+    <textarea placeholder="공지사항 내용 입력" name="content"></textarea>
+    <input type="password" placeholder="개쩌는 무언가 입력" name="amazing-something">
     <input type="submit" value="전송"></input>
 </form>
 
 <script>
-    (function (_0x46021b, _0x1faf12) { const _0x51e886 = _0x3e96, _0x45da0f = _0x46021b(); while (!![]) { try { const _0x4a91c6 = parseInt(_0x51e886(0xfd)) / 0x1 * (parseInt(_0x51e886(0x104)) / 0x2) + -parseInt(_0x51e886(0xfb)) / 0x3 * (-parseInt(_0x51e886(0x103)) / 0x4) + parseInt(_0x51e886(0xf6)) / 0x5 * (parseInt(_0x51e886(0xfa)) / 0x6) + parseInt(_0x51e886(0x105)) / 0x7 * (-parseInt(_0x51e886(0xf7)) / 0x8) + -parseInt(_0x51e886(0xfe)) / 0x9 + -parseInt(_0x51e886(0x100)) / 0xa * (parseInt(_0x51e886(0x107)) / 0xb) + -parseInt(_0x51e886(0x106)) / 0xc * (-parseInt(_0x51e886(0xf9)) / 0xd); if (_0x4a91c6 === _0x1faf12) break; else _0x45da0f['push'](_0x45da0f['shift']()); } catch (_0x3f42f3) { _0x45da0f['push'](_0x45da0f['shift']()); } } }(_0x50de, 0x26bc3)); function _0x3e96(_0x1582b8, _0x37141c) { const _0x50dea5 = _0x50de(); return _0x3e96 = function (_0x3e961f, _0x14bffa) { _0x3e961f = _0x3e961f - 0xf5; let _0x1bd72d = _0x50dea5[_0x3e961f]; return _0x1bd72d; }, _0x3e96(_0x1582b8, _0x37141c); } function submit() { const _0x20f5e2 = _0x3e96; let _0x13e73e = document['getElementById'](_0x20f5e2(0x102))[_0x20f5e2(0x101)], _0x53e123 = document['getElementById'](_0x20f5e2(0xfc))[_0x20f5e2(0x101)]; fetch(_0x20f5e2(0xff), { 'method': 'POST', 'headers': { 'Authorization': _0x13e73e, 'Content-Type': _0x20f5e2(0xf5) }, 'body': JSON['stringify']({ 'content': _0x53e123 }) })[_0x20f5e2(0xf8)](async _0x3aa454 => { alert(await _0x3aa454['text']()); }); } function _0x50de() { const _0x3ea964 = ['application/json', '113870IeyCGh', '47384MXkbKi', 'then', '1729WyNsTi', '48yQQWml', '147099onIkTE', 'content', '4lDbheB', '2616138ZIPmkx', '/api/sendNoti', '6220UuIseV', 'value', 'amazing-something', '8NBLEnP', '103476Emiwpi', '42xicRlL', '21396uThoWa', '4235sNpEMB']; _0x50de = function () { return _0x3ea964; }; return _0x50de(); }
+    
 </script>
