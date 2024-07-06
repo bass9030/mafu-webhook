@@ -73,7 +73,7 @@ function convertToHalf(e) {
  * @param {BigInt|String} userId userId is not username!!
  */
 async function getTimelineByUserID(userId) {
-    const reqURL = `https://twitter.com/i/api/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets?variables=${encodeURIComponent(JSON.stringify(Object.assign(default_variables, {userId: userId})))}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
+    const reqURL = `https://x.com/i/api/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets?variables=${encodeURIComponent(JSON.stringify(Object.assign(default_variables, {userId: userId})))}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
     
     
     try {
@@ -82,7 +82,7 @@ async function getTimelineByUserID(userId) {
             method: 'GET',
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-                "Referer": "https://twitter.com/",
+                "Referer": "https://x.com/",
                 "x-csrf-token": process.env.TWITTER_CT0,
                 "Cookie": `auth_token=${process.env.TWITTER_AUTH_TOKEN};ct0=${process.env.TWITTER_CT0};`,
                 "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
@@ -171,7 +171,7 @@ async function sendHook(tweetInfo) {
 
     //프로필 URL
     profileURL = tweetInfo.core.user_results.result.legacy.profile_image_url_https;
-    let originalLink = 'https://twitter.com/uni_mafumafu/status/' + tweetInfo.legacy.id_str;
+    let originalLink = 'https://x.com/uni_mafumafu/status/' + tweetInfo.legacy.id_str;
 
     // 인용 트윗 처리
     if(tweetInfo.legacy?.is_quote_status) {
