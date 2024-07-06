@@ -68,6 +68,11 @@ function convertToHalf(e) {
     ).replace(/、/g, ', ').replace(/。/g, '.');
 }
 
+async function sendDebugLog(message) {
+    const hook = new Webhook(process.env.DEBUG_WEBHOOK_URL);
+    await hook.send(message);
+}
+
 /**
  * 
  * @param {BigInt|String} userId userId is not username!!
@@ -97,9 +102,11 @@ async function getTimelineByUserID(userId) {
                         e.content.itemContent.tweet_results.result.core.user_results.result.id == 'VXNlcjoyNjg3NTg0NjE=';
                     })
                     .map(e => e.content.itemContent.tweet_results.result);
-        return tweets;
+        return {success: true, data: tweets};
     }catch(e) {
-        console.error(e)
+        // console.error(e)
+        await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet query fail\n\`\`\`shell\n${e.stack}\n\`\`\``);
+        return {success: false}
     }
 }
 
@@ -131,7 +138,9 @@ async function translateTextDeepL(source, target, query) {
  * 새 트윗 감지
  */
 async function checkNewTweet() {
-    let timelineInfo = await getTimelineByUserID(268758461);
+    let data = await getTimelineByUserID(268758461);
+    if(!data.success) return;
+    let timelineInfo = data.data;
     let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
 
     if(lastTweetID > prevLastTweetID || DEBUG) {
