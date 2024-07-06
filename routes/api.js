@@ -25,7 +25,12 @@ router.post('/register', async function(req, res, next) {
             res.json({status: -2, message: "역할 ID가 올바르지 않습니다.\n역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다."});
             return
         }
-        webhookManager.addWebhook(data.url, data.roleID, data.sendNoti)
+        let result = await webhookManager.addWebhook(data.url, data.roleID, data.sendNoti);
+        
+        if(!result.success) {
+            throw result.err;
+        }
+
         let embed = new MessageBuilder()
             .setTitle('마훅 구독 완료!')
             .setDescription('마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!')
@@ -37,7 +42,7 @@ router.post('/register', async function(req, res, next) {
         res.json({status: 0})
     }catch(e) {
         // console.error(e.no);
-        if(e.code == 'SQLITE_CONSTRAINT_UNIQUE') res.json({status: -2, message: '이미 등록된 웹후크 URL 입니다.'});
+        if(e.errno == 1062) res.json({status: -2, message: '이미 등록된 웹후크 URL 입니다.'});
         else {
             webhookManager.removeWebhook(data.url)
             if(e.message.includes('Error sending webhook')) 
@@ -99,6 +104,16 @@ router.get('/count', (req, res) => {
             status: -1
         })
     }    
+})
+
+router.get('/getNotices', async (req,res,next) => {
+    try {
+        let data = await webhookManager.getNotices();
+        res.json({status: 0, data});
+    }catch(e){
+        res.status(500);
+        res.json({status: -1});
+    }
 })
 
 router.post('/sendNoti', (req, res, next) => {
