@@ -6,7 +6,6 @@ var logger = require('morgan');
 const { checkNewTweet } = require('./utils/getTweet_new')
 
 var indexRouter = require('./routes/index');
-var howtoRouter = require('./routes/howto');
 var apiRouter = require('./routes/api');
 var sendNotiRouter = require('./routes/sendNoti');
 
@@ -23,9 +22,12 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/howto', howtoRouter);
 app.use('/api', apiRouter);
 app.use('/api/wa-you-know-sans-wa-papyrus', sendNotiRouter);
+
+app.get('/howto', (req,res) => res.render('howto'));
+app.get('/howtoedit', (req,res) => res.render('howto_edit'));
+app.get('/howtoremove', (req,res) => res.render('howto_remove'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
