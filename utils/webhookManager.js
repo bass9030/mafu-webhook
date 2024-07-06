@@ -26,7 +26,7 @@ core.getConnection().then((db) => {
         ');');
         db.execute('CREATE TABLE IF NOT EXISTS notices (' + 
             'id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, ' +
-            'date DATE NOT NULL,' +
+            'date DATETIME NOT NULL,' +
             'title TEXT,' +
             'content TEXT' +
         ');');
@@ -48,6 +48,9 @@ class webhookManager {
         try {
             db = await core.getConnection();
             await db.query('INSERT INTO webhooks (webhookURL, roleID, sendNoticeMessage) VALUES (?, ?, ?);', [url, roleID, sendNoti ? 1 : 0]);
+            return {success: true};
+        }catch(err){
+            return {success: false, err}
         }finally{
             db?.release();
         }
@@ -87,10 +90,23 @@ class webhookManager {
             db = await core.getConnection();
             let now = new Date();
             await db.query('INSERT INTO notices (date, title, content) VALUES (?, ?, ?);',
-                [`${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`, title, content]
+                [`${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`, title, content]
             );
-
             this.sendWebhook({title, content}, true);
+        }finally{
+            db?.release()
+        }
+    }
+
+    static async getNotices() {
+        let db;
+        try {
+            db = await core.getConnection();
+            let result = await db.query('SELECT date, title, content FROM notices ORDER BY date DESC LIMIT 10',);
+
+            return result;
+        }catch{
+            return [];
         }finally{
             db?.release()
         }
@@ -110,20 +126,21 @@ class webhookManager {
                 let e = webhooks[i];
                 try {
                     const hook = new Webhook(e.webhookURL);
-                    // console.log(message.getJSON()['embeds'][0]['footer'])
+                    if(!!e.roleID) {
+                        if(e.roleID == '@everyone' || e.roleID == '@here') hook.payload = {content: e.roleID};
+                        else hook.payload = {content: '<@&' + e.roleID + '>'};
+                    }
+
                     if(isNoti)
                         hook.setAvatar('https://mahook.bass9030.dev/logo.png');
                     else{
                         let profileURL = message.getJSON()['embeds'][0]['footer']['icon_url'];
                         if(!!profileURL) hook.setAvatar(profileURL);
-                    } 
+                    }
+                     
                     hook.setUsername('마훅 - 마후 트윗 번역봇');
-                    // if(!!e.roleID) {
-                    //     if(e.roleID == '@everyone' || e.roleID == '@here') await hook.send(e.roleID);
-                    //     else await hook.send('<@&' + e.roleID + '>');
-                    // }
                     if(isNoti) await hook.info('마훅 공지사항', message.title, message.content);
-                    else await hook.send({content:'@everyone', embeds: [message]});
+                    else await hook.send(message);
                     success_cnt++;
                 }catch(err){
                     err_cnt++;
@@ -131,7 +148,7 @@ class webhookManager {
                     console.error(err)
                 }
             }   
-            sendDebugLog(`[${new Date().toLocaleString('ja')}] New tweet ${webhooks.length} sended.\nTotal: ${webhooks.length} | Success: ${success_cnt} | Fail: ${err_cnt}`);
+            sendDebugLog(`[${new Date().toLocaleString('ja')}] Webhook sended. \nTotal: ${webhooks.length} | Success: ${success_cnt} | Fail: ${err_cnt}`);
 
         }finally{
             db?.release()
