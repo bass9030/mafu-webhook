@@ -53,7 +53,7 @@ const appRoot = require('app-root-path').path;
 require('dotenv').config({
     path: path.join(appRoot, '.env')
 });
-const { MessageBuilder } = require('discord-webhook-node');
+const { MessageBuilder, Webhook } = require('discord-webhook-node');
 const webhookManager = require('./webhookManager');
 
 let profileURL = '';
@@ -73,23 +73,23 @@ function convertToHalf(e) {
  * @param {BigInt|String} userId userId is not username!!
  */
 async function getTimelineByUserID(userId) {
-    const reqURL = `https://twitter.com/i/api/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets?variables=${encodeURIComponent(JSON.stringify(Object.assign(default_variables, {userId: userId})))}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
-    // console.log(reqURL);
-    let response = await fetch(reqURL,
-    {
-        method: 'GET',
-        headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-            "Referer": "https://twitter.com/",
-            "x-csrf-token": process.env.TWITTER_CT0,
-            "Cookie": `auth_token=${process.env.TWITTER_AUTH_TOKEN};ct0=${process.env.TWITTER_CT0};`,
-            "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-            "x-twitter-active-user": "yes",
-            "x-twitter-client-language": "en"
-        }
-    });
-
+    const reqURL = `https://x.com/i/api/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets?variables=${encodeURIComponent(JSON.stringify(Object.assign(default_variables, {userId: userId})))}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
+    
+    
     try {
+        let response = await fetch(reqURL,
+        {
+            method: 'GET',
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+                "Referer": "https://x.com/",
+                "x-csrf-token": process.env.TWITTER_CT0,
+                "Cookie": `auth_token=${process.env.TWITTER_AUTH_TOKEN};ct0=${process.env.TWITTER_CT0};`,
+                "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+                "x-twitter-active-user": "yes",
+                "x-twitter-client-language": "en"
+            }
+        });
         let res_json = await response.json();
         let tweets = res_json.data.user.result.timeline_v2.timeline.instructions.filter(e => e.type == "TimelineAddEntries")[0]
                     .entries.filter(e => {
@@ -111,17 +111,20 @@ async function getTimelineByUserID(userId) {
  */
 async function translateTextDeepL(source, target, query) {
     const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
-    query = convertToHalf(query);
     let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ ]+/g);
     let result = query;
-    for(let e of querys) {
-        let response = await translator.translateText(e, (source == 'auto' || !!source) ? source : null, target, {
-            glossary: '0e46d5a2-c745-41c7-8ccd-d29b986de309'
-        });
-        result = result.replace(e, response.text);
+    let response = await translator.translateText(querys, (source == 'auto' || !!source) ? source : null, target, {
+        glossary: process.env.DEEPL_GLOSSARY_ID
+    });
+
+    // console.log(querys, response)
+
+    for(let i in querys) {
+        // console.log(querys[i], "|", response[i]['text']);
+        result = result.replace(querys[i], response[i]['text']);
     }
 
-    return result;
+    return convertToHalf(result);
 }
 
 /**
@@ -134,13 +137,15 @@ async function checkNewTweet() {
     if(lastTweetID > prevLastTweetID || DEBUG) {
         let newTweets = timelineInfo.filter(e => {
             let id = BigInt(e.legacy.id_str);
-            return id > prevLastTweetID
+            return id > prevLastTweetID;
         }).reverse();
         prevLastTweetID = lastTweetID;
         fs.writeFileSync('./lastTweet.txt', String(lastTweetID));
-        console.log(`[${new Date().toLocaleString('ja')}] ${newTweets.length} new tweet detect`);
+        console.log(`[${new Date().toLocaleString('ja')}] Detect ${newTweets.length} new tweet`);
         for(let i = 0; i < newTweets.length; i++) {
-            await sendHook(newTweets[i]);
+            try {
+                await sendHook(newTweets[i]);
+            }catch{}
         }
     }
 }
@@ -166,7 +171,7 @@ async function sendHook(tweetInfo) {
 
     //프로필 URL
     profileURL = tweetInfo.core.user_results.result.legacy.profile_image_url_https;
-    let originalLink = 'https://twitter.com/uni_mafumafu/status/' + tweetInfo.legacy.id_str;
+    let originalLink = 'https://x.com/uni_mafumafu/status/' + tweetInfo.legacy.id_str;
 
     // 인용 트윗 처리
     if(tweetInfo.legacy?.is_quote_status) {
@@ -185,7 +190,7 @@ async function sendHook(tweetInfo) {
     // 미디어 처리
     if(!!tweetInfo.legacy.entities.media?.length && tweetInfo.legacy.entities.media[0].type == 'photo') embed.setImage(tweetInfo.legacy.entities.media[0].media_url_https);
     
-    webhookManager.sendWebhook(embed);
+    await webhookManager.sendWebhook(embed);
 }
 
 async function getProfileURL() {
@@ -197,14 +202,5 @@ async function getProfileURL() {
         return profileURL;
     }
 }
-
-// translateTextDeepL('ja', 'ko', `【ご報告】
-// 僕が裁判で訴えている相手の方から、自分も訴え返されたりしているのですが、「告訴状がきたら警察は受理して捜査する義務があるのです」と警察の方よりうかがいましたし、ご心配にはおよびません！（当たり前だけど逮捕されたりもしないよ）
-// 自分が話したことはもちろん根拠も証拠もありますし、自分が起こした裁判等もつつがなく進行しているのでご安心ください！
-// 情報開示の裁判は簡単には通らないので、開示されたなら違法であるケースが多いと弁護士さんから聞いてます。
-
-// 今回は心配してくれる方が多くいらしたので触れました！
-// またこんな暗い話題を申し訳ないです...
-// たくさん時間はかかると思うけど、決着がついたら報告するね！`).then(console.log);
 
 module.exports = { checkNewTweet, getProfileURL, sendRecentTweet };
