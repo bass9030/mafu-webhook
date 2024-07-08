@@ -11,7 +11,7 @@ const core = mariadb.createPool({
     port: 3306,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: 'mahook',
+    database: process.env.DB_NAME,
     connectionLimit: 10
 });
 const { Webhook, MessageBuilder } = require('discord-webhook-node');
