@@ -2,6 +2,8 @@ FROM node:20
 
 WORKDIR /usr/src/app
 
+ENV NODE_ENV=production
+
 RUN apt-get update
 RUN apt-get install git -y
 
