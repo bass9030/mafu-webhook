@@ -71,7 +71,7 @@ class webhookManager {
         let db;
         try {
             let db = await core.getConnection();
-            let result = db.query('UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE webhookURL = ?;', [roleID, sendNoti ? 1 : 0, url])
+            let result = await db.query('UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE webhookURL = ?;', [roleID, sendNoti ? 1 : 0, url])
             return {changes: result.affectedRows}
         }finally{
             db?.release();
@@ -126,7 +126,7 @@ class webhookManager {
                 let e = webhooks[i];
                 try {
                     const hook = new Webhook(e.webhookURL);
-                    if(!!e.roleID) {
+                    if(e.roleID != -1) {
                         if(e.roleID == '@everyone' || e.roleID == '@here') hook.payload = {content: e.roleID};
                         else hook.payload = {content: '<@&' + e.roleID + '>'};
                     }
