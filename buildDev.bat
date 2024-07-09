@@ -1,1 +1,1 @@
-docker build -t mahook-dev ./dockerfile.dev
+docker build -t mahook-dev -f dockerfile.dev .
