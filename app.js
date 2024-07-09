@@ -25,7 +25,7 @@ app.use('/', indexRouter);
 app.use('/api', apiRouter);
 app.use('/api/wa-you-know-sans-wa-papyrus', sendNotiRouter);
 
-// app.get('/howto', (req,res) => res.render('howto'));
+app.get('/howto', (req,res) => res.render('howto'));
 app.get('/howtoedit', (req,res) => res.render('howto_edit'));
 app.get('/howtoremove', (req,res) => res.render('howto_remove'));
 
