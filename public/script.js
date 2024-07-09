@@ -216,6 +216,7 @@ function createNoticeItem(title, date, content) {
     dateItem.textContent = `${uploadDate.getFullYear()}-${uploadDate.getMonth()+1}-${uploadDate.getDate()}`;
     contentItem.textContent = content;
     contentItem.style.marginTop = '10px';
+    contentItem.style.whiteSpace = 'pre';
     noticeItem.appendChild(titleItem);
     noticeItem.appendChild(document.createElement('br'));
     noticeItem.appendChild(dateItem);
