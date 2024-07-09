@@ -30,10 +30,14 @@ core.getConnection().then((db) => {
             'title TEXT,' +
             'content TEXT' +
         ');');
+        db.execute('CREATE TABLE IF NOT EXISTS lastTweet (' +
+            'key_str VARCHAR(10) NOT NULL UNIQUE,' + 
+            'id BIGINT UNSIGNED NOT NULL' +
+        ');');
     }catch(e){
         console.error(e);
     }finally{
-        db.release();
+        db?.release();
     }
 })
 
@@ -43,6 +47,32 @@ async function sendDebugLog(message) {
 }
 
 class webhookManager {
+    static async setLastTweetID(id) {
+        let db;
+        try {
+            db = await core.getConnection();
+            await db.query('REPLACE INTO lastTweet (key_str, id) VALUES (?, ?);', ['tweetID', id]);
+            return {success: true};
+        }catch(err){
+            return {success: false, err}
+        }finally{
+            db?.release();
+        }
+    }
+
+    static async getLastTweetID() {
+        let db;
+        try {
+            db = await core.getConnection();
+            let result = await db.query('SELECT * FROM lastTweet;');
+            return result[0]['id'];
+        }catch(err){
+            return null;
+        }finally{
+            db?.release();
+        }
+    }
+
     static async addWebhook(url, roleID, sendNoti) {
         let db;
         try {
@@ -60,10 +90,11 @@ class webhookManager {
         let db;
         try {
             let db = await core.getConnection();
-            let result = db.query('DELETE FROM webhooks WHERE webhookURL = ?;', [url]);
+            let result = await db.query('DELETE FROM webhooks WHERE webhookURL = ?;', [url]);
             return {changes: result.affectedRows};
         }finally{
             db?.release();
+            return {changes: 0}
         }
     }
 
@@ -75,6 +106,7 @@ class webhookManager {
             return {changes: result.affectedRows}
         }finally{
             db?.release();
+            return {changes: 0}
         }
     }
 
