@@ -150,8 +150,9 @@ async function editWebhook() {
             })
         })).json();
 
-        if (response.status != 0) throw new Error();
-        showSuccess('웹후크 수정 성공!');
+        if (response.status == -2) showError('웹후크 등록에 실패했습니다: ' + response.message);
+        else if (response.status != 0) throw new Error();
+        else showSuccess('웹후크 수정 성공!');
     } catch {
         showError('웹후크 수정에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')
     }
@@ -173,7 +174,8 @@ async function unregisterWebhook() {
             method: 'DELETE'
         })).json();
 
-        if (response.status != 0) throw new Error();
+        if (response.status == -2) showError('웹후크 등록에 실패했습니다: ' + response.message);
+        else if (response.status != 0) throw new Error();
         showSuccess('웹후크 삭제 성공!');
     } catch {
         showError('웹후크 삭제에 실패했습니다: 알 수 없는 오류가 발생하였습니다.')

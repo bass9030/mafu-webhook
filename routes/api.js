@@ -41,7 +41,7 @@ router.post('/register', async function(req, res, next) {
         await hook.send(embed);
         res.json({status: 0})
     }catch(e) {
-        // console.error(e.no);
+        console.error(e);
         if(e.errno == 1062) res.json({status: -2, message: '이미 등록된 웹후크 URL 입니다.'});
         else {
             webhookManager.removeWebhook(data.url)
@@ -54,7 +54,7 @@ router.post('/register', async function(req, res, next) {
 });
 
 
-router.post('/edit', (req, res, next) => {
+router.post('/edit', async (req, res, next) => {
     let data = req.body;
     if(!!!req.body && !!!req.body.url) {
         res.status(400).json({status: -99});
@@ -70,8 +70,11 @@ router.post('/edit', (req, res, next) => {
     }
 
     try {
-        let changeCnt = webhookManager.editWebhook(data.url, data.roleID, data.sendNoti).changes;
-        if(changeCnt <= 0) throw new Error();
+        let changeCnt = (await webhookManager.editWebhook(data.url, data.roleID, data.sendNoti)).changes;
+        if(changeCnt <= 0) {
+            res.json({status: -2, message: "웹후크를 찾을 수 없습니다. 등록된 웹후크인지 확인해주세요."})
+            return;
+        }
         res.json({status: 0})
     }catch(e) {
         console.error(e);
@@ -79,15 +82,19 @@ router.post('/edit', (req, res, next) => {
     }
 })
 
-router.delete('/unregister', (req, res, next) => {
+router.delete('/unregister', async (req, res, next) => {
     let data = req.query;
     if(!!!req.query?.url) {
         res.status(400).json({status: -99});
         return;
     }
     try {
-        let changeCnt = webhookManager.removeWebhook(decodeURIComponent(data.url)).changes;
-        if(changeCnt <= 0) throw new Error();
+        let changeCnt = (await webhookManager.removeWebhook(decodeURIComponent(data.url))).changes;
+        // if(changeCnt <= 0) throw new Error();
+        if(changeCnt <= 0) {
+            res.json({status: -2, message: "웹후크를 찾을 수 없습니다. 등록된 웹후크인지 확인해주세요."})
+            return;
+        }
         res.json({status: 0})
     }catch(e) {
         res.json({status: -1})
