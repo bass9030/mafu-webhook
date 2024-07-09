@@ -63,7 +63,8 @@ router.post('/edit', (req, res, next) => {
 
     if(data.roleID != '@everyone' &&
        data.roleID != '@here' &&
-       !!!data.roleID.match(/[0-9]+/g)) {
+       data.roleID != '-1' &&
+       !!!String(data.roleID).match(/[0-9]+/g)) {
         res.json({status: -2, message: "역할 ID가 올바르지 않습니다.\n역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다."});
         return;
     }
