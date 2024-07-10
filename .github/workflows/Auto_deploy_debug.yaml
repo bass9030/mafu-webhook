@@ -27,7 +27,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: 2234
           script: |
-            sudo docker rm -f $(docker ps -aqf "name=^${{secrets.DOCKERHUB_REPO_DEV}}")
-            sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_DEV}}:latest
-            sudo docker run -d -p 9999:3000 --env-file /home/bass9030/mahook.dev.env --name ${{secrets.DOCKERHUB_REPO_DEV}} ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_DEV}}:latest
-            sudo docker image prune -f
+            docker rm -f $(docker ps -aqf "name=^${{secrets.DOCKERHUB_REPO_DEV}}")
+            docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_DEV}}:latest
+            docker run -d -p 9999:3000 --env-file /home/bass9030/mahook.dev.env --name ${{secrets.DOCKERHUB_REPO_DEV}} ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_DEV}}:latest
+            docker image prune -f
