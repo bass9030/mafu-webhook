@@ -25,6 +25,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          port: 2234
           script: |
             sudo docker rm -f $(docker ps -aqf "name=^${{secrets.DOCKERHUB_REPO_DEV}}")
             sudo docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_DEV}}:latest
