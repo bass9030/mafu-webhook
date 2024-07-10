@@ -4,12 +4,10 @@ WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
 
-RUN apt-get update
-RUN apt-get install git -y
-
-RUN git clone -b production https://github.com/bass9030/mafu-webhook .
-
+COPY ./package.json .
 RUN npm install
+
+COPY . .
 
 EXPOSE 3000
 

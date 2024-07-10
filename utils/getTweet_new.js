@@ -57,9 +57,7 @@ const { MessageBuilder, Webhook } = require('discord-webhook-node');
 const webhookManager = require('./webhookManager');
 
 let profileURL = '';
-let prevLastTweetID = 0;
-if(fs.existsSync('./lastTweet.txt')) prevLastTweetID = BigInt(fs.readFileSync('./lastTweet.txt'));
-else fs.writeFileSync('./lastTweet.txt', '0');
+let prevLastTweetID = null;
 
 
 function convertToHalf(e) {
@@ -138,6 +136,14 @@ async function translateTextDeepL(source, target, query) {
  * 새 트윗 감지
  */
 async function checkNewTweet() {
+    if(!!!prevLastTweetID) {
+        prevLastTweetID = await webhookManager.getLastTweetID();
+        if(!!!prevLastTweetID) {
+            await webhookManager.setLastTweetID(0);
+            prevLastTweetID = 0;
+        }
+    }
+
     let data = await getTimelineByUserID(268758461);
     if(!data.success) return;
     let timelineInfo = data.data;
@@ -149,7 +155,7 @@ async function checkNewTweet() {
             return id > prevLastTweetID;
         }).reverse();
         prevLastTweetID = lastTweetID;
-        fs.writeFileSync('./lastTweet.txt', String(lastTweetID));
+        webhookManager.setLastTweetID(String(lastTweetID));
         console.log(`[${new Date().toLocaleString('ja')}] Detect ${newTweets.length} new tweet`);
         for(let i = 0; i < newTweets.length; i++) {
             try {
@@ -161,7 +167,7 @@ async function checkNewTweet() {
 
 async function sendRecentTweet() {
     let timelineInfo = (await getTimelineByUserID(268758461));
-    await sendHook(timelineInfo[0]);
+    await sendHook(timelineInfo.data[0]);
 }
 
 /**
@@ -206,9 +212,11 @@ async function getProfileURL() {
     if(!!profileURL) {
         return profileURL;
     }else{
-        let tweetInfo = (await getTimelineByUserID(268758461))[0];
-        profileURL = tweetInfo.core.user_results.result.legacy.profile_image_url_https;
-        return profileURL;
+        let tweetInfo = (await getTimelineByUserID(268758461));
+        if(tweetInfo.success) {
+            profileURL = tweetInfo.data[0].core.user_results.result.legacy.profile_image_url_https;
+            return profileURL;
+        }else return 'https://mahook.bass9030.dev/logo.png';
     }
 }
 

@@ -2,12 +2,10 @@ FROM node:20
 
 WORKDIR /usr/src/app
 
-RUN apt-get update
-RUN apt-get install git -y
-
-RUN git clone -b production https://github.com/bass9030/mafu-webhook .
-
+COPY ./package.json .
 RUN npm install
+
+COPY . .
 
 EXPOSE 3000
 
