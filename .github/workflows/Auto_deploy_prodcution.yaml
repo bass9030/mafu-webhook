@@ -1,4 +1,4 @@
-name: Frontend CD with Docker Hub
+name: auto deploy production
 on:
   push:
     branches:
