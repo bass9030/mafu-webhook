@@ -116,7 +116,8 @@ async function getTimelineByUserID(userId) {
  */
 async function translateTextDeepL(source, target, query) {
     const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
-    let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ ]+/g);
+    query = convertToHalf(query);
+    let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ \n]+/g);
     let result = query;
     let response = await translator.translateText(querys, (source == 'auto' || !!source) ? source : null, target, {
         glossary: process.env.DEEPL_GLOSSARY_ID
@@ -129,7 +130,7 @@ async function translateTextDeepL(source, target, query) {
         result = result.replace(querys[i], response[i]['text']);
     }
 
-    return convertToHalf(result);
+    return result;
 }
 
 /**
