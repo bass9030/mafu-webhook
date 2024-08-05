@@ -55,6 +55,26 @@ require('dotenv').config({
 });
 const { MessageBuilder, Webhook } = require('discord-webhook-node');
 const webhookManager = require('./webhookManager');
+const {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+} = require("@google/generative-ai");
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
+
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+  systemInstruction: "translate japanese to korean. the original text key is 'ja', and translated text key is 'ko'.",
+});
+
+const generationConfig = {
+  temperature: 1,
+  topP: 0.95,
+  topK: 64,
+  maxOutputTokens: 8192,
+  responseMimeType: "application/json",
+};
 
 let profileURL = '';
 let prevLastTweetID = null;
@@ -108,29 +128,44 @@ async function getTimelineByUserID(userId) {
     }
 }
 
+// /**
+//  * 번역 (DeepL 번역)
+//  * @param {string} source 번역할 언어(auto: 자동인식)
+//  * @param {string} target 번역될 언어
+//  * @param {string} query 번역할 텍스트
+//  */
+// async function translateTextDeepL(source, target, query) {
+//     const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
+//     query = convertToHalf(query);
+//     let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ \n]+/g);
+//     let result = query;
+//     let response = await translator.translateText(querys, (source == 'auto' || !!source) ? source : null, target, {
+//         glossary: process.env.DEEPL_GLOSSARY_ID
+//     });
+
+//     // console.log(querys, response)
+
+//     for(let i in querys) {
+//         // console.log(querys[i], "|", response[i]['text']);
+//         result = result.replace(querys[i], response[i]['text']);
+//     }
+
+//     return result;
+// }
+
 /**
- * 번역 (DeepL 번역)
- * @param {string} source 번역할 언어(auto: 자동인식)
- * @param {string} target 번역될 언어
+ * 번역 (Gemini 1.5 Flash)
  * @param {string} query 번역할 텍스트
  */
-async function translateTextDeepL(source, target, query) {
-    const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
-    query = convertToHalf(query);
-    let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ \n]+/g);
-    let result = query;
-    let response = await translator.translateText(querys, (source == 'auto' || !!source) ? source : null, target, {
-        glossary: process.env.DEEPL_GLOSSARY_ID
+async function translateTextGemini(query) {
+    //TODO
+    const chatSession = model.startChat({
+        generationConfig
     });
 
-    // console.log(querys, response)
-
-    for(let i in querys) {
-        // console.log(querys[i], "|", response[i]['text']);
-        result = result.replace(querys[i], response[i]['text']);
-    }
-
-    return result;
+    const result = await chatSession.sendMessage(query);
+    console.log(result.response.text())
+    return JSON.parse(result.response.text())['ko']
 }
 
 /**
@@ -183,7 +218,10 @@ async function sendHook(tweetInfo) {
     let created_at = new Date(tweetInfo.legacy.created_at);
 
     // DeepL 번역
-    let translatedText = await translateTextDeepL('ja', 'ko', content.trim());
+    // let translatedText = await translateTextDeepL('ja', 'ko', content.trim());
+
+    // Gemini 번역
+    let translatedText = await translateTextGemini(content.trim());
 
     //프로필 URL
     profileURL = tweetInfo.core.user_results.result.legacy.profile_image_url_https;
