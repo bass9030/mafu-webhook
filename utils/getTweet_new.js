@@ -164,7 +164,6 @@ async function translateTextGemini(query) {
     });
 
     const result = await chatSession.sendMessage(query);
-    console.log(result.response.text())
     return JSON.parse(result.response.text())['ko']
 }
 
