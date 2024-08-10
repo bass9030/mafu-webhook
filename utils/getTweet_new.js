@@ -178,25 +178,28 @@ async function checkNewTweet() {
             prevLastTweetID = 0;
         }
     }
+    try {
+        let data = await getTimelineByUserID(268758461);
+        if(!data.success) return;
+        let timelineInfo = data.data;
+        let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
 
-    let data = await getTimelineByUserID(268758461);
-    if(!data.success) return;
-    let timelineInfo = data.data;
-    let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
-
-    if(lastTweetID > prevLastTweetID || DEBUG) {
-        let newTweets = timelineInfo.filter(e => {
-            let id = BigInt(e.legacy.id_str);
-            return id > prevLastTweetID;
-        }).reverse();
-        prevLastTweetID = lastTweetID;
-        webhookManager.setLastTweetID(String(lastTweetID));
-        console.log(`[${new Date().toLocaleString('ja')}] Detect ${newTweets.length} new tweet`);
-        for(let i = 0; i < newTweets.length; i++) {
-            try {
-                await sendHook(newTweets[i]);
-            }catch{}
+        if(lastTweetID > prevLastTweetID || DEBUG) {
+            let newTweets = timelineInfo.filter(e => {
+                let id = BigInt(e.legacy.id_str);
+                return id > prevLastTweetID;
+            }).reverse();
+            prevLastTweetID = lastTweetID;
+            webhookManager.setLastTweetID(String(lastTweetID));
+            console.log(`[${new Date().toLocaleString('ja')}] Detect ${newTweets.length} new tweet`);
+            for(let i = 0; i < newTweets.length; i++) {
+                try {
+                    await sendHook(newTweets[i]);
+                }catch{}
+            }
         }
+    }catch(e){
+        await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``);
     }
 }
 
