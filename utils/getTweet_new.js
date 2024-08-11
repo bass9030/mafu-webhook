@@ -178,8 +178,9 @@ async function checkNewTweet() {
             prevLastTweetID = 0;
         }
     }
+    let data;
     try {
-        let data = await getTimelineByUserID(268758461);
+        data = await getTimelineByUserID(268758461);
         if(!data.success) return;
         let timelineInfo = data.data;
         let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
@@ -199,7 +200,7 @@ async function checkNewTweet() {
             }
         }
     }catch(e){
-        await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``);
+        await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\`\n\n\`\`\`json\n${JSON.stringify(data, null, 4)}\n\`\`\``);
     }
 }
 
