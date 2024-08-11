@@ -86,9 +86,10 @@ function convertToHalf(e) {
     ).replace(/、/g, ', ').replace(/。/g, '.');
 }
 
-async function sendDebugLog(message) {
+async function sendDebugLog(message, file) {
     const hook = new Webhook(process.env.DEBUG_WEBHOOK_URL);
-    await hook.send(message);
+    if(!!file) await hook.sendFile(file);
+    else await hook.send(message);
 }
 
 /**
@@ -200,7 +201,9 @@ async function checkNewTweet() {
             }
         }
     }catch(e){
-        await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\`\n\n\`\`\`json\n${JSON.stringify(data, null, 4)}\n\`\`\``);
+        await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``);
+        fs.writeFileSync('./tweetData.json', JSON.stringify(data, null, 4));
+        await sendDebugLog(null, './tweetData.json');
     }
 }
 
