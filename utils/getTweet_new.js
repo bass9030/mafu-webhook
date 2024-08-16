@@ -55,6 +55,26 @@ require('dotenv').config({
 });
 const { MessageBuilder, Webhook } = require('discord-webhook-node');
 const webhookManager = require('./webhookManager');
+const {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+} = require("@google/generative-ai");
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
+
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+  systemInstruction: "translate japanese to korean. the original text key is 'ja', and translated text key is 'ko'.",
+});
+
+const generationConfig = {
+  temperature: 1,
+  topP: 0.95,
+  topK: 64,
+  maxOutputTokens: 8192,
+  responseMimeType: "application/json",
+};
 
 let profileURL = '';
 let prevLastTweetID = null;
@@ -66,9 +86,10 @@ function convertToHalf(e) {
     ).replace(/、/g, ', ').replace(/。/g, '.');
 }
 
-async function sendDebugLog(message) {
+async function sendDebugLog(message, file) {
     const hook = new Webhook(process.env.DEBUG_WEBHOOK_URL);
-    await hook.send(message);
+    if(!!file) await hook.sendFile(file);
+    else await hook.send(message);
 }
 
 /**
@@ -108,28 +129,43 @@ async function getTimelineByUserID(userId) {
     }
 }
 
+// /**
+//  * 번역 (DeepL 번역)
+//  * @param {string} source 번역할 언어(auto: 자동인식)
+//  * @param {string} target 번역될 언어
+//  * @param {string} query 번역할 텍스트
+//  */
+// async function translateTextDeepL(source, target, query) {
+//     const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
+//     query = convertToHalf(query);
+//     let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ \n]+/g);
+//     let result = query;
+//     let response = await translator.translateText(querys, (source == 'auto' || !!source) ? source : null, target, {
+//         glossary: process.env.DEEPL_GLOSSARY_ID
+//     });
+
+//     // console.log(querys, response)
+
+//     for(let i in querys) {
+//         // console.log(querys[i], "|", response[i]['text']);
+//         result = result.replace(querys[i], response[i]['text']);
+//     }
+
+//     return result;
+// }
+
 /**
- * 번역 (DeepL 번역)
- * @param {string} source 번역할 언어(auto: 자동인식)
- * @param {string} target 번역될 언어
+ * 번역 (Gemini 1.5 Flash)
  * @param {string} query 번역할 텍스트
  */
-async function translateTextDeepL(source, target, query) {
-    const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
-    let querys = query.match(/[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ!-~ ]+/g);
-    let result = query;
-    let response = await translator.translateText(querys, (source == 'auto' || !!source) ? source : null, target, {
-        glossary: process.env.DEEPL_GLOSSARY_ID
+async function translateTextGemini(query) {
+    //TODO
+    const chatSession = model.startChat({
+        generationConfig
     });
 
-    // console.log(querys, response)
-
-    for(let i in querys) {
-        // console.log(querys[i], "|", response[i]['text']);
-        result = result.replace(querys[i], response[i]['text']);
-    }
-
-    return convertToHalf(result);
+    const result = await chatSession.sendMessage(query);
+    return JSON.parse(result.response.text())['ko']
 }
 
 /**
@@ -143,25 +179,31 @@ async function checkNewTweet() {
             prevLastTweetID = 0;
         }
     }
+    let data;
+    try {
+        data = await getTimelineByUserID(268758461);
+        if(!data.success) return;
+        let timelineInfo = data.data;
+        let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
 
-    let data = await getTimelineByUserID(268758461);
-    if(!data.success) return;
-    let timelineInfo = data.data;
-    let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
-
-    if(lastTweetID > prevLastTweetID || DEBUG) {
-        let newTweets = timelineInfo.filter(e => {
-            let id = BigInt(e.legacy.id_str);
-            return id > prevLastTweetID;
-        }).reverse();
-        prevLastTweetID = lastTweetID;
-        webhookManager.setLastTweetID(String(lastTweetID));
-        console.log(`[${new Date().toLocaleString('ja')}] Detect ${newTweets.length} new tweet`);
-        for(let i = 0; i < newTweets.length; i++) {
-            try {
-                await sendHook(newTweets[i]);
-            }catch{}
+        if(lastTweetID > prevLastTweetID || DEBUG) {
+            let newTweets = timelineInfo.filter(e => {
+                let id = BigInt(e.legacy.id_str);
+                return id > prevLastTweetID;
+            }).reverse();
+            prevLastTweetID = lastTweetID;
+            webhookManager.setLastTweetID(String(lastTweetID));
+            console.log(`[${new Date().toLocaleString('ja')}] Detect ${newTweets.length} new tweet`);
+            for(let i = 0; i < newTweets.length; i++) {
+                try {
+                    await sendHook(newTweets[i]);
+                }catch{}
+            }
         }
+    }catch(e){
+        await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``);
+        fs.writeFileSync('./tweetData.json', JSON.stringify(data, null, 4));
+        await sendDebugLog(null, './tweetData.json');
     }
 }
 
@@ -182,7 +224,10 @@ async function sendHook(tweetInfo) {
     let created_at = new Date(tweetInfo.legacy.created_at);
 
     // DeepL 번역
-    let translatedText = await translateTextDeepL('ja', 'ko', content.trim());
+    // let translatedText = await translateTextDeepL('ja', 'ko', content.trim());
+
+    // Gemini 번역
+    let translatedText = await translateTextGemini(content.trim());
 
     //프로필 URL
     profileURL = tweetInfo.core.user_results.result.legacy.profile_image_url_https;
