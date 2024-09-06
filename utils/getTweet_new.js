@@ -48,7 +48,6 @@ const default_features = {
 const DEBUG = false;
 const fs = require('fs');
 const path = require('path')
-const deepl = require('deepl-node');
 const appRoot = require('app-root-path').path;
 require('dotenv').config({
     path: path.join(appRoot, '.env')
@@ -57,15 +56,13 @@ const { MessageBuilder, Webhook } = require('discord-webhook-node');
 const webhookManager = require('./webhookManager');
 const {
   GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold,
 } = require("@google/generative-ai");
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
-  systemInstruction: "translate japanese to korean. the original text key is 'ja', and translated text key is 'ko'.",
+  systemInstruction: "Translate japanese to korean. Only translated sentences should be displayed in the response.",
 });
 
 const generationConfig = {
@@ -73,18 +70,10 @@ const generationConfig = {
   topP: 0.95,
   topK: 64,
   maxOutputTokens: 8192,
-  responseMimeType: "application/json",
 };
 
 let profileURL = '';
 let prevLastTweetID = null;
-
-
-function convertToHalf(e) {
-    return e.replace(/[！-～]/g, (halfwidthChar) =>
-      String.fromCharCode(halfwidthChar.charCodeAt(0) - 0xfee0)
-    ).replace(/、/g, ', ').replace(/。/g, '.');
-}
 
 async function sendDebugLog(message, file) {
     const hook = new Webhook(process.env.DEBUG_WEBHOOK_URL);
@@ -114,21 +103,28 @@ async function getTimelineByUserID(userId) {
                 "x-twitter-client-language": "en"
             }
         });
-        let res_json = await response.json();
-        let tweets = res_json.data.user.result.timeline_v2.timeline.instructions.filter(e => e.type == "TimelineAddEntries")[0]
-                    .entries.filter(e => {
-                        return e.entryId.match(/^tweet\-[0-9]+/g) && 
-                        e.content.itemContent.tweet_results.result.core.user_results.result.id == 'VXNlcjoyNjg3NTg0NjE=';
-                    })
-                    .map(e => e.content.itemContent.tweet_results.result);
-        return {success: true, data: tweets};
+        try {
+            let res_json = await response.json();
+            let tweets = res_json.data.user.result.timeline_v2.timeline.instructions.filter(e => e.type == "TimelineAddEntries")[0]
+                        .entries.filter(e => {
+                            return e.entryId.match(/^tweet\-[0-9]+/g) && 
+                            e.content.itemContent.tweet_results.result.core.user_results.result.id == 'VXNlcjoyNjg3NTg0NjE=';
+                        })
+                        .map(e => e.content.itemContent.tweet_results.result);
+            return {success: true, data: tweets};
+        }catch(e) {
+            await sendDebugLog(`[${new Date().toLocaleString('ja')}] Response parse failed\n\`\`\`shell\n${e.stack}\n\`\`\``);
+            fs.writeFileSync('./tweetData.json', JSON.stringify(await response.text(), null, 4));
+            await sendDebugLog(null, './tweetData.json');
+            return {success: false}
+        }
     }catch(e) {
-        // console.error(e)
         await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet query fail\n\`\`\`shell\n${e.stack}\n\`\`\``);
         return {success: false}
     }
 }
 
+// 언젠가 있을수도 있는 Gemini API 유로화에 대비하여 남김
 // /**
 //  * 번역 (DeepL 번역)
 //  * @param {string} source 번역할 언어(auto: 자동인식)
@@ -159,13 +155,12 @@ async function getTimelineByUserID(userId) {
  * @param {string} query 번역할 텍스트
  */
 async function translateTextGemini(query) {
-    //TODO
     const chatSession = model.startChat({
         generationConfig
     });
 
     const result = await chatSession.sendMessage(query);
-    return JSON.parse(result.response.text())['ko']
+    return result.response.text().replace(/\\/g, '\\\\\\');
 }
 
 /**
