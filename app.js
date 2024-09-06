@@ -14,8 +14,8 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
-app.use(logger('dev'));
+app.set('trust proxy', true);
+app.use(logger(app.get('env') == 'development' ? 'dev' : 'common'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
