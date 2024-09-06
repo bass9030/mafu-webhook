@@ -15,7 +15,7 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-app.use(logger(process.env.NODE_ENV == 'development' ? 'dev' : 'common'));
+app.use(logger(app.get('env') == 'development' ? 'dev' : 'common'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
