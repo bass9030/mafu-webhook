@@ -192,7 +192,9 @@ async function checkNewTweet() {
             for(let i = 0; i < newTweets.length; i++) {
                 try {
                     await sendHook(newTweets[i]);
-                }catch{}
+                }catch(e){
+                    await sendDebugLog(`[${new Date().toLocaleString('ja')}] Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``);
+                }
             }
         }
     }catch(e){
