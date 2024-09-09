@@ -8,16 +8,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{secrets.DOCKERHUB_USERNAME}}
-          password: ${{secrets.DOCKERHUB_TOKEN}}
       - name: Build and Release
         run: |
-          docker build -t ${{secrets.DOCKERHUB_REPO_PROD}} .
-          docker tag ${{secrets.DOCKERHUB_REPO_PROD}}:latest ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_PROD}}:latest
-          docker push ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_PROD}}:latest
+          docker build -t mahook-prod -f dockerfile .
+          docker image save mahook-prod:latest -o ./mahook-prod.tar
+          chmod 664 ./mahook-prod.tar
+      - name: Deploy Prod use SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: 2234
+          source: "./mahook-prod.tar"
+          target: "/home/bass9030"
       - name: Deploy to server
         uses: appleboy/ssh-action@master
         id: deploy
@@ -27,7 +31,8 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: 2234
           script: |
-            docker rm -f $(docker ps -aqf "name=^${{secrets.DOCKERHUB_REPO_PROD}}")
-            docker pull ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_PROD}}:latest
-            docker run -d -p 3003:3000 --env-file /home/${{secrets.USERNAME}}/mahook.env --name ${{secrets.DOCKERHUB_REPO_PROD}} ${{secrets.DOCKERHUB_USERNAME}}/${{secrets.DOCKERHUB_REPO_PROD}}:latest
+            docker rm -f $(docker ps -aqf "name=^mahook-prod")
+            docker load --input /home/bass9030/mahook-prod.tar
+            docker run -d -p 9999:3000 --env-file /home/bass9030/mahook.env --name mahook-prod --restart always mahook-prod:latest
             docker image prune -f
+            rm /home/bass9030/mahook-prod.tar
