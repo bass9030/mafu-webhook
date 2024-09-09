@@ -33,6 +33,6 @@ jobs:
           script: |
             docker rm -f $(docker ps -aqf "name=^mahook-prod")
             docker load --input /home/bass9030/mahook-prod.tar
-            docker run -d -p 9999:3000 --env-file /home/bass9030/mahook.env --name mahook-prod --restart always mahook-prod:latest
+            docker run -d -p 3003:3000 --env-file /home/bass9030/mahook.env --name mahook-prod --restart always mahook-prod:latest
             docker image prune -f
             rm /home/bass9030/mahook-prod.tar
