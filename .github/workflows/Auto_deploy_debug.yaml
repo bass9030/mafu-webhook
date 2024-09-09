@@ -19,6 +19,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          port: 2234
           source: "./mahook-dev.tar"
           target: "/home/bass9030"
       - name: Deploy to server
