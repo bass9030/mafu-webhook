@@ -67,7 +67,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
     systemInstruction:
-        "translate japanese to korean. the original text key is 'ja', and translated text key is 'ko'.",
+        "Translate japanese to korean. Only translated sentences should be displayed in the response.",
 });
 
 const generationConfig = {
@@ -75,20 +75,10 @@ const generationConfig = {
     topP: 0.95,
     topK: 64,
     maxOutputTokens: 8192,
-    responseMimeType: "application/json",
 };
 
 let profileURL = "";
 let prevLastTweetID = null;
-
-function convertToHalf(e) {
-    return e
-        .replace(/[！-～]/g, (halfwidthChar) =>
-            String.fromCharCode(halfwidthChar.charCodeAt(0) - 0xfee0)
-        )
-        .replace(/、/g, ", ")
-        .replace(/。/g, ".");
-}
 
 async function sendDebugLog(message, file) {
     const hook = new Webhook(process.env.DEBUG_WEBHOOK_URL);
@@ -120,20 +110,35 @@ async function getTimelineByUserID(userId) {
                 "x-twitter-client-language": "en",
             },
         });
-        let res_json = await response.json();
-        let tweets = res_json.data.user.result.timeline_v2.timeline.instructions
-            .filter((e) => e.type == "TimelineAddEntries")[0]
-            .entries.filter((e) => {
-                return (
-                    e.entryId.match(/^tweet\-[0-9]+/g) &&
-                    e.content.itemContent.tweet_results.result.core.user_results
-                        .result.id == "VXNlcjoyNjg3NTg0NjE="
-                );
-            })
-            .map((e) => e.content.itemContent.tweet_results.result);
-        return { success: true, data: tweets };
+        try {
+            let res_json = await response.json();
+            let tweets =
+                res_json.data.user.result.timeline_v2.timeline.instructions
+                    .filter((e) => e.type == "TimelineAddEntries")[0]
+                    .entries.filter((e) => {
+                        return (
+                            e.entryId.match(/^tweet\-[0-9]+/g) &&
+                            e.content.itemContent.tweet_results.result.core
+                                .user_results.result.id ==
+                                "VXNlcjoyNjg3NTg0NjE="
+                        );
+                    })
+                    .map((e) => e.content.itemContent.tweet_results.result);
+            return { success: true, data: tweets };
+        } catch (e) {
+            await sendDebugLog(
+                `[${new Date().toLocaleString(
+                    "ja"
+                )}] Response parse failed\n\`\`\`shell\n${e.stack}\n\`\`\``
+            );
+            fs.writeFileSync(
+                "./tweetData.json",
+                JSON.stringify(await response.text(), null, 4)
+            );
+            await sendDebugLog(null, "./tweetData.json");
+            return { success: false };
+        }
     } catch (e) {
-        // console.error(e)
         await sendDebugLog(
             `[${new Date().toLocaleString(
                 "ja"
@@ -192,13 +197,12 @@ async function tryTranslateText(text) {
  * @param {string} query 번역할 텍스트
  */
 async function translateTextGemini(query) {
-    //TODO
     const chatSession = model.startChat({
         generationConfig,
     });
 
     const result = await chatSession.sendMessage(query);
-    return JSON.parse(result.response.text())["ko"];
+    return result.response.text().replace(/\\/g, "\\\\\\");
 }
 
 /**
@@ -236,7 +240,13 @@ async function checkNewTweet() {
             for (let i = 0; i < newTweets.length; i++) {
                 try {
                     await sendHook(newTweets[i]);
-                } catch {}
+                } catch (e) {
+                    await sendDebugLog(
+                        `[${new Date().toLocaleString(
+                            "ja"
+                        )}] Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``
+                    );
+                }
             }
         }
     } catch (e) {
