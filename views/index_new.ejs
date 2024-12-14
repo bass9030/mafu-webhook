@@ -1,111 +1,210 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <%- include('header') %>
-    <link rel="stylesheet" href="/style.css">
-</head>
-<body>
-    <div class="main">
-        <div class="popup_dim hidden">
-            <div class="popup_box">
-                <div class="title">
-                    <h3>디스코드 웹후크 구독</h3>
-                    <button onclick="closeRegister()" class="btn close"><i class="fa-solid fa-xmark"></i></button>
-                    <br>
-                    <a href="/howto" target="_blank">웹후크 생성방법</a>
-                    <a href="/howtoedit" target="_blank">웹후크 수정방법</a>
-                    <a href="/howtoremove" target="_blank">웹후크 삭제방법</a>
-                </div>
-                <div action="javascript:void(0)" id="registerForm">
-                    <div class="input-group has-validation">
-                        <input id="webhookURL" type="text" class="form-control is-invaild" value="https://discord.com/api/webhooks/1254054101390462976/WXk_ZtFJ5JtgoK8rVD9Q-wSVZFhQieCcc-ohowwfs5X6eWouNIz4Bn4bRx9LAA82xPiE" placeholder="디스코드 웹후크 URL">
-                        <div class="invalid-feedback">
-                            올바른 웹후크 URL을 입력해주세요.
-                        </div>
+    <head>
+        <%- include('header') %>
+        <link rel="stylesheet" href="/style.css" />
+    </head>
+    <body>
+        <div class="main">
+            <div class="popup_dim hidden">
+                <div class="popup_box">
+                    <div class="title">
+                        <h3>디스코드 웹후크 구독</h3>
+                        <button onclick="closeRegister()" class="btn close">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <br />
+                        <a href="/howto" target="_blank">웹후크 생성방법</a>
+                        <a href="/howtoedit" target="_blank">웹후크 수정방법</a>
+                        <a href="/howtoremove" target="_blank"
+                            >웹후크 삭제방법</a
+                        >
                     </div>
-                    <div class="options">
-                        <input onchange="changeRoleIDStatus(event)" type="checkbox" class="form-check-input" id="allowMention">
-                        <label for="allowMention" class="form-check-label">특정 역할 맨션하기</label>
+                    <div action="javascript:void(0)" id="registerForm">
                         <div class="input-group has-validation">
-                            <input type="text" value="@everyone" disabled class="form-control" id="roleId" placeholder="역할 ID 입력">
+                            <input
+                                id="webhookURL"
+                                type="text"
+                                class="form-control is-invaild"
+                                value="https://discord.com/api/webhooks/1254054101390462976/WXk_ZtFJ5JtgoK8rVD9Q-wSVZFhQieCcc-ohowwfs5X6eWouNIz4Bn4bRx9LAA82xPiE"
+                                placeholder="디스코드 웹후크 URL"
+                            />
                             <div class="invalid-feedback">
-                                역할 ID는 @everyone, @here 혹은 숫자로 이루어저있어야합니다.
+                                올바른 웹후크 URL을 입력해주세요.
                             </div>
                         </div>
+                        <div class="options">
+                            <input
+                                onchange="changeRoleIDStatus(event)"
+                                type="checkbox"
+                                class="form-check-input"
+                                id="allowMention"
+                            />
+                            <label for="allowMention" class="form-check-label"
+                                >특정 역할 맨션하기</label
+                            >
+                            <div class="input-group has-validation">
+                                <input
+                                    type="text"
+                                    value="@everyone"
+                                    disabled
+                                    class="form-control"
+                                    id="roleId"
+                                    placeholder="역할 ID 입력"
+                                />
+                                <div class="invalid-feedback">
+                                    역할 ID는 @everyone, @here 혹은 숫자로
+                                    이루어저있어야합니다.
+                                </div>
+                            </div>
+                            <div>
+                                <input
+                                    type="checkbox"
+                                    id="allowReceiveNoti"
+                                    class="form-check-input"
+                                    value="공지사항 수신하기"
+                                    checked
+                                />
+                                <label
+                                    for="allowReceiveNoti"
+                                    class="form-check-label"
+                                    >공지사항 수신하기</label
+                                >
+                            </div>
+                        </div>
+                        <div class="buttons">
+                            <input
+                                type="button"
+                                onclick="unregisterWebhook()"
+                                class="btn btn-danger delete"
+                                value="구독취소"
+                            />
+                            <input
+                                type="button"
+                                onclick="registerWebhook()"
+                                class="btn btn-success subscribe"
+                                value="구독"
+                            />
+                            <input
+                                type="button"
+                                onclick="editWebhook()"
+                                class="btn btn-primary edit"
+                                value="수정"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div
+                id="success"
+                class="alert alert-success alert-hidden"
+                role="alert"
+            >
+                웹후크가 성공적으로 구독되었습니다
+            </div>
+            <div
+                id="error"
+                class="alert alert-danger alert-hidden"
+                role="alert"
+            >
+                웹후크 구독 취소 실패: 등록된 웹후크가 없습니다
+            </div>
+            <div class="introduce">
+                <div class="introduce_box">
+                    <div class="introduce_img">
+                        <div class="embed-box">
+                            <div class="profile-box">
+                                <img class="profile" src="/profile.jpg" />
+                                <span class="nickname"
+                                    >마훅 - 마후 트윗 번역봇</span
+                                >
+                            </div>
+                            <div class="discord-embed">
+                                <a
+                                    href="https://x.com/uni_mafumafu"
+                                    target="_blank"
+                                    ><strong>New Tweet Release!</strong></a
+                                >
+                                <div class="embed-content">
+                                    가끔씩 낮잠을 자다가 총 12시간 정도 잠을
+                                    자는 경우가 있는데, 친구에게「수면의 질을
+                                    높이는 보충제를 먹으면, 두 번 자지 않고
+                                    상쾌하게 일어날 수 있게 될 거야.」라는 말을
+                                    듣고 시도해보니, 최고 품질의 12시간 수면에
+                                    성공했습니다!!!좋은 아침입니다!!오늘
+                                    아무것도 하지 않습니다!!!
+                                </div>
+                                <div class="embed-footer">
+                                    <img src="/logo.png" />
+                                    <span
+                                        >마훅 - 마후마후 트윗을 한국어로,
+                                        디스코드에서</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="introduce_text">
                         <div>
-                            <input type="checkbox" id="allowReceiveNoti" class="form-check-input" value="공지사항 수신하기" checked>
-                            <label for="allowReceiveNoti" class="form-check-label">공지사항 수신하기</label>
+                            <div class="text_area">
+                                <span id="text_title">마훅</span><br />
+                                <span id="text_description1"
+                                    >한글 번역된 마후마후 트윗을,</span
+                                ><br />
+                                <span id="text_description2"
+                                    >디스코드에서.</span
+                                >
+                            </div>
+                            <button
+                                class="btn btn-primary"
+                                onclick="javascript:openRegister()"
+                            >
+                                웹후크 등록 · 수정
+                            </button>
                         </div>
-                    </div>
-                    <div class="buttons">
-                        <input type="button" onclick="unregisterWebhook()" class="btn btn-danger delete" value="구독취소" />
-                        <input type="button" onclick="registerWebhook()" class="btn btn-success subscribe" value="구독"/>
-                        <input type="button" onclick="editWebhook()" class="btn btn-primary edit" value="수정" />
                     </div>
                 </div>
             </div>
-        </div>
-        <div id="success" class="alert alert-success alert-hidden" role="alert">
-            웹후크가 성공적으로 구독되었습니다
-        </div>
-        <div id="error" class="alert alert-danger alert-hidden" role="alert">
-            웹후크 구독 취소 실패: 등록된 웹후크가 없습니다
-        </div>
-        <div class="introduce">
-            <div class="introduce_box">
-                <div class="introduce_img">
-                    <div class="embed-box">
-                        <div class="profile-box">
-                            <img class="profile" src="/profile.jpg">
-                            <span class="nickname">마훅 - 마후 트윗 번역봇</span>
-                        </div>
-                        <div class="discord-embed">
-                            <a href="https://x.com/uni_mafumafu" target="_blank"><strong>New Tweet Release!</strong></a>
-                            <div class="embed-content">
-                                가끔씩 낮잠을 자다가 총 12시간 정도 잠을 자는 경우가 있는데, 친구에게「수면의 질을 높이는 보충제를 먹으면, 두 번 자지 않고 상쾌하게 일어날 수 있게 될 거야.」라는 말을 듣고 시도해보니, 최고 품질의 12시간
-                                수면에 성공했습니다!!!좋은 아침입니다!!오늘 아무것도 하지 않습니다!!!
-                            </div>
-                            <div class="embed-footer">
-                                <img src="/logo.png">
-                                <span>마훅 - 마후마후 트윗을 한국어로, 디스코드에서</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="introduce_text">
-                    <div>
-                        <div class="text_area">
-                            <span id="text_title">마훅</span><br>
-                            <span id="text_description1">한글 번역된 마후마후 트윗을,</span><br>
-                            <span id="text_description2">디스코드에서.</span>
-                        </div>
-                        <button class="btn btn-primary" onclick="javascript:openRegister()">웹후크 등록 · 수정</button>
-                    </div>
-                </div>
+            <hr />
+            <div class="notice">
+                <h2>공지사항</h2>
+                <br />
+                <div class="notice-list"></div>
             </div>
+            <hr />
+            <div class="footer">
+                <p>
+                    마훅의 한국어 번역은 Google사의 Gemini API와 DeepL SE사의
+                    DeepL 번역 API를 이용하여 제공됩니다.
+                </p>
+                <p>
+                    마훅은 X(구 Twitter)의
+                    <strong>비공식 API를 사용하여 개발</strong>되었습니다.<br />
+                    따라서 <strong>서비스에 예기치 못한 장애가 발생</strong>할
+                    수 있으며,
+                    <strong
+                        >X(구 Twitter)사의 요청에 따라 서비스 운영이 종료될 수
+                        있습니다.</strong
+                    >
+                </p>
+                <p>Contact: contact@bass9030.dev</p>
+                <p>
+                    깃허브<br />
+                    <a
+                        class="community"
+                        href="https://github.com/bass9030/mafu-webhook"
+                        target="_blank"
+                        ><i class="fa-brands fa-github"></i
+                    ></a>
+                </p>
+            </div>
+            <a
+                class="easteregg"
+                href="https://youtu.be/ucbx9we6EHk?si=VRZfMeluYT70_gZ_"
+                target="_blank"
+                >女の子になりたい</a
+            >
         </div>
-        <hr>
-        <div class="notice">
-            <h2>공지사항</h2><br>
-            <div class="notice-list"></div>
-        </div>
-        <hr>
-        <div class="footer">
-            <p>
-                마훅의 한국어 번역은 Google사의 Gemini API를 이용하여 제공됩니다.
-            </p>
-            <p>
-                마훅은 X(구 Twitter)의 <strong>비공식 API를 사용하여 개발</strong>되었습니다.<br>
-                따라서 <strong>서비스에 예기치 못한 장애가 발생</strong>할 수 있으며, <strong>X(구 Twitter)사의 요청에 따라 서비스 운영이 종료될 수 있습니다.</strong>
-            </p>
-            <p>Contact: contact@bass9030.dev</p>
-            <p>
-                깃허브<br>
-                <a class="community" href="https://github.com/bass9030/mafu-webhook" target="_blank"><i class="fa-brands fa-github"></i></a>
-            </p>
-        </div>
-        <a class="easteregg" href="https://youtu.be/ucbx9we6EHk?si=VRZfMeluYT70_gZ_" target="_blank">女の子になりたい</a>
-    </div>
-    <script src="/script.js"></script>
-</body>
+        <script src="/script.js"></script>
+    </body>
 </html>
