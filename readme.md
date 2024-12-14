@@ -1,6 +1,6 @@
 # 마훅(mahook)
 
-![main](https://github.com/bass9030/FUCK-CHZZK-GRID/blob/master/images/main.png?raw=true)
+![main](https://github.com/bass9030/mafu-webhook/blob/master/images/main.png?raw=true)
 
 > 한글 번역된 마후마후 트윗을, 디스코드에서.
 
