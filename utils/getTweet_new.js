@@ -1,5 +1,5 @@
 const default_variables = {
-    count: 1000,
+    count: 50,
     withSafetyModeUserFields: true,
     includePromotedContent: false,
     withQuickPromoteEligibilityTweetFields: true,
@@ -47,18 +47,12 @@ const default_features = {
 /* ============== */
 const DEBUG = false;
 const fs = require("fs");
-const path = require("path");
 const deepl = require("deepl-node");
-const appRoot = require("app-root-path").path;
-require("dotenv").config({
-    path: path.join(appRoot, ".env"),
-});
 const { MessageBuilder, Webhook } = require("discord-webhook-node");
 const webhookManager = require("./webhookManager");
+const glossary = require("./glossary.json");
 const {
     GoogleGenerativeAI,
-    HarmCategory,
-    HarmBlockThreshold,
     GoogleGenerativeAIError,
 } = require("@google/generative-ai");
 const apiKey = process.env.GEMINI_API_KEY;
@@ -67,7 +61,8 @@ const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
     systemInstruction:
-        "Translate japanese to korean. Only translated sentences should be displayed in the response.",
+        "Translate japanese to korean. Only translated sentences should be displayed in the response. Some words should be translated as below.\n" +
+        glossary.map((e) => `${e.source} is ${e.target}`).join(". "),
 });
 
 const generationConfig = {
@@ -117,14 +112,46 @@ async function getTimelineByUserID(userId) {
                     .filter((e) => e.type == "TimelineAddEntries")[0]
                     .entries.filter((e) => {
                         return (
-                            e.entryId.match(/^tweet\-[0-9]+/g) &&
-                            e.content.itemContent.tweet_results.result.core
-                                .user_results.result.id ==
-                                "VXNlcjoyNjg3NTg0NjE="
+                            e.entryId.match(
+                                /^profile\-conversation\-[0-9]+/g
+                            ) || e.entryId.match(/^tweet\-[0-9]+/g)
                         );
-                    })
-                    .map((e) => e.content.itemContent.tweet_results.result);
-            return { success: true, data: tweets };
+                    });
+
+            let data = [];
+            for (let i = 0; i < tweets.length; i++) {
+                let e = tweets[i];
+                if (e.entryId.match(/^tweet\-[0-9]+/g)) {
+                    // 일반 트윗
+                    data.push(e.content.itemContent.tweet_results.result);
+                } else if (e.entryId.match(/^profile\-conversation\-[0-9]+/g)) {
+                    // 타래 트윗
+                    for (let j = 0; j < e.content.items.length; j++) {
+                        let f = e.content.items[j];
+                        if (
+                            !f.entryId.match(
+                                /^profile\-conversation\-[0-9]+\-tweet\-[0-9]+/g
+                            )
+                        )
+                            continue;
+                        data.push(f.item.itemContent.tweet_results.result);
+                    }
+                }
+            }
+
+            data.sort((a, b) => {
+                a = BigInt(a.rest_id);
+                b = BigInt(b.rest_id);
+                if (a > b) {
+                    return -1;
+                } else if (a < b) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+
+            return { success: true, data: data };
         } catch (e) {
             await sendDebugLog(
                 `[${new Date().toLocaleString(
@@ -323,4 +350,9 @@ async function getProfileURL() {
     }
 }
 
-module.exports = { checkNewTweet, getProfileURL, sendRecentTweet };
+module.exports = {
+    checkNewTweet,
+    getProfileURL,
+    sendRecentTweet,
+    getTimelineByUserID,
+};
