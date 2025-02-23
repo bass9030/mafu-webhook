@@ -22,8 +22,8 @@ jobs:
                   docker build -t mahook-db-dev -f dockerfile.mariadb .
                   docker image save mahook-web-dev:latest -o ./mahook-web-dev.tar
                   docker image save mahook-db-dev:latest -o ./mahook-db-dev.tar
-                  chmod 664 ./mahook-web.tar
-                  chmod 664 ./mahook-db.tar
+                  chmod 664 ./mahook-web-dev.tar
+                  chmod 664 ./mahook-db-dev.tar
             - name: Deploy web server image
               uses: appleboy/scp-action@master
               with:
