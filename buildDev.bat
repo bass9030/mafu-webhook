@@ -1,1 +1,0 @@
-docker build -t mahook-dev -f dockerfile.dev .
