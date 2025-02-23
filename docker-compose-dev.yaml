@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
     mahook-web:
-        image: mahook-web:latest
+        image: mahook-web-dev:latest
         restart: always
         expose:
             - 3000
@@ -27,7 +27,7 @@ services:
             - mahook-db
 
     mahook-db:
-        image: mahook-db:latest
+        image: mahook-db-dev:latest
         container_name: mahook-db
         restart: always
         volumes:

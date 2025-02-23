@@ -16,21 +16,33 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
-            - name: Build and Release
+            - name: Build
               run: |
-                  docker build -t mahook-dev -f dockerfile.dev .
-                  docker image save mahook-dev:latest -o ./mahook-dev.tar
-                  chmod 664 ./mahook-dev.tar
-            - name: Deploy Prod use SCP
+                  docker build -t mahook-web-dev -f dockerfile .
+                  docker build -t mahook-db-dev -f dockerfile.mariadb .
+                  docker image save mahook-web-dev:latest -o ./mahook-web-dev.tar
+                  docker image save mahook-db-dev:latest -o ./mahook-db-dev.tar
+                  chmod 664 ./mahook-web.tar
+                  chmod 664 ./mahook-db.tar
+            - name: Deploy web server image
               uses: appleboy/scp-action@master
               with:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: 2234
-                  source: "./mahook-dev.tar"
+                  source: "./mahook-web-dev.tar"
                   target: "/home/bass9030"
-            - name: Deploy to server
+            - name: Deploy db image
+              uses: appleboy/scp-action@master
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USERNAME }}
+                  password: ${{ secrets.PASSWORD }}
+                  port: 2234
+                  source: "./mahook-db-dev.tar"
+                  target: "/home/bass9030"
+            - name: Restarting service
               uses: appleboy/ssh-action@master
               id: deploy
               with:
@@ -39,8 +51,9 @@ jobs:
                   password: ${{ secrets.PASSWORD }}
                   port: 2234
                   script: |
-                      docker rm -f $(docker ps -aqf "name=^mahook-dev")
-                      docker load --input /home/bass9030/mahook-dev.tar
-                      docker run -d -p 9999:3000 --env-file /home/bass9030/mahook.dev.env --name mahook-dev --restart always mahook-dev:latest
-                      docker image prune -f
-                      rm /home/bass9030/mahook-dev.tar
+                      docker-compose -f docker-compose-dev.yaml down
+                      docker rmi -f $(docker images -aq "mahook-*-dev")
+                      docker load --input /home/bass9030/mahook-web-dev.tar
+                      docker load --input /home/bass9030/mahook-db-dev.tar
+                      docker-compose -f docker-compose-dev.yaml up -d
+                      rm /home/bass9030/mahook-*-dev.tar
