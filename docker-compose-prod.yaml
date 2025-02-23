@@ -7,7 +7,7 @@ services:
         expose:
             - 3000
         ports:
-            - "9999:3000"
+            - "3003:3000"
         container_name: mahook-web
         environment:
             TZ: Asia/Seoul
