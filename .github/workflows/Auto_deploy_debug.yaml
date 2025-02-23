@@ -55,5 +55,5 @@ jobs:
                       docker rmi -f $(docker images -aq "mahook-*-dev")
                       docker load --input /home/bass9030/mahook-web-dev.tar
                       docker load --input /home/bass9030/mahook-db-dev.tar
-                      docker-compose -f docker-compose-dev.yaml up -d
+                      docker-compose -f docker-compose-dev.yaml up --env-file /home/bass9030/mahook.dev.env -d
                       rm /home/bass9030/mahook-*-dev.tar
