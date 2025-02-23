@@ -210,7 +210,7 @@ async function tryTranslateText(text) {
             sendDebugLog(
                 `[${new Date().toLocaleString(
                     "ja"
-                )}] tweet translate fallback. try deepl translate.`
+                )}] Gemini translate fallback. try deepL translate.`
             );
             result = await translateTextDeepL("ja", "ko", text);
         }
@@ -243,6 +243,12 @@ async function checkNewTweet() {
             prevLastTweetID = 0;
         }
     }
+
+    if ((await webhookManager.getWebhookCount()) < 1) {
+        console.log("No user found. Ignored");
+        return;
+    }
+
     let data;
     try {
         data = await getTimelineByUserID(268758461);
