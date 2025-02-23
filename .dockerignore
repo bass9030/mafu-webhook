@@ -1,0 +1,9 @@
+build.sh
+.env
+.git
+images
+node_modules
+.gitignore
+docker*
+readme.md
+nodemon.json

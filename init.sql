@@ -1,0 +1,24 @@
+CREATE DATABASE `mahook`;
+
+USE `mahook`;
+
+CREATE TABLE IF NOT EXISTS webhooks (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    webhookURL VARCHAR(2048) NOT NULL UNIQUE,
+    roleID VARCHAR(19),
+    sendNoticeMessage BOOLEAN
+);
+
+CREATE TABLE IF NOT EXISTS notices (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    date DATETIME NOT NULL,
+    title TEXT,
+    content TEXT
+);
+
+CREATE TABLE IF NOT EXISTS lastTweet (
+    key_str VARCHAR(10) NOT NULL UNIQUE,
+    id BIGINT UNSIGNED NOT NULL
+);
+
+GRANT ALL ON `mahook`.* TO 'mahook-db'@'%';

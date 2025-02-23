@@ -1,38 +1,59 @@
 name: auto deploy production
 on:
-  push:
-    branches:
-      - production
+    push:
+        branches:
+            - production
+    workflow_dispatch:
+        inputs:
+            logLevel:
+                description: "Log level"
+                required: true
+                default: "warning"
+            tags:
+                description: "Test scenario tags"
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build and Release
-        run: |
-          docker build -t mahook-prod -f dockerfile .
-          docker image save mahook-prod:latest -o ./mahook-prod.tar
-          chmod 664 ./mahook-prod.tar
-      - name: Deploy Prod use SCP
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: 2234
-          source: "./mahook-prod.tar"
-          target: "/home/bass9030"
-      - name: Deploy to server
-        uses: appleboy/ssh-action@master
-        id: deploy
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: 2234
-          script: |
-            docker rm -f $(docker ps -aqf "name=^mahook-prod")
-            docker load --input /home/bass9030/mahook-prod.tar
-            docker run -d -p 3003:3000 --env-file /home/bass9030/mahook.env --name mahook-prod --restart always mahook-prod:latest
-            docker image prune -f
-            rm /home/bass9030/mahook-prod.tar
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Build
+              run: |
+                  docker build -t mahook-web -f dockerfile .
+                  docker build -t mahook-db -f dockerfile.mariadb .
+                  docker image save mahook-web:latest -o ./mahook-web.tar
+                  docker image save mahook-db:latest -o ./mahook-db.tar
+                  chmod 664 ./mahook-web.tar
+                  chmod 664 ./mahook-db.tar
+            - name: Deploy web server image
+              uses: appleboy/scp-action@master
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USERNAME }}
+                  password: ${{ secrets.PASSWORD }}
+                  port: 2234
+                  source: "./mahook-web.tar"
+                  target: "/home/bass9030"
+            - name: Deploy db image
+              uses: appleboy/scp-action@master
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USERNAME }}
+                  password: ${{ secrets.PASSWORD }}
+                  port: 2234
+                  source: "./mahook-db.tar"
+                  target: "/home/bass9030"
+            - name: Restarting service
+              uses: appleboy/ssh-action@master
+              id: deploy
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USERNAME }}
+                  password: ${{ secrets.PASSWORD }}
+                  port: 2234
+                  script: |
+                      docker-compose -f docker-compose-prod.yaml down
+                      docker rmi $(docker images -aq "mahook-*")
+                      docker load --input /home/bass9030/mahook-web.tar
+                      docker load --input /home/bass9030/mahook-db.tar
+                      docker-compose -f docker-compose.yaml up -d
+                      rm /home/bass9030/mahook-*.tar
