@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+    mahook-web:
+        image: mahook-web-dev:latest
+        restart: always
+        expose:
+            - 3000
+        ports:
+            - "9999:3000"
+        container_name: mahook-web
+        environment:
+            TZ: Asia/Seoul
+            TWITTER_AUTH_TOKEN: ${TWITTER_AUTH_TOKEN}
+            TWITTER_CT0: ${TWITTER_CT0}
+            DEBUG_WEBHOOK_URL: ${DEBUG_WEBHOOK_URL}
+            GEMINI_API_KEY: ${GEMINI_API_KEY}
+            DEEPL_API_KEY: ${DEEPL_API_KEY}
+            DEEPL_GLOSSARY_ID: ${DEEPL_GLOSSARY_ID}
+            DB_HOST: ${DB_HOST}
+            DB_NAME: ${DB_NAME}
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+        networks:
+            - mahook-dev
+        depends_on:
+            - mahook-db
+
+    mahook-db:
+        image: mahook-db-dev:latest
+        container_name: mahook-db
+        restart: always
+        volumes:
+            - /mahook-dev-db:/var/lib/mysql
+        environment:
+            TZ: Asia/Seoul
+            MARIADB_USER: ${DB_USER}
+            MARIADB_PASSWORD: ${DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+        networks:
+            - mahook-dev
+
+networks:
+    mahook-dev:
