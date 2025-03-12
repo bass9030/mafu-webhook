@@ -1,46 +1,42 @@
 const default_variables = {
-    count: 50,
-    withSafetyModeUserFields: true,
-    includePromotedContent: false,
+    count: 20,
+    includePromotedContent: true,
     withQuickPromoteEligibilityTweetFields: true,
     withVoice: true,
     withV2Timeline: true,
-    withDownvotePerspective: false,
-    withBirdwatchNotes: true,
-    withCommunity: true,
-    withSuperFollowsUserFields: true,
-    withReactionsMetadata: false,
-    withReactionsPerspective: false,
-    withSuperFollowsTweetFields: true,
-    isMetatagsQuery: false,
-    withReplays: true,
-    withClientEventToken: false,
-    withAttachments: true,
-    withConversationQueryHighlights: true,
-    withMessageQueryHighlights: true,
-    withMessages: true,
 };
 
 const default_features = {
+    profile_label_improvements_pcf_label_in_post_enabled: true,
+    rweb_tipjar_consumption_enabled: true,
     responsive_web_graphql_exclude_directive_enabled: true,
     verified_phone_label_enabled: false,
     creator_subscriptions_tweet_preview_api_enabled: true,
     responsive_web_graphql_timeline_navigation_enabled: true,
     responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
+    premium_content_api_read_enabled: false,
+    communities_web_enable_tweet_community_results_fetch: true,
     c9s_tweet_anatomy_moderator_badge_enabled: true,
-    tweetypie_unmention_optimization_enabled: true,
+    responsive_web_grok_analyze_button_fetch_trends_enabled: false,
+    responsive_web_grok_analyze_post_followups_enabled: true,
+    responsive_web_jetfuel_frame: false,
+    responsive_web_grok_share_attachment_enabled: true,
+    articles_preview_enabled: true,
     responsive_web_edit_tweet_api_enabled: true,
     graphql_is_translatable_rweb_tweet_is_translatable_enabled: true,
     view_counts_everywhere_api_enabled: true,
     longform_notetweets_consumption_enabled: true,
     responsive_web_twitter_article_tweet_consumption_enabled: true,
     tweet_awards_web_tipping_enabled: false,
+    responsive_web_grok_analysis_button_from_backend: false,
+    creator_subscriptions_quote_tweet_preview_enabled: false,
     freedom_of_speech_not_reach_fetch_enabled: true,
     standardized_nudges_misinfo: true,
     tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled: true,
     rweb_video_timestamps_enabled: true,
     longform_notetweets_rich_text_read_enabled: true,
     longform_notetweets_inline_media_enabled: true,
+    responsive_web_grok_image_annotation_enabled: true,
     responsive_web_enhance_cards_enabled: false,
 };
 
@@ -54,6 +50,8 @@ const glossary = require("./glossary.json");
 const {
     GoogleGenerativeAI,
     GoogleGenerativeAIError,
+    HarmCategory,
+    HarmBlockThreshold,
 } = require("@google/generative-ai");
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -63,6 +61,24 @@ const model = genAI.getGenerativeModel({
     systemInstruction:
         "Translate japanese to korean. Only translated sentences should be displayed in the response. Some words should be translated as below.\n" +
         glossary.map((e) => `${e.source} is ${e.target}`).join(". "),
+    safetySettings: [
+        {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+        {
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+        {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+        {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+    ],
 });
 
 const generationConfig = {
@@ -86,7 +102,7 @@ async function sendDebugLog(message, file) {
  * @param {BigInt|String} userId userId is not username!!
  */
 async function getTimelineByUserID(userId) {
-    const reqURL = `https://x.com/i/api/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets?variables=${encodeURIComponent(
+    const reqURL = `https://x.com/i/api/graphql/Y9WM4Id6UcGFE8Z-hbnixw/UserTweets?variables=${encodeURIComponent(
         JSON.stringify(Object.assign(default_variables, { userId: userId }))
     )}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
 
@@ -94,19 +110,19 @@ async function getTimelineByUserID(userId) {
         let response = await fetch(reqURL, {
             method: "GET",
             headers: {
-                "User-Agent":
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-                Referer: "https://x.com/",
-                "x-csrf-token": process.env.TWITTER_CT0,
-                Cookie: `auth_token=${process.env.TWITTER_AUTH_TOKEN};ct0=${process.env.TWITTER_CT0};`,
-                Authorization:
+                referer: "https://x.com/",
+                cookie: `auth_token=${process.env.TWITTER_AUTH_TOKEN}; ct0=${process.env.TWITTER_CT0};`,
+                authorization:
                     "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+                "x-csrf-token": process.env.TWITTER_CT0,
                 "x-twitter-active-user": "yes",
                 "x-twitter-client-language": "en",
             },
         });
+        let res_text;
         try {
-            let res_json = await response.json();
+            res_text = await response.text();
+            res_json = JSON.parse(res_text);
             let tweets =
                 res_json.data.user.result.timeline_v2.timeline.instructions
                     .filter((e) => e.type == "TimelineAddEntries")[0]
@@ -158,11 +174,8 @@ async function getTimelineByUserID(userId) {
                     "ja"
                 )}] Response parse failed\n\`\`\`shell\n${e.stack}\n\`\`\``
             );
-            fs.writeFileSync(
-                "./tweetData.json",
-                JSON.stringify(await response.text(), null, 4)
-            );
-            await sendDebugLog(null, "./tweetData.json");
+            fs.writeFileSync("./tweetData", res_text);
+            await sendDebugLog(null, "./tweetData");
             return { success: false };
         }
     } catch (e) {
@@ -244,11 +257,6 @@ async function checkNewTweet() {
         }
     }
 
-    if ((await webhookManager.getWebhookCount()) < 1) {
-        console.log("No user found. Ignored");
-        return;
-    }
-
     let data;
     try {
         data = await getTimelineByUserID(268758461);
@@ -270,6 +278,10 @@ async function checkNewTweet() {
                     newTweets.length
                 } new tweet`
             );
+            if ((await webhookManager.getWebhookCount()) < 1) {
+                console.log("No user found. Ignored");
+                return;
+            }
             for (let i = 0; i < newTweets.length; i++) {
                 try {
                     await sendHook(newTweets[i]);
@@ -293,9 +305,15 @@ async function checkNewTweet() {
     }
 }
 
-async function sendRecentTweet() {
+async function sendRecentTweet(id) {
     let timelineInfo = await getTimelineByUserID(268758461);
-    await sendHook(timelineInfo.data[0]);
+    // fs.writeFileSync("./timeline.json", JSON.stringify(timelineInfo, null, 4));
+
+    await sendHook(
+        !!id
+            ? timelineInfo.data.filter((e) => e["rest_id"] == id)[0]
+            : timelineInfo.data[0]
+    );
 }
 
 /**
