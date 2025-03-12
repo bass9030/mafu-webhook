@@ -1,10 +1,3 @@
-// const db = require('better-sqlite3')('./webhooks.db');
-const appRoot = require("app-root-path").path;
-const path = require("path");
-require("dotenv").config({
-    path: path.join(appRoot, ".env"),
-});
-
 const mariadb = require("mariadb");
 const core = mariadb.createPool({
     host: process.env.DB_HOST,
