@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-    mahook-web:
+    mahook-web-dev:
         image: mahook-web-dev:latest
         restart: always
         expose:
@@ -26,7 +26,7 @@ services:
         depends_on:
             - mahook-db
 
-    mahook-db:
+    mahook-db-dev:
         image: mahook-db-dev:latest
         container_name: mahook-db
         restart: always
