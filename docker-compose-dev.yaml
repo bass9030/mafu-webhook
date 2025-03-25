@@ -8,7 +8,7 @@ services:
             - 3000
         ports:
             - "9999:3000"
-        container_name: mahook-web
+        container_name: mahook-web-dev
         environment:
             TZ: Asia/Seoul
             TWITTER_AUTH_TOKEN: ${TWITTER_AUTH_TOKEN}
@@ -24,11 +24,11 @@ services:
         networks:
             - mahook-dev
         depends_on:
-            - mahook-db
+            - mahook-db-dev
 
     mahook-db-dev:
         image: mahook-db-dev:latest
-        container_name: mahook-db
+        container_name: mahook-db-dev
         restart: always
         volumes:
             - /mahook-dev-db:/var/lib/mysql
