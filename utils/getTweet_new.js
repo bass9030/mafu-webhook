@@ -57,7 +57,7 @@ const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
     systemInstruction:
         "Translate japanese to korean. Only translated sentences should be displayed in the response. Some words should be translated as below.\n" +
         glossary.map((e) => `${e.source} is ${e.target}`).join(". "),
