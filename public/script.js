@@ -217,33 +217,41 @@ async function unregisterWebhook() {
 let embed_idx = 0;
 
 function page_onLoad() {
-    EMBED_CONTENT.innerHTML = EMBED_TEXT[embed_idx];
-    EMBED_CONTENT.parentElement.style.height =
-        EMBED_CONTENT.parentElement.clientHeight + "px";
+    // EMBED_CONTENT.innerHTML = EMBED_TEXT[embed_idx];
+    // EMBED_ELEMENT.style.height = EMBED_ELEMENT.clientHeight + "px";
     setInterval(transform_embed_text, 5000);
 
     getNoticeList();
 }
 
 const EMBED_CONTENT = document.getElementsByClassName("embed-content")[0];
+const EMBED_TITLE = document.querySelector(".discord-embed > a");
 const EMBED_FOOTER = document.getElementsByClassName("embed-footer")[0];
 const EMBED_ELEMENT = document.getElementsByClassName("discord-embed")[0];
-const EMBED_PADDING =
-    EMBED_ELEMENT.clientHeight -
-    EMBED_CONTENT.clientHeight +
-    EMBED_FOOTER.clientHeight +
-    25;
+
+window.addEventListener("resize", () => {
+    requestAnimationFrame(() => {
+        EMBED_ELEMENT.style.height = `calc(85px + ${
+            EMBED_TITLE.clientHeight + EMBED_FOOTER.clientHeight
+        }px + ${EMBED_CONTENT.clientHeight}px)`;
+    });
+});
+
 function transform_embed_text() {
     EMBED_CONTENT.style.opacity = "0";
     embed_idx = (embed_idx + 1) % EMBED_TEXT.length;
+    EMBED_ELEMENT.style.height = `${EMBED_ELEMENT.offsetHeight}px`; // 고정 높이 설정
+
     setTimeout(() => {
-        EMBED_CONTENT.innerHTML = EMBED_TEXT[embed_idx];
-        EMBED_ELEMENT.style.height =
-            EMBED_PADDING + EMBED_CONTENT.clientHeight + "px";
+        requestAnimationFrame(() => {
+            EMBED_CONTENT.innerHTML = EMBED_TEXT[embed_idx];
+
+            EMBED_ELEMENT.style.height = `calc(85px + ${
+                EMBED_TITLE.clientHeight + EMBED_FOOTER.clientHeight
+            }px + ${EMBED_CONTENT.clientHeight}px)`;
+            EMBED_CONTENT.style.opacity = "1";
+        });
     }, 250);
-    setTimeout(() => {
-        EMBED_CONTENT.style.opacity = "1";
-    }, 500);
 }
 
 function createNoticeItem(title, date, content) {
