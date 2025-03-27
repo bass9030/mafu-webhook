@@ -15,6 +15,7 @@ services:
                   target: /usr/src/app
                   ignore:
                       - node_modules
+                      - .git
         container_name: mahook-web-dev
         environment:
             TZ: Asia/Seoul
