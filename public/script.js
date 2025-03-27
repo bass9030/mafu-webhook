@@ -30,7 +30,6 @@ const mentionIdInputElement = document.getElementById("roleId");
 const formElement = document.getElementById("registerForm");
 const allowMentionElement = document.getElementById("allowMention");
 const allowReceiveNotiElement = document.getElementById("allowReceiveNoti");
-const embedContent = document.getElementsByClassName("embed-content")[0];
 
 webhookInputElement.addEventListener("input", on_formChanged);
 mentionIdInputElement.addEventListener("input", on_formChanged);
@@ -218,24 +217,32 @@ async function unregisterWebhook() {
 let embed_idx = 0;
 
 function page_onLoad() {
-    embedContent.innerHTML = EMBED_TEXT[embed_idx];
-    embedContent.parentElement.style.height =
-        embedContent.parentElement.clientHeight + "px";
+    EMBED_CONTENT.innerHTML = EMBED_TEXT[embed_idx];
+    EMBED_CONTENT.parentElement.style.height =
+        EMBED_CONTENT.parentElement.clientHeight + "px";
     setInterval(transform_embed_text, 5000);
 
     getNoticeList();
 }
 
+const EMBED_CONTENT = document.getElementsByClassName("embed-content")[0];
+const EMBED_FOOTER = document.getElementsByClassName("embed-footer")[0];
+const EMBED_ELEMENT = document.getElementsByClassName("discord-embed")[0];
 const EMBED_PADDING =
-    embedContent.parentElement.clientHeight - embedContent.clientHeight;
+    EMBED_ELEMENT.clientHeight -
+    EMBED_CONTENT.clientHeight +
+    EMBED_FOOTER.clientHeight +
+    25;
 function transform_embed_text() {
-    embedContent.style.opacity = "0";
+    EMBED_CONTENT.style.opacity = "0";
     embed_idx = (embed_idx + 1) % EMBED_TEXT.length;
     setTimeout(() => {
-        embedContent.innerHTML = EMBED_TEXT[embed_idx];
+        EMBED_CONTENT.innerHTML = EMBED_TEXT[embed_idx];
+        EMBED_ELEMENT.style.height =
+            EMBED_PADDING + EMBED_CONTENT.clientHeight + "px";
     }, 250);
     setTimeout(() => {
-        embedContent.style.opacity = "1";
+        EMBED_CONTENT.style.opacity = "1";
     }, 500);
 }
 
