@@ -8,6 +8,13 @@ services:
             - 3000
         ports:
             - "9999:3000"
+        develop:
+            watch:
+                - action: sync
+                  path: .
+                  target: /usr/src/app
+                  ignore:
+                      - node_modules
         container_name: mahook-web-dev
         environment:
             TZ: Asia/Seoul
