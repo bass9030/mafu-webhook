@@ -1,9 +1,9 @@
 * {
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: "Noto Sans KR", sans-serif;
 }
 
 body {
-    background-color: #2E3035;
+    background-color: #2e3035;
     color: white;
 }
 
@@ -38,7 +38,7 @@ body {
         justify-content: center !important;
     }
 
-    .introduce_text>div {
+    .introduce_text > div {
         margin: 0 !important;
     }
 }
@@ -65,7 +65,7 @@ body {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    background-color: #2E3035;
+    background-color: #2e3035;
     height: 100dvh;
     width: 100dvw;
     color: white;
@@ -79,7 +79,7 @@ body {
     flex: 4;
 }
 
-.introduce_text>div {
+.introduce_text > div {
     margin-left: 50px;
 }
 
@@ -140,7 +140,7 @@ body {
     display: inline-block;
 }
 
-.popup_box>.title>.close {
+.popup_box > .title > .close {
     float: right;
 }
 
@@ -162,7 +162,7 @@ body {
     margin-top: 20px;
 }
 
-.options>div {
+.options > div {
     margin-bottom: 20px;
 }
 
@@ -170,7 +170,7 @@ body {
     position: absolute;
     bottom: 5px;
     right: 5px;
-    color: #2E3035;
+    color: #2e3035;
     text-decoration: line-through;
     font-size: 15px;
 }
@@ -184,7 +184,7 @@ body {
     text-align: center;
 }
 
-.footer>p>a {
+.footer > p > a {
     color: white;
     text-decoration: none;
 }
@@ -206,38 +206,41 @@ body {
 }
 
 .discord-embed {
+    /* position: relative; */
     margin-left: 50px;
     padding: 20px;
-    background-color: #2B2D31;
+    background-color: #2b2d31;
     max-width: 700px;
     width: 100%;
     max-height: 80vh;
-    border-left: 5px solid #1DA0F2;
+    border-left: 5px solid #1da0f2;
     border-radius: 5px;
-    transition: opacity .25s ease-in-out, max-height .5s ease-in-out;
+    transition: height 0.2s ease-in-out;
 }
 
-.discord-embed>a {
+.discord-embed > a {
     text-decoration: none;
-    color: #00A8FC;
+    color: #00a8fc;
 }
 
 .embed-content {
     max-height: 100vh;
     margin-top: 10px;
     margin-bottom: 10px;
-    transition: opacity .25s ease-in-out, max-height .5s ease-in-out;
+    transition: opacity 0.25s ease-in-out;
 }
 
 .embed-footer {
-    font-size: .75rem;
+    position: relative;
+    /* bottom: 25px; */
+    font-size: 0.75rem;
 }
 
-.embed-footer>* {
+.embed-footer > * {
     vertical-align: middle;
 }
 
-.embed-footer>img {
+.embed-footer > img {
     width: 20px;
     height: 20px;
     margin-right: 5px;
