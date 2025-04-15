@@ -1,14 +1,22 @@
 version: "3.8"
 
 services:
-    mahook-web:
+    mahook-web-dev:
         image: mahook-web-dev:latest
         restart: always
         expose:
             - 3000
         ports:
             - "9999:3000"
-        container_name: mahook-web
+        develop:
+            watch:
+                - action: sync
+                  path: .
+                  target: /usr/src/app
+                  ignore:
+                      - node_modules
+                      - .git
+        container_name: mahook-web-dev
         environment:
             TZ: Asia/Seoul
             TWITTER_AUTH_TOKEN: ${TWITTER_AUTH_TOKEN}
@@ -24,11 +32,11 @@ services:
         networks:
             - mahook-dev
         depends_on:
-            - mahook-db
+            - mahook-db-dev
 
-    mahook-db:
+    mahook-db-dev:
         image: mahook-db-dev:latest
-        container_name: mahook-db
+        container_name: mahook-db-dev
         restart: always
         volumes:
             - /mahook-dev-db:/var/lib/mysql
