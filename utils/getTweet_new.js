@@ -45,48 +45,14 @@ const DEBUG = false;
 const fs = require("fs");
 const deepl = require("deepl-node");
 const { MessageBuilder, Webhook } = require("discord-webhook-node");
-const webhookManager = require("./webhookManager");
+const { webhookManager } = require("./webhookManager");
 const glossary = require("./glossary.json");
-const {
-    GoogleGenerativeAI,
-    GoogleGenerativeAIError,
-    HarmCategory,
-    HarmBlockThreshold,
-} = require("@google/generative-ai");
+const systemInstruction =
+    "Translate japanese to korean. Only translated sentences should be displayed in the response. Some words should be translated as below.\n" +
+    glossary.map((e) => `${e.source} is ${e.target}`).join(". ");
+const { GoogleGenAI } = require("@google/genai");
 const apiKey = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey);
-
-const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    systemInstruction:
-        "Translate japanese to korean. Only translated sentences should be displayed in the response. Some words should be translated as below.\n" +
-        glossary.map((e) => `${e.source} is ${e.target}`).join(". "),
-    safetySettings: [
-        {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-    ],
-});
-
-const generationConfig = {
-    temperature: 1,
-    topP: 0.95,
-    topK: 64,
-    maxOutputTokens: 8192,
-};
+const genAI = new GoogleGenAI({ apiKey });
 
 let profileURL = "";
 let prevLastTweetID = null;
@@ -167,7 +133,7 @@ async function getTimelineByUserID(userId) {
                 }
             });
 
-            return { success: true, data: data };
+            return data;
         } catch (e) {
             await sendDebugLog(
                 `[${new Date().toLocaleString(
@@ -176,7 +142,7 @@ async function getTimelineByUserID(userId) {
             );
             fs.writeFileSync("./tweetData", res_text);
             await sendDebugLog(null, "./tweetData");
-            return { success: false };
+            throw e;
         }
     } catch (e) {
         await sendDebugLog(
@@ -184,7 +150,7 @@ async function getTimelineByUserID(userId) {
                 "ja"
             )}] Tweet query fail\n\`\`\`shell\n${e.stack}\n\`\`\``
         );
-        return { success: false };
+        throw e;
     }
 }
 
@@ -216,17 +182,16 @@ async function translateTextDeepL(source, target, query) {
  */
 async function tryTranslateText(text) {
     let result = null;
+    console.log(text);
     try {
         result = await translateTextGemini(text);
     } catch (e) {
-        if (e instanceof GoogleGenerativeAIError) {
-            sendDebugLog(
-                `[${new Date().toLocaleString(
-                    "ja"
-                )}] Gemini translate fallback. try deepL translate.`
-            );
-            result = await translateTextDeepL("ja", "ko", text);
-        }
+        sendDebugLog(
+            `[${new Date().toLocaleString(
+                "ja"
+            )}] Gemini translate fallback. try deepL translate.`
+        );
+        result = await translateTextDeepL("ja", "ko", text);
     }
 
     return result;
@@ -237,12 +202,32 @@ async function tryTranslateText(text) {
  * @param {string} query 번역할 텍스트
  */
 async function translateTextGemini(query) {
-    const chatSession = model.startChat({
-        generationConfig,
+    const result = await genAI.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: query,
+        config: {
+            safetySettings: [
+                {
+                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    threshold: "BLOCK_NONE",
+                },
+                {
+                    category: "HARM_CATEGORY_HARASSMENT",
+                    threshold: "BLOCK_NONE",
+                },
+                {
+                    category: "HARM_CATEGORY_HATE_SPEECH",
+                    threshold: "BLOCK_NONE",
+                },
+                {
+                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    threshold: "BLOCK_NONE",
+                },
+            ],
+            systemInstruction: systemInstruction,
+        },
     });
-
-    const result = await chatSession.sendMessage(query);
-    return result.response.text().replace(/\\/g, "\\\\\\");
+    return result.text.replace(/\\/g, "\\\\\\");
 }
 
 /**
@@ -257,11 +242,9 @@ async function checkNewTweet() {
         }
     }
 
-    let data;
+    let timelineInfo;
     try {
-        data = await getTimelineByUserID(268758461);
-        if (!data.success) return;
-        let timelineInfo = data.data;
+        timelineInfo = await getTimelineByUserID(268758461);
         let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
 
         if (lastTweetID > prevLastTweetID || DEBUG) {
@@ -300,7 +283,10 @@ async function checkNewTweet() {
                 e.stack
             }\n\`\`\``
         );
-        fs.writeFileSync("./tweetData.json", JSON.stringify(data, null, 4));
+        fs.writeFileSync(
+            "./tweetData.json",
+            JSON.stringify(timelineInfo, null, 4)
+        );
         await sendDebugLog(null, "./tweetData.json");
     }
 }
@@ -311,8 +297,8 @@ async function sendRecentTweet(id) {
 
     await sendHook(
         !!id
-            ? timelineInfo.data.filter((e) => e["rest_id"] == id)[0]
-            : timelineInfo.data[0]
+            ? timelineInfo.filter((e) => e["rest_id"] == id)[0]
+            : timelineInfo[0]
     );
 }
 
@@ -364,13 +350,14 @@ async function getProfileURL() {
     if (!!profileURL) {
         return profileURL;
     } else {
-        let tweetInfo = await getTimelineByUserID(268758461);
-        if (tweetInfo.success) {
-            profileURL =
-                tweetInfo.data[0].core.user_results.result.legacy
-                    .profile_image_url_https;
+        try {
+            let tweetInfo = await getTimelineByUserID(268758461);
+            tweetInfo[0].core.user_results.result.legacy
+                .profile_image_url_https;
             return profileURL;
-        } else return "https://mahook.bass9030.dev/logo.png";
+        } catch {
+            return "https://mahook.bass9030.dev/logo.png";
+        }
     }
 }
 
