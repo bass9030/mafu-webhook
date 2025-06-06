@@ -1,21 +1,18 @@
-version: "3.8"
-
 services:
     mahook-web-dev:
-        image: mahook-web-dev:latest
-        restart: always
-        expose:
-            - 3000
-        ports:
-            - "9999:3000"
+        build: .
         develop:
             watch:
-                - action: sync
+                - action: sync+restart
                   path: .
                   target: /usr/src/app
                   ignore:
                       - node_modules
                       - .git
+        # expose:
+        #     - 3000
+        ports:
+            - "9999:3000"
         container_name: mahook-web-dev
         environment:
             TZ: Asia/Seoul
@@ -35,9 +32,11 @@ services:
             - mahook-db-dev
 
     mahook-db-dev:
-        image: mahook-db-dev:latest
+        build:
+            context: .
+            dockerfile: ./dockerfile.mariadb
         container_name: mahook-db-dev
-        restart: always
+        restart: unless-stopped
         volumes:
             - /mahook-dev-db:/var/lib/mysql
         environment:
