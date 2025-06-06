@@ -14,6 +14,13 @@ async function sendDebugLog(message) {
     await hook.send(message);
 }
 
+class WebhookNotFoundError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "WebhookNotFoundError";
+    }
+}
+
 class webhookManager {
     static async setLastTweetID(id) {
         let db;
@@ -23,9 +30,6 @@ class webhookManager {
                 "REPLACE INTO lastTweet (key_str, id) VALUES (?, ?);",
                 ["tweetID", id]
             );
-            return { success: true };
-        } catch (err) {
-            return { success: false, err };
         } finally {
             db?.release();
         }
@@ -52,9 +56,6 @@ class webhookManager {
                 "INSERT INTO webhooks (webhookURL, roleID, sendNoticeMessage) VALUES (?, ?, ?);",
                 [url, roleID, sendNoti ? 1 : 0]
             );
-            return { success: true };
-        } catch (err) {
-            return { success: false, err };
         } finally {
             db?.release();
         }
@@ -68,10 +69,9 @@ class webhookManager {
                 "DELETE FROM webhooks WHERE webhookURL = ?;",
                 [url]
             );
-            return { changes: result.affectedRows };
+            if (result.affectedRows == 0) throw new WebhookNotFoundError();
         } finally {
             db?.release();
-            return { changes: 0 };
         }
     }
 
@@ -83,10 +83,9 @@ class webhookManager {
                 "UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE webhookURL = ?;",
                 [roleID, sendNoti ? 1 : 0, url]
             );
-            return { changes: result.affectedRows };
+            if (result.affectedRows == 0) throw new WebhookNotFoundError();
         } finally {
             db?.release();
-            return { changes: 0 };
         }
     }
 
@@ -196,4 +195,7 @@ class webhookManager {
     }
 }
 
-module.exports = webhookManager;
+module.exports = {
+    webhookManager,
+    WebhookNotFoundError,
+};
