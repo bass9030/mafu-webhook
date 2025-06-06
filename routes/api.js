@@ -1,7 +1,10 @@
 var express = require("express");
 var router = express.Router();
 const crypto = require("crypto");
-const webhookManager = require("../utils/webhookManager");
+const {
+    webhookManager,
+    WebhookNotFoundError,
+} = require("../utils/webhookManager");
 var createError = require("http-errors");
 const { getProfileURL, sendRecentTweet } = require("../utils/getTweet_new");
 const { Webhook, MessageBuilder } = require("discord-webhook-node");
@@ -20,21 +23,13 @@ router.post("/register", async function (req, res, next) {
             !!!String(data.roleID).match(/[0-9]+/g) &&
             data.roleID != -1
         ) {
+            res.status(400);
             res.json({
                 status: -2,
                 message:
                     "역할 ID가 올바르지 않습니다.\n역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다.",
             });
             return;
-        }
-        let result = await webhookManager.addWebhook(
-            data.url,
-            data.roleID,
-            data.sendNoti
-        );
-
-        if (!result.success) {
-            throw result.err;
         }
 
         let embed = new MessageBuilder()
@@ -47,19 +42,24 @@ router.post("/register", async function (req, res, next) {
         hook.setUsername("마훅 - 마후 트윗 번역봇");
         hook.setAvatar(await getProfileURL());
         await hook.send(embed);
+
+        await webhookManager.addWebhook(data.url, data.roleID, data.sendNoti);
+
         res.json({ status: 0 });
     } catch (e) {
         console.error(e);
-        if (e.errno == 1062)
+        if (e.errno == 1062) {
+            res.status(409);
             res.json({ status: -2, message: "이미 등록된 웹후크 URL 입니다." });
-        else {
-            webhookManager.removeWebhook(data.url);
-            if (e.message.includes("Error sending webhook"))
-                res.json({
-                    status: -2,
-                    message: "올바르지 않은 웹후크 URL 입니다.",
-                });
-            else res.json({ status: -1 });
+        } else if (e.message.includes("Error sending webhook")) {
+            res.status(400);
+            res.json({
+                status: -2,
+                message: "올바르지 않은 웹후크 URL 입니다.",
+            });
+        } else {
+            res.status(500);
+            res.json({ status: -1 });
         }
     }
 });
@@ -77,6 +77,7 @@ router.post("/edit", async (req, res, next) => {
         data.roleID != "-1" &&
         !!!String(data.roleID).match(/[0-9]+/g)
     ) {
+        res.status(400);
         res.json({
             status: -2,
             message:
@@ -86,25 +87,20 @@ router.post("/edit", async (req, res, next) => {
     }
 
     try {
-        let changeCnt = (
-            await webhookManager.editWebhook(
-                data.url,
-                data.roleID,
-                data.sendNoti
-            )
-        ).changes;
-        if (changeCnt <= 0) {
+        await webhookManager.editWebhook(data.url, data.roleID, data.sendNoti);
+        res.json({ status: 0 });
+    } catch (e) {
+        if (e instanceof WebhookNotFoundError) {
+            res.status(404);
             res.json({
                 status: -2,
                 message:
                     "웹후크를 찾을 수 없습니다. 등록된 웹후크인지 확인해주세요.",
             });
-            return;
+        } else {
+            res.status(500);
+            res.json({ status: -1 });
         }
-        res.json({ status: 0 });
-    } catch (e) {
-        console.error(e);
-        res.json({ status: -1 });
     }
 });
 
@@ -115,34 +111,20 @@ router.delete("/unregister", async (req, res, next) => {
         return;
     }
     try {
-        let changeCnt = (
-            await webhookManager.removeWebhook(decodeURIComponent(data.url))
-        ).changes;
-
-        if (changeCnt <= 0) {
+        await webhookManager.removeWebhook(decodeURIComponent(data.url));
+        res.json({ status: 0 });
+    } catch (e) {
+        if (e instanceof WebhookNotFoundError) {
+            res.status(404);
             res.json({
                 status: -2,
                 message:
                     "웹후크를 찾을 수 없습니다. 등록된 웹후크인지 확인해주세요.",
             });
-            return;
+        } else {
+            res.status(500);
+            res.json({ status: -1 });
         }
-        res.json({ status: 0 });
-    } catch (e) {
-        res.json({ status: -1 });
-    }
-});
-
-router.get("/count", (req, res) => {
-    try {
-        res.json({
-            status: 0,
-            data: webhookManager.getWebhookCount(),
-        });
-    } catch {
-        res.json({
-            status: -1,
-        });
     }
 });
 
