@@ -217,10 +217,7 @@ async function unregisterWebhook() {
 let embed_idx = 0;
 
 function page_onLoad() {
-    // EMBED_CONTENT.innerHTML = EMBED_TEXT[embed_idx];
-    // EMBED_ELEMENT.style.height = EMBED_ELEMENT.clientHeight + "px";
     setInterval(transform_embed_text, 5000);
-
     getNoticeList();
 }
 
@@ -254,7 +251,7 @@ function transform_embed_text() {
     }, 250);
 }
 
-function createNoticeItem(title, date, content) {
+function createNoticeItem(title, date, content, isLast) {
     const noticeItem = document.createElement("div");
     const titleItem = document.createElement("span");
     titleItem.classList.add("h3");
@@ -278,7 +275,7 @@ function createNoticeItem(title, date, content) {
     noticeItem.appendChild(document.createElement("br"));
     noticeItem.appendChild(dateItem);
     noticeItem.appendChild(contentItem);
-    noticeItem.appendChild(splitLine);
+    if (!isLast) noticeItem.appendChild(splitLine);
 
     return noticeItem;
 }
@@ -293,10 +290,17 @@ async function getNoticeList() {
                 "<span>아직 올라온 공지가 없네요 ¯\\(°_o)/¯</span>";
             return;
         }
+        let idx = 0;
         for (let i of notices.data) {
             noticeList.appendChild(
-                createNoticeItem(i.title, i.date, i.content)
+                createNoticeItem(
+                    i.title,
+                    i.date,
+                    i.content,
+                    idx == notices.data.length - 1
+                )
             );
+            idx++;
         }
     } catch (e) {
         console.error(e);
