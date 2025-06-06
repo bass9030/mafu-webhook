@@ -1,0 +1,52 @@
+name: auto deploy production
+on:
+    push:
+        branches:
+            - production
+    workflow_dispatch:
+        inputs:
+            logLevel:
+                description: "Log level"
+                required: true
+                default: "warning"
+            tags:
+                description: "Test scenario tags"
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: tailscale/github-action@v3
+              name: Connect to Tailscale network
+              with:
+                  oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+                  oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+                  tag: tag:webserver
+
+            - uses: actions/checkout@v2
+              name: Clone repository
+
+            - name: Build image
+              run: |
+                  docker build -t mahook-web -f dockerfile .
+                  docker build -t mahook-db -f dockerfile.mariadb .
+                  docker image save mahook-web:latest -o ./mahook-web.tar
+                  docker image save mahook-db:latest -o ./mahook-db.tar
+                  chmod 664 ./mahook-web.tar
+                  chmod 664 ./mahook-db.tar
+
+            - name: Upload images
+              run: |
+                  scp -v -o StrictHostKeyChecking=no ./mahook-web.tar bass9030@web-server:/tmp
+                  scp -v -o StrictHostKeyChecking=no ./mahook-db.tar bass9030@web-server:/tmp
+
+            - name: Restarting service
+              run: |
+                  ssh -o StrictHostKeyChecking=no bass9030@web-server "
+                      docker-compose -f docker-compose-prod.yaml down
+                      docker rmi $(docker images -aq "mahook-*")
+                      docker load --input /tmp/mahook-web.tar
+                      docker load --input /tmp/mahook-db.tar
+                      docker-compose -f docker-compose-prod.yaml --env-file /home/bass9030/mahook.env up -d
+                      rm /tmp/mahook-*.tar
+                      exit
+                  "
