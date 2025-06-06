@@ -20,7 +20,7 @@ jobs:
               with:
                   oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
                   oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-                  tag: tag:webserver
+                  tags: tag:webserver
 
             - uses: actions/checkout@v2
               name: Clone repository
