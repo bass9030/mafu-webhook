@@ -12,7 +12,7 @@ services:
         # expose:
         #     - 3000
         ports:
-            - "9999:3000"
+            - "3000:3000"
         container_name: mahook-web-dev
         environment:
             TZ: Asia/Seoul
@@ -22,10 +22,12 @@ services:
             GEMINI_API_KEY: ${GEMINI_API_KEY}
             DEEPL_API_KEY: ${DEEPL_API_KEY}
             DEEPL_GLOSSARY_ID: ${DEEPL_GLOSSARY_ID}
+            NOTICE_TOKEN_KEY: ${NOTICE_TOKEN_KEY}
             DB_HOST: ${DB_HOST}
             DB_NAME: ${DB_NAME}
             DB_USER: ${DB_USER}
             DB_PASSWORD: ${DB_PASSWORD}
+            OTP_SECRET: ${OTP_SECRET}
         networks:
             - mahook-dev
         depends_on:
