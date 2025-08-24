@@ -3,7 +3,7 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-const { checkNewTweet } = require("./utils/getTweet_new");
+const { checkNewTweet } = require("./utils/getTweet");
 
 var indexRouter = require("./routes/index");
 var apiRouter = require("./routes/api");
@@ -47,7 +47,9 @@ app.use(function (err, req, res, next) {
     res.render("error");
 });
 
-checkNewTweet();
-setInterval(checkNewTweet, 1000 * 60 * 5);
+if (process.env.NODE_ENV == "production") {
+    checkNewTweet();
+    setInterval(checkNewTweet, 1000 * 60 * 5);
+}
 
 module.exports = app;
