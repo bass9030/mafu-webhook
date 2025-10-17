@@ -1,0 +1,29 @@
+services:
+    mahook-migration:
+        build: .
+        container_name: mahook-migration
+        restart: on-failure:5
+        environment:
+            DB_HOST: ${DB_HOST}
+            DB_NAME: ${DB_NAME}
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+        networks:
+            - mahook
+        depends_on:
+            - mahook-db
+
+    mahook-db:
+        image: mahook-db-dev:latest
+        container_name: mariadb-migration
+        volumes:
+            - /mahook-db:/var/lib/mysql
+        environment:
+            TZ: Asia/Seoul
+            MARIADB_USER: ${DB_USER}
+            MARIADB_PASSWORD: ${DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+        networks:
+            - mahook
+networks:
+    mahook:
