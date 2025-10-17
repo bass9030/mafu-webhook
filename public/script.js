@@ -30,6 +30,7 @@ const mentionIdInputElement = document.getElementById("roleId");
 const formElement = document.getElementById("registerForm");
 const allowMentionElement = document.getElementById("allowMention");
 const allowReceiveNotiElement = document.getElementById("allowReceiveNoti");
+const allowReceiveLineElement = document.getElementById("allowReceiveLINE");
 
 webhookInputElement.addEventListener("input", on_formChanged);
 mentionIdInputElement.addEventListener("input", on_formChanged);
@@ -113,10 +114,18 @@ function disableButtons() {
     document.querySelector(".edit").disabled = true;
 }
 
+function setOptions(isLINESend, isNotiSend, isMention) {
+    let bit = `${isLINESend ? "1" : "0"}${isNotiSend ? "1" : "0"}${
+        isMention ? "1" : "0"
+    }`.padStart(8, "0");
+    return parseInt(bit, 2);
+}
+
 async function registerWebhook() {
     let webhookURL = webhookInputElement.value;
     let roleID = allowMentionElement.checked ? mentionIdInputElement.value : -1;
     let allowSendNoti = allowReceiveNotiElement.checked;
+    let allowSendLine = allowReceiveLineElement.checked;
 
     disableButtons();
 
@@ -132,14 +141,19 @@ async function registerWebhook() {
                 body: JSON.stringify({
                     url: webhookURL,
                     roleID: roleID,
-                    sendNoti: allowSendNoti,
+                    options: setOptions(
+                        allowSendLine,
+                        allowSendNoti,
+                        roleID != -1
+                    ),
                 }),
             })
         ).json();
-        if (response.status == -2)
+        if (400 <= response.status && response.status < 500)
             showError("웹후크 등록에 실패했습니다: " + response.message);
-        else if (response.status != 0) throw new Error();
-        else showSuccess("웹후크 등록 성공!");
+        else if (200 <= response.status && response.status < 400)
+            showSuccess("웹후크 등록 성공!");
+        else throw new Error();
     } catch {
         showError(
             "웹후크 등록에 실패했습니다: 알 수 없는 오류가 발생하였습니다."
@@ -171,11 +185,13 @@ async function editWebhook() {
             })
         ).json();
 
-        if (response.status == -2)
-            showError("웹후크 등록에 실패했습니다: " + response.message);
-        else if (response.status != 0) throw new Error();
-        else showSuccess("웹후크 수정 성공!");
-    } catch {
+        if (400 <= response.status && response.status < 500)
+            showError("웹후크 수정에 실패했습니다: " + response.message);
+        else if (200 <= response.status && response.status < 400)
+            showSuccess("웹후크 수정 성공!");
+        else throw new Error();
+    } catch (e) {
+        console.error(e);
         showError(
             "웹후크 수정에 실패했습니다: 알 수 없는 오류가 발생하였습니다."
         );
@@ -202,13 +218,15 @@ async function unregisterWebhook() {
             )
         ).json();
 
-        if (response.status == -2)
-            showError("웹후크 등록에 실패했습니다: " + response.message);
-        else if (response.status != 0) throw new Error();
-        showSuccess("웹후크 삭제 성공!");
-    } catch {
+        if (400 <= response.status && response.status < 500)
+            showError("웹후크 취소에 실패했습니다: " + response.message);
+        else if (200 <= response.status && response.status < 400)
+            showSuccess("웹후크 취소 성공!");
+        else throw new Error();
+    } catch (e) {
+        console.error(e);
         showError(
-            "웹후크 삭제에 실패했습니다: 알 수 없는 오류가 발생하였습니다."
+            "웹후크 취소에 실패했습니다: 알 수 없는 오류가 발생하였습니다."
         );
     }
     closeRegister();
