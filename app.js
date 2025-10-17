@@ -50,6 +50,8 @@ app.use(function (err, req, res, next) {
 if (process.env.NODE_ENV == "production") {
     checkNewTweet();
     setInterval(checkNewTweet, 1000 * 60 * 5);
+} else {
+    console.log("development mode. tweet detection is disabled");
 }
 
 module.exports = app;
