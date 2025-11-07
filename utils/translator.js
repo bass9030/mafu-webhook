@@ -20,7 +20,7 @@ async function translateTextDeepL(source, target, query) {
     // query = convertToHalf(query);
     let response = await translator.translateText(
         query,
-        source == "auto" || !!source ? source : null,
+        !!source ? source : null,
         target,
         {
             glossary: process.env.DEEPL_GLOSSARY_ID,
