@@ -12,7 +12,6 @@ services:
     mariadb:
         image: mahook-db-dev:latest
         container_name: mariadb
-        restart: always
         volumes:
             - /mahook-db:/var/lib/mysql
         environment:
