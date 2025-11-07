@@ -14,6 +14,15 @@ const WEBHOOK_TYPE = {
     LINE: 2,
 };
 
+const pool = mariadb.createPool({
+    host: process.env.DB_HOST,
+    port: 3306,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    connectionLimit: 30,
+});
+
 class WebhookNotFoundError extends Error {
     constructor(message) {
         super(message);
@@ -23,19 +32,11 @@ class WebhookNotFoundError extends Error {
 
 class WebhookManager {
     constructor() {
-        this.pool = mariadb.createPool({
-            host: process.env.DB_HOST,
-            port: 3306,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
-            connectionLimit: 10,
-        });
         this.db = null;
     }
 
     async getConnection() {
-        this.db = await this.pool.getConnection();
+        this.db = await pool.getConnection();
     }
 
     async releaseConnection() {
