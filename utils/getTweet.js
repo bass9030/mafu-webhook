@@ -1,7 +1,7 @@
 const DEBUG = false;
 const { default_features, default_variables } = require("./twitterFeatures");
 const { EmbedBuilder } = require("discord.js");
-const { WebhookManager } = require("./webhookManager");
+const { WebhookManager, WEBHOOK_TYPE } = require("./webhookManager");
 const translateText = require("./translator");
 const sendDebugLog = require("./DebugLogger");
 
@@ -131,7 +131,8 @@ async function checkNewTweet() {
             }
             for (let i = 0; i < newTweets.length; i++) {
                 try {
-                    await sendHook(newTweets[i]);
+                    const embed = await getWebhookEmbed(newTweets[i]);
+                    await webhookManager.sendWebhook(embed);
                 } catch (e) {
                     await sendDebugLog(
                         `Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``
@@ -151,12 +152,16 @@ async function checkNewTweet() {
 
 async function sendRecentTweet(id) {
     let timelineInfo = await getTimelineByUserID(268758461);
+    const webhookManager = new WebhookManager();
+    await webhookManager.getConnection();
 
-    await sendHook(
+    const embed = await getWebhookEmbed(
         !!id
             ? timelineInfo.filter((e) => e["rest_id"] == id)[0]
             : timelineInfo[0]
     );
+
+    webhookManager.sendWebhook(embed, WEBHOOK_TYPE.TWITTER);
 }
 
 async function generationTweetMarkdown(tweetInfo, stack = 0, max_stack = 3) {
@@ -260,7 +265,7 @@ async function generationTweetMarkdown(tweetInfo, stack = 0, max_stack = 3) {
  * tweetInfo 데이터를 기반으로 Discord 훅 전송
  * @param {object} tweetInfo 트윗 정보 Object
  */
-async function sendHook(tweetInfo) {
+async function getWebhookEmbed(tweetInfo) {
     let created_at = new Date(tweetInfo.legacy?.created_at);
 
     // 번역
@@ -296,10 +301,7 @@ async function sendHook(tweetInfo) {
             embed.setImage(tweetInfo.legacy.entities.media[0].media_url_https);
     }
 
-    const webhookManager = new WebhookManager();
-    await webhookManager.getConnection();
-    await webhookManager.sendWebhook(embed);
-    webhookManager.releaseConnection();
+    return embed;
 }
 
 async function getProfileURL() {
