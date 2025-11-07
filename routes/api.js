@@ -221,13 +221,18 @@ router.post("/sendNoti", async (req, res, next) => {
     }
 });
 
-router.get("/testWebhook", (req, res, next) => {
+router.get("/testWebhook", async (req, res, next) => {
     if (req.app.get("env") !== "development") {
         next(createError(404));
         return;
     }
-    sendRecentTweet(req.query.id);
-    res.send("웹훅 전송 성공");
+    try {
+        sendRecentTweet(req.query.id);
+        res.send("웹훅 전송 성공");
+    } catch (e) {
+        console.error(e);
+        res.status(500).send();
+    }
 });
 
 router.post("/line-webhook", async (req, res, next) => {
