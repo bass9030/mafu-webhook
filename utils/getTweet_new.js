@@ -80,6 +80,11 @@ async function getTimelineByUserID(userId) {
         let response = await fetch(reqURL, {
             method: "GET",
             headers: {
+                referer: "https://x.com",
+                "x-twitter-client-language": "ko",
+                "x-twitter-active-user": "yes",
+                "user-agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
                 cookie: `auth_token=${process.env.TWITTER_AUTH_TOKEN}; ct0=${process.env.TWITTER_CT0};`,
                 authorization:
                     "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
