@@ -4,11 +4,20 @@ services:
         develop:
             watch:
                 - action: sync+restart
-                  path: .
-                  target: /usr/src/app
-                  ignore:
-                      - node_modules
-                      - .git
+                  path: ./app.js
+                  target: /usr/src/app/app.js
+                - action: sync+restart
+                  path: ./utils/
+                  target: /usr/src/app/utils
+                - action: sync+restart
+                  path: ./routes/
+                  target: /usr/src/app/routes
+                - action: sync+restart
+                  path: ./views/
+                  target: /usr/src/app/views
+                - action: sync
+                  path: ./public/
+                  target: /usr/src/app/public
         ports:
             - "3000:3000"
         container_name: mahook-web
@@ -37,7 +46,6 @@ services:
             context: .
             dockerfile: ./dockerfile.mariadb
         container_name: mahook-db
-        restart: unless-stopped
         volumes:
             - /mahook-db:/var/lib/mysql
         environment:
