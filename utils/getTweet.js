@@ -3,7 +3,11 @@ const { default_features, default_variables } = require("./twitterFeatures");
 const { EmbedBuilder } = require("discord.js");
 const { WebhookManager, WEBHOOK_TYPE } = require("./webhookManager");
 const translateText = require("./translator");
-const sendDebugLog = require("./DebugLogger");
+const {
+    sendErrorLog,
+    sendInfoLog,
+    sendResponseDataLog,
+} = require("./DebugLogger");
 
 let profileURL = "";
 let prevLastTweetID = null;
@@ -13,7 +17,7 @@ let prevLastTweetID = null;
  * @param {BigInt|String} userId userId is not username!!
  */
 async function getTimelineByUserID(userId) {
-    const reqURL = `https://x.com/i/api/graphql/Y9WM4Id6UcGFE8Z-hbnixw/UserTweets?variables=${encodeURIComponent(
+    const reqURL = `https://x.com/i/api/graphql/oRJs8SLCRNRbQzuZG93_oA/UserTweets?variables=${encodeURIComponent(
         JSON.stringify(Object.assign(default_variables, { userId: userId }))
     )}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
 
@@ -25,17 +29,24 @@ async function getTimelineByUserID(userId) {
                 cookie: `auth_token=${process.env.TWITTER_AUTH_TOKEN}; ct0=${process.env.TWITTER_CT0};`,
                 authorization:
                     "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+                "user-agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
                 "x-csrf-token": process.env.TWITTER_CT0,
                 "x-twitter-active-user": "yes",
                 "x-twitter-client-language": "en",
             },
         });
-        let res_text;
+        let res_text = "";
         try {
+            if (!response.ok) {
+                throw new Error(
+                    `Twitter API response not ok: ${response.status} ${response.statusText}`
+                );
+            }
             res_text = await response.text();
             res_json = JSON.parse(res_text);
             let tweets =
-                res_json.data.user.result.timeline_v2.timeline.instructions
+                res_json.data.user.result.timeline.timeline.instructions
                     .filter((e) => e.type == "TimelineAddEntries")[0]
                     .entries.filter((e) => {
                         return (
@@ -80,14 +91,13 @@ async function getTimelineByUserID(userId) {
 
             return data;
         } catch (e) {
-            await sendDebugLog(
-                `Response parse failed\n\`\`\`\n${e.stack}\n\`\`\``,
-                res_text
-            );
+            sendErrorLog(e);
+            sendResponseDataLog(res_text);
             throw e;
         }
     } catch (e) {
-        await sendDebugLog(`Tweet query fail\n\`\`\`\n${e.stack}\n\`\`\``);
+        sendErrorLog(e);
+        sendResponseDataLog(res_text);
         throw e;
     }
 }
@@ -120,11 +130,7 @@ async function checkNewTweet() {
                 .reverse();
             prevLastTweetID = lastTweetID;
             webhookManager.setLastTweetID(String(lastTweetID));
-            console.log(
-                `[${new Date().toLocaleString("ja")}] Detect ${
-                    newTweets.length
-                } new tweet`
-            );
+            sendInfoLog(`${newTweets.length} new tweet detect`);
             if ((await webhookManager.getWebhookCount()) < 1) {
                 console.log("No user found. Ignored");
                 return;
@@ -134,17 +140,13 @@ async function checkNewTweet() {
                     const embed = await getWebhookEmbed(newTweets[i]);
                     await webhookManager.sendWebhook(embed);
                 } catch (e) {
-                    await sendDebugLog(
-                        `Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``
-                    );
+                    sendErrorLog(e);
                 }
             }
         }
     } catch (e) {
-        await sendDebugLog(
-            `Tweet send fail\n\`\`\`\n${e.stack}\n\`\`\``,
-            JSON.stringify(timelineInfo, null, 4)
-        );
+        sendErrorLog(e);
+        sendResponseDataLog(JSON.stringify(timelineInfo));
     } finally {
         webhookManager.releaseConnection();
     }
