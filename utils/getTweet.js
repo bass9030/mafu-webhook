@@ -187,7 +187,7 @@ async function generationTweetMarkdown(tweetInfo, stack = 0, max_stack = 3) {
     if (isRetweet && stack < max_stack) {
         // RT
         let retweetData = tweetInfo.legacy?.retweeted_status_result.result;
-        let retweetUser = retweetData?.core?.user_results?.result.legacy;
+        let retweetUser = retweetData?.core?.user_results?.result.core;
 
         // RT 트윗 사용자 정보
         let retweetUserName = retweetUser.name;
@@ -222,7 +222,7 @@ async function generationTweetMarkdown(tweetInfo, stack = 0, max_stack = 3) {
     } else if (isQuote && stack < max_stack) {
         // 인용
         let quoteData = tweetInfo.quoted_status_result.result;
-        let quoteUser = quoteData.core.user_results.result.legacy;
+        let quoteUser = quoteData.core.user_results.result.core;
 
         // 인용 트윗 사용자 정보
         let quoteUserName = quoteUser.name;
@@ -276,8 +276,7 @@ async function getWebhookEmbed(tweetInfo) {
     // translatedText = await translateText(translatedText);
 
     //프로필 URL
-    profileURL =
-        tweetInfo.core.user_results.result.legacy.profile_image_url_https;
+    profileURL = tweetInfo.core.user_results.result.avatar.image_url;
     let originalLink =
         "https://x.com/uni_mafumafu/status/" + tweetInfo.legacy.id_str;
 
@@ -312,8 +311,7 @@ async function getProfileURL() {
     } else {
         try {
             let tweetInfo = await getTimelineByUserID(268758461);
-            tweetInfo[0].core.user_results.result.legacy
-                .profile_image_url_https;
+            tweetInfo[0].core.user_results.result.avatar.image_url;
             return profileURL;
         } catch {
             return "https://mahook.bass9030.dev/logo.png";
