@@ -6,7 +6,7 @@ const systemInstruction =
 const { GoogleGenAI } = require("@google/genai");
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenAI({ apiKey });
-const sendDebugLog = require("./DebugLogger");
+const { sendErrorLog } = require("./DebugLogger");
 
 /**
  * 번역 (DeepL 번역)
@@ -42,9 +42,7 @@ async function translateText(text) {
     try {
         result = await translateTextGemini(text);
     } catch (e) {
-        sendDebugLog(
-            `Gemini translate fallback. try deepL translate.\nStackTrace:\`\`\`\n${e.stack}\n\`\`\``
-        );
+        sendErrorLog(e);
         result = await translateTextDeepL("ja", "ko", text);
     }
 
@@ -57,7 +55,7 @@ async function translateText(text) {
  */
 async function translateTextGemini(query) {
     const result = await genAI.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash-lite",
         contents: query,
         config: {
             safetySettings: [
