@@ -227,11 +227,11 @@ router.get("/testWebhook", async (req, res, next) => {
         return;
     }
     try {
-        sendRecentTweet(req.query.id);
+        await sendRecentTweet(req.query.id);
         res.send("웹훅 전송 성공");
     } catch (e) {
         console.error(e);
-        res.status(500).send();
+        res.status(500).send(`<pre><code>${e.stack}</code></pre>`);
     }
 });
 
