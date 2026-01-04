@@ -1,6 +1,6 @@
 const mariadb = require("mariadb");
 const { WebhookClient, EmbedBuilder } = require("discord.js");
-const sendDebugLog = require("./DebugLogger");
+const { sendErrorLog, sendInfoLog } = require("./DebugLogger");
 
 /**
  * @typedef { Number } WEBHOOK_TYPES
@@ -219,11 +219,12 @@ class WebhookManager {
                 success_cnt++;
             } catch (err) {
                 err_cnt++;
+                sendErrorLog(err);
                 console.error(`Failed to send webhook to ${e.webhookURL}`);
                 console.error(err);
             }
         }
-        sendDebugLog(
+        sendInfoLog(
             `Webhook sended. \n` +
                 `Total: ${webhooks.length} | Success: ${success_cnt} | Fail: ${err_cnt}`
         );
