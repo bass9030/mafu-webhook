@@ -7,6 +7,7 @@
     },
     "dependencies": {
         "@google/genai": "^0.13.0",
+        "@sentry/node": "^10.32.1",
         "app-root-path": "^3.1.0",
         "cookie-parser": "~1.4.7",
         "debug": "~2.6.9",
