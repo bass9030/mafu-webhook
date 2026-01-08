@@ -1,4 +1,6 @@
 const mariadb = require("mariadb");
+const process = require('process');
+require('dotenv').config();
 
 function setOptions(isLINESend, isNotiSend, isMention) {
     let bit = `${isLINESend ? "1" : "0"}${isNotiSend ? "1" : "0"}${
@@ -8,6 +10,7 @@ function setOptions(isLINESend, isNotiSend, isMention) {
 }
 
 async function main() {
+    console.log('connecting db...');
     const db = await mariadb.createConnection({
         host: process.env.DB_HOST,
         port: 3306,
@@ -16,7 +19,7 @@ async function main() {
         database: process.env.DB_NAME,
     });
 
-    // await db.execute("BEGIN");
+    console.log('adding new column...');
     await db.query(
         "ALTER TABLE webhooks ADD COLUMN `channelID` VARCHAR(20) NOT NULL AFTER `id`;"
     );
@@ -28,6 +31,7 @@ async function main() {
     );
 
     let data = await db.query("SELECT * FROM webhooks;");
+    console.log('migrating webhook url structure...');
     for (let e of data) {
         let options = setOptions(true, e.sendNoticeMessage, e.roleID != -1);
 
@@ -40,9 +44,12 @@ async function main() {
         );
     }
 
+    console.log('dropping old column...');
     await db.query("ALTER TABLE webhooks DROP COLUMN `webhookURL`;");
     await db.query("ALTER TABLE webhooks DROP COLUMN `sendNoticeMessage`;");
-    // await db.execute("END;");
+
+    console.log('done! goodbye!')
+    process.exit(0);    
 }
 
 main();
