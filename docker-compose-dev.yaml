@@ -1,51 +1,60 @@
 services:
-    mahook-web-dev:
+    mahook-web:
         build: .
         develop:
             watch:
                 - action: sync+restart
-                  path: .
-                  target: /usr/src/app
-                  ignore:
-                      - node_modules
-                      - .git
-        # expose:
-        #     - 3000
+                  path: ./app.js
+                  target: /usr/src/app/app.js
+                - action: sync+restart
+                  path: ./utils/
+                  target: /usr/src/app/utils
+                - action: sync+restart
+                  path: ./routes/
+                  target: /usr/src/app/routes
+                - action: sync+restart
+                  path: ./views/
+                  target: /usr/src/app/views
+                - action: sync
+                  path: ./public/
+                  target: /usr/src/app/public
         ports:
-            - "9999:3000"
-        container_name: mahook-web-dev
+            - "3000:3000"
+        container_name: mahook-web
         environment:
             TZ: Asia/Seoul
+            NODE_ENV: development
             TWITTER_AUTH_TOKEN: ${TWITTER_AUTH_TOKEN}
             TWITTER_CT0: ${TWITTER_CT0}
             DEBUG_WEBHOOK_URL: ${DEBUG_WEBHOOK_URL}
             GEMINI_API_KEY: ${GEMINI_API_KEY}
             DEEPL_API_KEY: ${DEEPL_API_KEY}
             DEEPL_GLOSSARY_ID: ${DEEPL_GLOSSARY_ID}
+            NOTICE_TOKEN_KEY: ${NOTICE_TOKEN_KEY}
             DB_HOST: ${DB_HOST}
             DB_NAME: ${DB_NAME}
             DB_USER: ${DB_USER}
             DB_PASSWORD: ${DB_PASSWORD}
+            OTP_SECRET: ${OTP_SECRET}
         networks:
-            - mahook-dev
+            - mahook
         depends_on:
-            - mahook-db-dev
+            - mahook-db
 
-    mahook-db-dev:
+    mahook-db:
         build:
             context: .
             dockerfile: ./dockerfile.mariadb
-        container_name: mahook-db-dev
-        restart: unless-stopped
+        container_name: mahook-db
         volumes:
-            - /mahook-dev-db:/var/lib/mysql
+            - /mahook-db:/var/lib/mysql
         environment:
             TZ: Asia/Seoul
             MARIADB_USER: ${DB_USER}
             MARIADB_PASSWORD: ${DB_PASSWORD}
             MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
         networks:
-            - mahook-dev
+            - mahook
 
 networks:
-    mahook-dev:
+    mahook:

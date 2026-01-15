@@ -11,7 +11,7 @@ services:
         container_name: mahook-web
         environment:
             TZ: Asia/Seoul
-            NODE_ENV: production
+            NODE_ENV: ${NODE_ENV}
             TWITTER_AUTH_TOKEN: ${TWITTER_AUTH_TOKEN}
             TWITTER_CT0: ${TWITTER_CT0}
             DEBUG_WEBHOOK_URL: ${DEBUG_WEBHOOK_URL}

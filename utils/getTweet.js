@@ -1,138 +1,335 @@
-/* ===== 마후 트윗 번역봇 재가동!! ===== */
-let cheerio = require('cheerio')
-const path = require('path')
-const deepl = require('deepl-node');
-const appRoot = require('app-root-path').path;
-require('dotenv').config({
-    path: path.join(appRoot, '.env')
-});
-const fs = require('fs')
-const { MessageBuilder } = require('discord-webhook-node');
 const DEBUG = false;
-const webhookManager = require('./webhookManager');
+const { default_features, default_variables } = require("./twitterFeatures");
+const { EmbedBuilder } = require("discord.js");
+const { WebhookManager, WEBHOOK_TYPE } = require("./webhookManager");
+const translateText = require("./translator");
+const {
+    sendErrorLog,
+    sendInfoLog,
+    sendResponseDataLog,
+} = require("./DebugLogger");
 
-let profileURL = '';
-let prevLastTweetID = 0;
-if(fs.existsSync('./lastTweet.txt')) prevLastTweetID = BigInt(fs.readFileSync('./lastTweet.txt'));
-else fs.writeFileSync('./lastTweet.txt', '0');
-
-
-function convertToHalf(e) {
-    return e.replace(/[！-～]/g, (halfwidthChar) =>
-      String.fromCharCode(halfwidthChar.charCodeAt(0) - 0xfee0)
-    );
-}
-
-/**
- * 번역 (DeepL 번역)
- * @param {string} source 번역할 언어(auto: 자동인식)
- * @param {string} target 번역될 언어
- * @param {string} query 번역할 텍스트
- */
-async function translateTextDeepL(source, target, query) {
-    const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
-    const response = await translator.translateText(convertToHalf(query), (source == 'auto' || !!source) ? source : null, target, {
-        glossary: '0e46d5a2-c745-41c7-8ccd-d29b986de309'
-    });
-
-    return response.text;
-}
+let profileURL = "";
+let prevLastTweetID = null;
 
 /**
- * userID 트위터 타임라인 반환
- * @param {string} userID 사용자 ID
+ *
+ * @param {BigInt|String} userId userId is not username!!
  */
-async function getTimelineByUserID(userID) {
-    let response = await (await fetch(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${encodeURIComponent(userID)}?hl=kr`, {
-        method: 'GET',
-        headers: {
-            'Cookie': `auth_token=${process.env.TWITTER_AUTH_TOKEN};`
+async function getTimelineByUserID(userId) {
+    const reqURL = `https://x.com/i/api/graphql/oRJs8SLCRNRbQzuZG93_oA/UserTweets?variables=${encodeURIComponent(
+        JSON.stringify(Object.assign(default_variables, { userId: userId }))
+    )}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
+
+    try {
+        let response = await fetch(reqURL, {
+            method: "GET",
+            headers: {
+                referer: "https://x.com/",
+                cookie: `auth_token=${process.env.TWITTER_AUTH_TOKEN}; ct0=${process.env.TWITTER_CT0};`,
+                authorization:
+                    "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+                "user-agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+                "x-csrf-token": process.env.TWITTER_CT0,
+                "x-twitter-active-user": "yes",
+                "x-twitter-client-language": "en",
+            },
+        });
+        let res_text = "";
+        try {
+            if (!response.ok) {
+                throw new Error(
+                    `Twitter API response not ok: ${response.status} ${response.statusText}`
+                );
+            }
+            res_text = await response.text();
+            res_json = JSON.parse(res_text);
+            let tweets =
+                res_json.data.user.result.timeline.timeline.instructions
+                    .filter((e) => e.type == "TimelineAddEntries")[0]
+                    .entries.filter((e) => {
+                        return (
+                            e.entryId.match(
+                                /^profile\-conversation\-[0-9]+/g
+                            ) || e.entryId.match(/^tweet\-[0-9]+/g)
+                        );
+                    });
+
+            let data = [];
+            for (let i = 0; i < tweets.length; i++) {
+                let e = tweets[i];
+                if (e.entryId.match(/^tweet\-[0-9]+/g)) {
+                    // 일반 트윗
+                    data.push(e.content.itemContent.tweet_results.result);
+                } else if (e.entryId.match(/^profile\-conversation\-[0-9]+/g)) {
+                    // 타래 트윗
+                    for (let j = 0; j < e.content.items.length; j++) {
+                        let f = e.content.items[j];
+                        if (
+                            !f.entryId.match(
+                                /^profile\-conversation\-[0-9]+\-tweet\-[0-9]+/g
+                            )
+                        )
+                            continue;
+                        data.push(f.item.itemContent.tweet_results.result);
+                    }
+                }
+            }
+
+            data.sort((a, b) => {
+                a = BigInt(a.rest_id);
+                b = BigInt(b.rest_id);
+                if (a > b) {
+                    return -1;
+                } else if (a < b) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+
+            return data;
+        } catch (e) {
+            sendErrorLog(e);
+            sendResponseDataLog(res_text);
+            throw e;
         }
-    })).text()
-    let $ = cheerio.load(response);
-
-    // is_quote_status: 인용 여부
-    // quoted_status: 인용 트윗 내용
-    let twitterInfo = JSON.parse($('script#__NEXT_DATA__').html()).props.pageProps;
-    let timeline = twitterInfo.timeline.entries;
-    fs.writeFileSync('./timeline.json', JSON.stringify(timeline, null, 4));
-    let last_tweet_id = twitterInfo.latest_tweet_id
-    return {timeline, last_tweet_id};
-}
-
-/**
- * tweetInfo 데이터를 기반으로 Discord 훅 전송
- * @param {object} tweetInfo 트윗 정보 Object
- */
-async function sendHook(tweetInfo) {
-        // 트위터 본문
-        let content = tweetInfo.content.tweet;
-        let created_at = new Date(content.created_at);
-
-        // DeepL 번역
-        let translatedText = await translateTextDeepL('ja', 'ko', content.full_text);
-
-        profileURL = content.user.profile_image_url_https;
-        let originalLink = 'https://twitter.com/uni_mafumafu/status/' + content.id_str;
-
-        // 인용 트윗 처리
-        if(content?.is_quote_status) {
-            translatedText += `\n\nhttps://twitter.com${content.quoted_status.permalink}`
-        }
-    
-        // 번역된 문장을 메시지로 만든다.
-	    // await hook.send('<@&757040827620130896>')
-        let embed = new MessageBuilder()
-            .setTitle('New Tweet Release!')
-            .setURL(originalLink)
-            .setFooter(originalLink, profileURL)
-            .setTimestamp(created_at)
-            .setDescription(translatedText.trim())
-            .setColor('#1da1f2');
-        
-        if(!!content.entities.media.length) embed.setImage(content.entities.media[0].media_url_https);
-        webhookManager.sendWebhook(embed, profileURL);
-}
-
-async function getProfileURL() {
-    if(!!profileURL) {
-        return profileURL;
-    }else{
-        let tweetInfo = await getTimelineByUserID('uni_mafumafu');
-        profileURL = tweetInfo.timeline[0].content.tweet.user.profile_image_url_https;
-        return profile;
+    } catch (e) {
+        sendErrorLog(e);
+        sendResponseDataLog(res_text);
+        throw e;
     }
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
  * 새 트윗 감지
  */
 async function checkNewTweet() {
-    let timelineInfo = await getTimelineByUserID('uni_mafumafu');
-    let lastTweetID = BigInt(timelineInfo.last_tweet_id);
+    const webhookManager = new WebhookManager();
+    await webhookManager.getConnection();
+    if (!!!prevLastTweetID) {
+        prevLastTweetID = await webhookManager.getLastTweetID();
+        if (!!!prevLastTweetID) {
+            await webhookManager.setLastTweetID(0);
+            prevLastTweetID = 0;
+        }
+    }
 
-    if(lastTweetID > prevLastTweetID || DEBUG) {
-        let newTweets = timelineInfo.timeline.filter(e => {
-            let id = BigInt(e.content.tweet.id_str);
-            return id > prevLastTweetID
-        }).reverse();
-        prevLastTweetID = lastTweetID;
-        fs.writeFileSync('./lastTweet.txt', String(lastTweetID));
-        console.log(`[${new Date().toLocaleString('ja')}] ${newTweets.length} new tweet detect`);
-        for(let i = 0; i < newTweets.length; i++) {
-            await sendHook(newTweets[i]);
-            await sleep(1500);
+    let timelineInfo;
+    try {
+        timelineInfo = await getTimelineByUserID(268758461);
+        let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
+
+        if (lastTweetID > prevLastTweetID || DEBUG) {
+            let newTweets = timelineInfo
+                .filter((e) => {
+                    let id = BigInt(e.legacy.id_str);
+                    return id > prevLastTweetID;
+                })
+                .reverse();
+            prevLastTweetID = lastTweetID;
+            webhookManager.setLastTweetID(String(lastTweetID));
+            sendInfoLog(`${newTweets.length} new tweet detect`);
+            if ((await webhookManager.getWebhookCount()) < 1) {
+                console.log("No user found. Ignored");
+                return;
+            }
+            for (let i = 0; i < newTweets.length; i++) {
+                try {
+                    const embed = await getWebhookEmbed(newTweets[i]);
+                    await webhookManager.sendWebhook(embed);
+                } catch (e) {
+                    sendErrorLog(e);
+                }
+            }
+        }
+    } catch (e) {
+        sendErrorLog(e);
+        sendResponseDataLog(JSON.stringify(timelineInfo));
+    } finally {
+        webhookManager.releaseConnection();
+    }
+}
+
+async function sendRecentTweet(id) {
+    let timelineInfo = await getTimelineByUserID(268758461);
+    const webhookManager = new WebhookManager();
+    await webhookManager.getConnection();
+
+    const embed = await getWebhookEmbed(
+        !!id
+            ? timelineInfo.filter((e) => e["rest_id"] == id)[0]
+            : timelineInfo[0]
+    );
+
+    webhookManager.sendWebhook(embed, WEBHOOK_TYPE.TWITTER);
+}
+
+async function generationTweetMarkdown(tweetInfo, stack = 0, max_stack = 3) {
+    stack++;
+
+    // console.log(JSON.stringify(tweetInfo, null, 4));
+
+    let result = "";
+
+    let isRetweet =
+        tweetInfo.legacy?.retweeted ||
+        !!tweetInfo.legacy?.retweeted_status_result;
+    let isQuote =
+        tweetInfo.legacy?.is_quote_status || !!tweetInfo.quoted_status_result;
+
+    // 인용/RT 트윗 처리
+    // 인용트를 RT | retweeted: true, is_quote_status: true, retweeted_status_result에 인용트 내용
+    // 인용트를 인용 | retweeted: false, is_quote_status: true, quoted_status_result에 인용트 내용
+    // RT | retweeted: true, is_quote_status: false, retweeted_status_result에 RT내용
+    // 인용트 | retweeted: false, is_qoute_status: true, quoted_status_result에 인용트 내용
+    if (isRetweet && stack < max_stack) {
+        // RT
+        let retweetData = tweetInfo.legacy?.retweeted_status_result.result;
+        let retweetUser = retweetData?.core?.user_results?.result.core;
+
+        // RT 트윗 사용자 정보
+        let retweetUserName = retweetUser.name;
+        let retweetUserHandle = retweetUser.screen_name;
+
+        let retweetText = "";
+
+        // RT 트윗에 인용 여부 확인
+        if (
+            (retweetData.legacy.is_quote_status ||
+                !!retweetData.quoted_status_result) &&
+            stack < max_stack
+        ) {
+            // 인용트윗
+            retweetText = await generationTweetMarkdown(
+                retweetData,
+                stack,
+                max_stack
+            );
+        } else {
+            // 일반트윗
+            retweetText = !!retweetData.note_tweet
+                ? retweetData.note_tweet.note_tweet_results.result.text
+                : retweetData.legacy.full_text;
+
+            retweetText = await translateText(retweetText);
+        }
+
+        result =
+            `RT: **${retweetUserName} ([@${retweetUserHandle}](https://x.com/${retweetUserHandle}))**:\n` +
+            `${retweetText}`;
+    } else if (isQuote && stack < max_stack) {
+        // 인용
+        let quoteData = tweetInfo.quoted_status_result.result;
+        let quoteUser = quoteData.core.user_results.result.core;
+
+        // 인용 트윗 사용자 정보
+        let quoteUserName = quoteUser.name;
+        let quoteUserHandle = quoteUser.screen_name;
+
+        // 인용 트윗 본문
+        let quoteText = !!tweetInfo.note_tweet
+            ? tweetInfo.note_tweet.note_tweet_results.result.text
+            : tweetInfo.legacy.full_text;
+
+        quoteText = await translateText(quoteText);
+
+        // 인용한 트윗 내용
+        let innerQuoteText = quoteData.note_tweet
+            ? quoteData.note_tweet.note_tweet_results.result.text
+            : quoteData.legacy.full_text;
+
+        innerQuoteText = await translateText(innerQuoteText);
+        innerQuoteText =
+            `QT: **${quoteUserName} ([@${quoteUserHandle}](https://x.com/${quoteUserHandle}))**:\n\n` +
+            innerQuoteText;
+        if (stack <= 2)
+            innerQuoteText = innerQuoteText
+                .split("\n")
+                .map((e) => "> \u200b" + e)
+                .join("\n");
+
+        result = `${quoteText}\n\n` + `${innerQuoteText}`;
+    } else {
+        // 일반
+        // 트윗 본문 (장문일시 note_tweet, 일반일시 legacy.full_text)
+        let content = !!tweetInfo.note_tweet
+            ? tweetInfo.note_tweet.note_tweet_results.result.text
+            : tweetInfo.legacy.full_text;
+        result = await translateText(content);
+    }
+    result = String(result).trim();
+    return result;
+}
+
+/**
+ * tweetInfo 데이터를 기반으로 Discord 훅 전송
+ * @param {object} tweetInfo 트윗 정보 Object
+ */
+async function getWebhookEmbed(tweetInfo) {
+    let created_at = new Date(tweetInfo.legacy?.created_at);
+
+    // 번역
+    let translatedText = await generationTweetMarkdown(tweetInfo);
+    // console.log(translatedText);
+    // translatedText = await translateText(translatedText);
+
+    //프로필 URL
+    profileURL = tweetInfo.core.user_results.result.avatar.image_url;
+    let originalLink =
+        "https://x.com/uni_mafumafu/status/" + tweetInfo.legacy.id_str;
+
+    // embed 메시지 생성
+    let embed = new EmbedBuilder();
+
+    embed.setTitle("New Tweet Release!");
+    embed.setURL(originalLink);
+    embed.setFooter({
+        text: originalLink,
+        iconURL: profileURL,
+    });
+    embed.setTimestamp(created_at);
+    embed.setDescription(translatedText);
+    embed.setColor(0x1da1f2);
+
+    // 미디어 처리
+    if (!!tweetInfo.legacy.entities.media?.length) {
+        if (
+            tweetInfo.legacy.entities.media[0].type == "photo" ||
+            tweetInfo.legacy.entities.media[0].type == "video"
+        )
+            embed.setImage(tweetInfo.legacy.entities.media[0].media_url_https);
+    }
+
+    return embed;
+}
+
+async function getProfileURL() {
+    if (!!profileURL) {
+        return profileURL;
+    } else {
+        try {
+            let tweetInfo = await getTimelineByUserID(268758461);
+            tweetInfo[0].core.user_results.result.avatar.image_url;
+            return profileURL;
+        } catch {
+            return "https://mahook.bass9030.dev/logo.png";
         }
     }
 }
 
-async function sendRecentTweet() {
-    let timelineInfo = (await getTimelineByUserID('uni_mafumafu')).timeline;
-    await sendHook(timelineInfo[0]);
-}
+module.exports = {
+    checkNewTweet,
+    getProfileURL,
+    sendRecentTweet,
+    getTimelineByUserID,
+};
 
-module.exports = { checkNewTweet, getProfileURL, sendRecentTweet };
+// async function test() {
+//     console.log(await getTimelineByUserID(268758461));
+// }
+
+// if (require.main === module) {
+//     test();
+// }
