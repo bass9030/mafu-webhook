@@ -26,11 +26,8 @@
                                 id="webhookURL"
                                 type="text"
                                 class="form-control is-invaild"
-                                value="https://discord.com/api/webhooks/1254054101390462976/WXk_ZtFJ5JtgoK8rVD9Q-wSVZFhQieCcc-ohowwfs5X6eWouNIz4Bn4bRx9LAA82xPiE"
                                 placeholder="디스코드 웹후크 URL"
                             />
-                            <!-- If you are a hacker and see this webhook link, you will feel so happy and you think developer is too dummy. But don't worry! This webhook url is EXPIRED LOL! -->
-                            <!-- 만약 당신이 해커고 이 웹훅 링크를 본다면, 당신은 매우 기쁘고 개발자가 멍청하다고 생각하겠죠. 하지만 걱정마세요! 이 웹훅링크는 **만료**되었습니다! -->
                             <div class="invalid-feedback">
                                 올바른 웹후크 URL을 입력해주세요.
                             </div>
@@ -59,19 +56,35 @@
                                     이루어저있어야합니다.
                                 </div>
                             </div>
-                            <div>
-                                <input
-                                    type="checkbox"
-                                    id="allowReceiveNoti"
-                                    class="form-check-input"
-                                    value="공지사항 수신하기"
-                                    checked
-                                />
-                                <label
-                                    for="allowReceiveNoti"
-                                    class="form-check-label"
-                                    >공지사항 수신하기</label
-                                >
+                            <div style="display: flex; flex-direction: row">
+                                <div style="margin-right: 10px">
+                                    <input
+                                        type="checkbox"
+                                        id="allowReceiveNoti"
+                                        class="form-check-input"
+                                        value="공지사항 수신하기"
+                                        checked
+                                    />
+                                    <label
+                                        for="allowReceiveNoti"
+                                        class="form-check-label"
+                                        >공지사항 수신하기</label
+                                    >
+                                </div>
+                                <div>
+                                    <input
+                                        type="checkbox"
+                                        id="allowReceiveLINE"
+                                        class="form-check-input"
+                                        value="라인 메시지 수신하기"
+                                        checked
+                                    />
+                                    <label
+                                        for="allowReceiveLINE"
+                                        class="form-check-label"
+                                        >라인 메시지 수신하기</label
+                                    >
+                                </div>
                             </div>
                         </div>
                         <div class="buttons">

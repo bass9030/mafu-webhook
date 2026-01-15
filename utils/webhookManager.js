@@ -1,18 +1,27 @@
 const mariadb = require("mariadb");
-const core = mariadb.createPool({
+const { WebhookClient, EmbedBuilder } = require("discord.js");
+const { sendErrorLog, sendInfoLog } = require("./DebugLogger");
+
+/**
+ * @typedef { Number } WEBHOOK_TYPES
+ */
+/**
+ * @enum { WEBHOOK_TYPES } WEBHOOK_TYPE
+ */
+const WEBHOOK_TYPE = {
+    TWITTER: 0,
+    NOTI: 1,
+    LINE: 2,
+};
+
+const pool = mariadb.createPool({
     host: process.env.DB_HOST,
     port: 3306,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    connectionLimit: 10,
+    connectionLimit: 30,
 });
-const { Webhook, MessageBuilder } = require("discord-webhook-node");
-
-async function sendDebugLog(message) {
-    const hook = new Webhook(process.env.DEBUG_WEBHOOK_URL);
-    await hook.send(message);
-}
 
 class WebhookNotFoundError extends Error {
     constructor(message) {
@@ -21,181 +30,209 @@ class WebhookNotFoundError extends Error {
     }
 }
 
-class webhookManager {
-    static async setLastTweetID(id) {
-        let db;
-        try {
-            db = await core.getConnection();
-            await db.query(
-                "REPLACE INTO lastTweet (key_str, id) VALUES (?, ?);",
-                ["tweetID", id]
-            );
-        } finally {
-            db?.release();
-        }
+class WebhookManager {
+    constructor() {
+        this.db = null;
     }
 
-    static async getLastTweetID() {
-        let db;
+    async getConnection() {
+        this.db = await pool.getConnection();
+    }
+
+    async releaseConnection() {
+        if (!!this.db) await this.db.release();
+        this.db = null;
+    }
+
+    async setLastTweetID(id) {
+        await this.db.query(
+            "REPLACE INTO lastTweet (key_str, id) VALUES (?, ?);",
+            ["tweetID", id]
+        );
+    }
+
+    async getLastTweetID() {
         try {
-            db = await core.getConnection();
-            let result = await db.query("SELECT * FROM lastTweet;");
+            let result = await this.db.query("SELECT * FROM lastTweet;");
             return result[0]["id"];
         } catch (err) {
             return null;
-        } finally {
-            db?.release();
         }
     }
 
-    static async addWebhook(url, roleID, sendNoti) {
-        let db;
-        try {
-            db = await core.getConnection();
-            await db.query(
-                "INSERT INTO webhooks (webhookURL, roleID, sendNoticeMessage) VALUES (?, ?, ?);",
-                [url, roleID, sendNoti ? 1 : 0]
-            );
-        } finally {
-            db?.release();
-        }
+    async sendWelcomeWebhook(channelID, webhookToken) {
+        let embed = new EmbedBuilder();
+        embed.setTitle("마훅 구독 완료!");
+        embed.setDescription(
+            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!"
+        );
+        embed.setColor(0x1da1f2);
+
+        let hook = new WebhookClient({ id: channelID, token: webhookToken });
+        await hook.send({
+            content: "",
+            username: "마훅 - 마후 트윗 번역봇",
+            avatarURL: await getProfileURL(),
+            embeds: [embed],
+        });
     }
 
-    static async removeWebhook(url) {
-        let db;
-        try {
-            let db = await core.getConnection();
-            let result = await db.query(
-                "DELETE FROM webhooks WHERE webhookURL = ?;",
-                [url]
-            );
-            if (result.affectedRows == 0) throw new WebhookNotFoundError();
-        } finally {
-            db?.release();
-        }
+    static getOptions(optionNumber) {
+        // 00000111
+        // 3rd bit - isLINESend
+        // 2nd bit - isNotiSend
+        // 1st bit - isMention
+        let optionBit = optionNumber.toString(2).padStart(8, "0");
+        let isLINESend = optionBit[5] == "1";
+        let isNotiSend = optionBit[6] == "1";
+        let isMention = optionBit[7] == "1";
+
+        return {
+            isLINESend,
+            isNotiSend,
+            isMention,
+        };
     }
 
-    static async editWebhook(url, roleID, sendNoti) {
-        let db;
-        try {
-            let db = await core.getConnection();
-            let result = await db.query(
-                "UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE webhookURL = ?;",
-                [roleID, sendNoti ? 1 : 0, url]
-            );
-            if (result.affectedRows == 0) throw new WebhookNotFoundError();
-        } finally {
-            db?.release();
-        }
+    static setOptions(isLINESend, isNotiSend, isMention) {
+        let bit = `${isLINESend ? "1" : "0"}${isNotiSend ? "1" : "0"}${
+            isMention ? "1" : "0"
+        }`.padStart(8, "0");
+        return parseInt(bit, 2);
     }
 
-    static async getWebhookCount() {
-        let db = await core.getConnection();
-        let count = await db.query("SELECT COUNT(*) FROM webhooks;");
+    async addWebhook(channelID, webhookToken, options, roleID) {
+        await this.db.query(
+            "INSERT INTO webhooks (channelID, webhookToken, options, roleID) VALUES (?, ?, ?, ?);",
+            [channelID, webhookToken, options, roleID]
+        );
+    }
+
+    async removeWebhook(channelID, webhookToken) {
+        let result = await this.db.query(
+            "DELETE FROM webhooks WHERE channelID = ? AND webhookToken = ?;",
+            [channelID, webhookToken]
+        );
+        if (result.affectedRows == 0) throw new WebhookNotFoundError();
+    }
+
+    async editWebhook(channelID, webhookToken, options, roleID) {
+        let result = await this.db.query(
+            "UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE channelID = ? AND webhookToken = ?;",
+            [roleID, options, channelID, webhookToken]
+        );
+        if (result.affectedRows == 0) throw new WebhookNotFoundError();
+    }
+
+    async getWebhookCount() {
+        let count = await this.db.query("SELECT COUNT(*) FROM webhooks;");
         return count[0]["COUNT(*)"];
     }
 
-    static async sendNotice(title, content) {
-        let db;
-        try {
-            db = await core.getConnection();
-            let now = new Date();
-            await db.query(
-                "INSERT INTO notices (date, title, content) VALUES (?, ?, ?);",
-                [
-                    `${now.getFullYear()}-${
-                        now.getMonth() + 1
-                    }-${now.getDate()} ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`,
-                    title,
-                    content,
-                ]
-            );
-            this.sendWebhook({ title, content }, true);
-        } finally {
-            db?.release();
+    async sendNotice(title, content) {
+        function getFullTimestamp(date) {
+            return `${date.getFullYear()}-${
+                date.getMonth() + 1
+            }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
         }
+
+        let now = new Date();
+        await this.db.query(
+            "INSERT INTO notices (date, title, content) VALUES (?, ?, ?);",
+            [getFullTimestamp(now), title, content]
+        );
+        this.sendWebhook({ title, content }, WEBHOOK_TYPE.NOTI);
     }
 
-    static async getNotices() {
-        let db;
+    async getNotices() {
         try {
-            db = await core.getConnection();
-            let result = await db.query(
+            let result = await this.db.query(
                 "SELECT date, title, content FROM notices ORDER BY date DESC LIMIT 10"
             );
 
             return result;
-        } catch {
+        } catch (e) {
             return [];
-        } finally {
-            db?.release();
         }
     }
 
     /**
-     * @param {MessageBuilder | object} message
+     * @param {EmbedBuilder | object} message
+     * @param {WEBHOOK_TYPE} type
      */
-    static async sendWebhook(message, isNoti) {
-        let db;
+    async sendWebhook(message, type = WEBHOOK_TYPE.TWITTER) {
         let err_cnt = 0;
         let success_cnt = 0;
-        try {
-            db = await core.getConnection();
-            const webhooks = isNoti
-                ? await db.query(
-                      "SELECT * FROM webhooks WHERE sendNoticeMessage = ?;",
-                      [1]
-                  )
-                : await db.query("SELECT * FROM webhooks;");
-            for (let i = 0; i < webhooks.length; i++) {
-                let e = webhooks[i];
-                try {
-                    const hook = new Webhook(e.webhookURL);
+        const webhooks =
+            type == WEBHOOK_TYPE.TWITTER
+                ? await this.db.query("SELECT * FROM webhooks;")
+                : await this.db.query(
+                      "SELECT * FROM webhooks WHERE options & ? = ?;",
+                      [type, 2 ** type]
+                  );
+        for (let i = 0; i < webhooks.length; i++) {
+            let e = webhooks[i];
+            try {
+                const hook = new WebhookClient({
+                    id: e.channelID,
+                    token: e.webhookToken,
+                });
+                let webhookOptions = WebhookManager.getOptions(e.options);
+                let mention = "";
+                if (webhookOptions.isMention) {
                     if (e.roleID != -1) {
                         if (e.roleID == "@everyone" || e.roleID == "@here")
-                            hook.payload = { content: e.roleID };
-                        else hook.payload = { content: "<@&" + e.roleID + ">" };
+                            mention = e.roleID;
+                        else mention = "<@&" + e.roleID + ">";
                     }
-
-                    if (isNoti)
-                        hook.setAvatar("https://mahook.bass9030.dev/logo.png");
-                    else {
-                        let profileURL =
-                            message.getJSON()["embeds"][0]["footer"][
-                                "icon_url"
-                            ];
-                        if (!!profileURL) hook.setAvatar(profileURL);
-                    }
-
-                    hook.setUsername("마훅 - 마후 트윗 번역봇");
-                    if (isNoti)
-                        await hook.info(
-                            "마훅 공지사항",
-                            message.title,
-                            message.content
-                        );
-                    else await hook.send(message);
-                    success_cnt++;
-                } catch (err) {
-                    err_cnt++;
-                    console.error(`Failed to send webhook to ${e.webhookURL}`);
-                    console.error(err);
                 }
+                let profileURL;
+                switch (type) {
+                    case WEBHOOK_TYPE.NOTI:
+                        profileURL = "https://mahook.bass9030.dev/logo.png";
+                        const embed = new EmbedBuilder();
+                        embed.setTitle("마훅 공지사항");
+                        embed.setFields({
+                            name: message.title,
+                            value: message.content,
+                        });
+                        embed.setColor(4037805);
+
+                        await hook.send({
+                            avatarURL: profileURL,
+                            username: "마훅 - 마후 트윗 번역봇",
+                            content: mention,
+                            embeds: [embed],
+                        });
+                        break;
+                    case WEBHOOK_TYPE.TWITTER:
+                    case WEBHOOK_TYPE.LINE:
+                        profileURL = message.data["footer"]["icon_url"];
+                        await hook.send({
+                            avatarURL: profileURL,
+                            username: "마훅 - 마후 트윗 번역봇",
+                            content: mention,
+                            embeds: [message],
+                        });
+                        break;
+                }
+                success_cnt++;
+            } catch (err) {
+                err_cnt++;
+                sendErrorLog(err);
+                console.error(`Failed to send webhook to ${e.webhookURL}`);
+                console.error(err);
             }
-            sendDebugLog(
-                `[${new Date().toLocaleString(
-                    "ja"
-                )}] Webhook sended. \nTotal: ${
-                    webhooks.length
-                } | Success: ${success_cnt} | Fail: ${err_cnt}`
-            );
-        } finally {
-            db?.release();
         }
+        sendInfoLog(
+            `Webhook sended. \n` +
+                `Total: ${webhooks.length} | Success: ${success_cnt} | Fail: ${err_cnt}`
+        );
     }
 }
 
 module.exports = {
-    webhookManager,
+    WebhookManager,
     WebhookNotFoundError,
+    WEBHOOK_TYPE,
 };

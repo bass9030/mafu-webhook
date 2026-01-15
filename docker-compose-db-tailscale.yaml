@@ -1,0 +1,22 @@
+services:
+    tailscale:
+        image: "tailscale/tailscale"
+        hostname: mariadb-docker
+        environment:
+            TS_AUTH_ONCE: true
+        cap_add:
+            - NET_ADMIN
+            - SYS_MODULE
+        devices:
+            - /dev/net/tun
+    mariadb:
+        image: mahook-db-dev:latest
+        container_name: mariadb
+        volumes:
+            - /mahook-db:/var/lib/mysql
+        environment:
+            TZ: Asia/Seoul
+            MARIADB_USER: ${DB_USER}
+            MARIADB_PASSWORD: ${DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+        network_mode: "service:tailscale"
