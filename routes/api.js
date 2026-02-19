@@ -10,6 +10,7 @@ const { getProfileURL, sendRecentTweet } = require("../utils/getTweet");
 const { WebhookClient, EmbedBuilder } = require("discord.js");
 const getOTP = require("../utils/otpGenerator");
 const { sendHook } = require("../utils/sendLINE");
+const { sendErrorLog } = require("../utils/DebugLogger");
 
 const webhookManager = new WebhookManager();
 
@@ -41,7 +42,7 @@ router.post("/register", async function (req, res, next) {
         // webhook url check
         if (
             !!!data.url.match(
-                /discord(app)?\.com\/api\/webhooks\/[0-9]+\/[A-z0-9_\.\-]+/g
+                /discord(app)?\.com\/api\/webhooks\/[0-9]+\/[A-z0-9_\.\-]+/g,
             )
         ) {
             res.status(400);
@@ -59,7 +60,7 @@ router.post("/register", async function (req, res, next) {
         let embed = new EmbedBuilder();
         embed.setTitle("마훅 구독 완료!");
         embed.setDescription(
-            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!"
+            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!",
         );
         embed.setColor(0x1da1f2);
 
@@ -80,12 +81,11 @@ router.post("/register", async function (req, res, next) {
             channelID,
             webhookToken,
             data.options,
-            data.roleID
+            data.roleID,
         );
         res.json({ status: res.statusCode });
         webhookManager.releaseConnection();
     } catch (e) {
-        console.error(e);
         if (e.errno == 1062) {
             res.status(409);
             res.json({
@@ -99,6 +99,7 @@ router.post("/register", async function (req, res, next) {
                 message: "올바르지 않은 웹후크 URL 입니다.",
             });
         } else {
+            sendErrorLog(e);
             res.status(500);
             res.json({ status: res.statusCode });
         }
@@ -136,8 +137,8 @@ router.post("/edit", async (req, res, next) => {
         await webhookManager.editWebhook(
             channelID,
             webhookToken,
+            data.options,
             data.roleID,
-            data.sendNoti
         );
         res.json({ status: res.statusCode });
         webhookManager.releaseConnection();
@@ -150,6 +151,7 @@ router.post("/edit", async (req, res, next) => {
                     "웹후크를 찾을 수 없습니다. 올바른 웹후크 URL인지 확인해주세요.",
             });
         } else {
+            sendErrorLog(e);
             res.status(500);
             res.json({ status: res.statusCode });
         }
@@ -179,6 +181,7 @@ router.delete("/unregister", async (req, res, next) => {
                     "웹후크를 찾을 수 없습니다. 등록된 웹후크인지 확인해주세요.",
             });
         } else {
+            sendErrorLog(e);
             res.status(500);
             res.json({ status: res.statusCode });
         }
@@ -192,6 +195,7 @@ router.get("/getNotices", async (req, res, next) => {
         res.json({ status: res.statusCode, data });
         webhookManager.releaseConnection();
     } catch (e) {
+        sendErrorLog(e);
         res.status(500);
         res.json({ status: res.statusCode });
     }
@@ -216,7 +220,7 @@ router.post("/sendNoti", async (req, res, next) => {
             res.status(403).json({ status: res.statusCode });
         }
     } catch (e) {
-        console.error(e);
+        sendErrorLog(e);
         res.status(500).json({ status: res.statusCode });
     }
 });
@@ -230,7 +234,7 @@ router.get("/testWebhook", async (req, res, next) => {
         await sendRecentTweet(req.query.id);
         res.send("웹훅 전송 성공");
     } catch (e) {
-        console.error(e);
+        sendErrorLog(e);
         res.status(500).send(`<pre><code>${e.stack}</code></pre>`);
     }
 });
@@ -255,7 +259,6 @@ router.post("/line-webhook", async (req, res, next) => {
 
         let message = req.body.content;
         let time = req.body.time;
-        let profileImg = req.body.profileImg;
 
         if (!!!message || !!!time) {
             res.status(400).json({ status: res.statusCode });
@@ -265,7 +268,6 @@ router.post("/line-webhook", async (req, res, next) => {
         sendHook({
             time,
             message,
-            profileImg,
         });
 
         res.json({
