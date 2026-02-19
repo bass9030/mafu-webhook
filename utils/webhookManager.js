@@ -10,8 +10,8 @@ const { sendErrorLog, sendInfoLog } = require("./DebugLogger");
  */
 const WEBHOOK_TYPE = {
     TWITTER: 0,
-    NOTI: 1,
-    LINE: 2,
+    NOTI: 2,
+    LINE: 4,
 };
 
 const pool = mariadb.createPool({
@@ -47,7 +47,7 @@ class WebhookManager {
     async setLastTweetID(id) {
         await this.db.query(
             "REPLACE INTO lastTweet (key_str, id) VALUES (?, ?);",
-            ["tweetID", id]
+            ["tweetID", id],
         );
     }
 
@@ -64,7 +64,7 @@ class WebhookManager {
         let embed = new EmbedBuilder();
         embed.setTitle("마훅 구독 완료!");
         embed.setDescription(
-            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!"
+            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!",
         );
         embed.setColor(0x1da1f2);
 
@@ -104,22 +104,22 @@ class WebhookManager {
     async addWebhook(channelID, webhookToken, options, roleID) {
         await this.db.query(
             "INSERT INTO webhooks (channelID, webhookToken, options, roleID) VALUES (?, ?, ?, ?);",
-            [channelID, webhookToken, options, roleID]
+            [channelID, webhookToken, options, roleID],
         );
     }
 
     async removeWebhook(channelID, webhookToken) {
         let result = await this.db.query(
             "DELETE FROM webhooks WHERE channelID = ? AND webhookToken = ?;",
-            [channelID, webhookToken]
+            [channelID, webhookToken],
         );
         if (result.affectedRows == 0) throw new WebhookNotFoundError();
     }
 
     async editWebhook(channelID, webhookToken, options, roleID) {
         let result = await this.db.query(
-            "UPDATE webhooks SET roleID = ?, sendNoticeMessage = ? WHERE channelID = ? AND webhookToken = ?;",
-            [roleID, options, channelID, webhookToken]
+            "UPDATE webhooks SET roleID = ?, options = ? WHERE channelID = ? AND webhookToken = ?;",
+            [roleID, options, channelID, webhookToken],
         );
         if (result.affectedRows == 0) throw new WebhookNotFoundError();
     }
@@ -139,7 +139,7 @@ class WebhookManager {
         let now = new Date();
         await this.db.query(
             "INSERT INTO notices (date, title, content) VALUES (?, ?, ?);",
-            [getFullTimestamp(now), title, content]
+            [getFullTimestamp(now), title, content],
         );
         this.sendWebhook({ title, content }, WEBHOOK_TYPE.NOTI);
     }
@@ -147,7 +147,7 @@ class WebhookManager {
     async getNotices() {
         try {
             let result = await this.db.query(
-                "SELECT date, title, content FROM notices ORDER BY date DESC LIMIT 10"
+                "SELECT date, title, content FROM notices ORDER BY date DESC LIMIT 10",
             );
 
             return result;
@@ -168,7 +168,7 @@ class WebhookManager {
                 ? await this.db.query("SELECT * FROM webhooks;")
                 : await this.db.query(
                       "SELECT * FROM webhooks WHERE options & ? = ?;",
-                      [type, 2 ** type]
+                      [type, type],
                   );
         for (let i = 0; i < webhooks.length; i++) {
             let e = webhooks[i];
@@ -226,7 +226,7 @@ class WebhookManager {
         }
         sendInfoLog(
             `Webhook sended. \n` +
-                `Total: ${webhooks.length} | Success: ${success_cnt} | Fail: ${err_cnt}`
+                `Total: ${webhooks.length} | Success: ${success_cnt} | Fail: ${err_cnt}`,
         );
     }
 }
