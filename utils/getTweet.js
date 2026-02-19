@@ -18,7 +18,7 @@ let prevLastTweetID = null;
  */
 async function getTimelineByUserID(userId) {
     const reqURL = `https://x.com/i/api/graphql/oRJs8SLCRNRbQzuZG93_oA/UserTweets?variables=${encodeURIComponent(
-        JSON.stringify(Object.assign(default_variables, { userId: userId }))
+        JSON.stringify(Object.assign(default_variables, { userId: userId })),
     )}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
 
     try {
@@ -40,7 +40,7 @@ async function getTimelineByUserID(userId) {
         try {
             if (!response.ok) {
                 throw new Error(
-                    `Twitter API response not ok: ${response.status} ${response.statusText}`
+                    `Twitter API response not ok: ${response.status} ${response.statusText}`,
                 );
             }
             res_text = await response.text();
@@ -51,7 +51,7 @@ async function getTimelineByUserID(userId) {
                     .entries.filter((e) => {
                         return (
                             e.entryId.match(
-                                /^profile\-conversation\-[0-9]+/g
+                                /^profile\-conversation\-[0-9]+/g,
                             ) || e.entryId.match(/^tweet\-[0-9]+/g)
                         );
                     });
@@ -68,7 +68,7 @@ async function getTimelineByUserID(userId) {
                         let f = e.content.items[j];
                         if (
                             !f.entryId.match(
-                                /^profile\-conversation\-[0-9]+\-tweet\-[0-9]+/g
+                                /^profile\-conversation\-[0-9]+\-tweet\-[0-9]+/g,
                             )
                         )
                             continue;
@@ -160,7 +160,7 @@ async function sendRecentTweet(id) {
     const embed = await getWebhookEmbed(
         !!id
             ? timelineInfo.filter((e) => e["rest_id"] == id)[0]
-            : timelineInfo[0]
+            : timelineInfo[0],
     );
 
     webhookManager.sendWebhook(embed, WEBHOOK_TYPE.TWITTER);
@@ -205,7 +205,7 @@ async function generationTweetMarkdown(tweetInfo, stack = 0, max_stack = 3) {
             retweetText = await generationTweetMarkdown(
                 retweetData,
                 stack,
-                max_stack
+                max_stack,
             );
         } else {
             // 일반트윗
