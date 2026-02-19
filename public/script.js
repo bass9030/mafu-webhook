@@ -89,7 +89,7 @@ function showSuccess(text) {
     document.getElementById("success").classList.remove("alert-hidden");
     setTimeout(
         () => document.getElementById("success").classList.add("alert-hidden"),
-        2000
+        2000,
     );
 }
 
@@ -98,7 +98,7 @@ function showError(text) {
     document.getElementById("error").classList.remove("alert-hidden");
     setTimeout(
         () => document.getElementById("error").classList.add("alert-hidden"),
-        2000
+        2000,
     );
 }
 
@@ -144,7 +144,7 @@ async function registerWebhook() {
                     options: setOptions(
                         allowSendLine,
                         allowSendNoti,
-                        roleID != -1
+                        roleID != -1,
                     ),
                 }),
             })
@@ -156,7 +156,7 @@ async function registerWebhook() {
         else throw new Error();
     } catch {
         showError(
-            "웹후크 등록에 실패했습니다: 알 수 없는 오류가 발생하였습니다."
+            "웹후크 등록에 실패했습니다: 알 수 없는 오류가 발생하였습니다.",
         );
     }
     enableButtons();
@@ -167,6 +167,9 @@ async function editWebhook() {
     let webhookURL = webhookInputElement.value;
     let roleID = allowMentionElement.checked ? mentionIdInputElement.value : -1;
     let allowSendNoti = allowReceiveNotiElement.checked;
+    let allowSendLine = allowReceiveLineElement.checked;
+
+    disableButtons();
 
     if (!vaildateValue()) return;
 
@@ -180,7 +183,11 @@ async function editWebhook() {
                 body: JSON.stringify({
                     url: webhookURL,
                     roleID: roleID,
-                    sendNoti: allowSendNoti,
+                    options: setOptions(
+                        allowSendLine,
+                        allowSendNoti,
+                        roleID != -1,
+                    ),
                 }),
             })
         ).json();
@@ -193,9 +200,10 @@ async function editWebhook() {
     } catch (e) {
         console.error(e);
         showError(
-            "웹후크 수정에 실패했습니다: 알 수 없는 오류가 발생하였습니다."
+            "웹후크 수정에 실패했습니다: 알 수 없는 오류가 발생하였습니다.",
         );
     }
+    enableButtons();
     closeRegister();
 }
 
@@ -214,7 +222,7 @@ async function unregisterWebhook() {
                 "/api/unregister?url=" + encodeURIComponent(webhookURL),
                 {
                     method: "DELETE",
-                }
+                },
             )
         ).json();
 
@@ -226,7 +234,7 @@ async function unregisterWebhook() {
     } catch (e) {
         console.error(e);
         showError(
-            "웹후크 취소에 실패했습니다: 알 수 없는 오류가 발생하였습니다."
+            "웹후크 취소에 실패했습니다: 알 수 없는 오류가 발생하였습니다.",
         );
     }
     closeRegister();
@@ -315,8 +323,8 @@ async function getNoticeList() {
                     i.title,
                     i.date,
                     i.content,
-                    idx == notices.data.length - 1
-                )
+                    idx == notices.data.length - 1,
+                ),
             );
             idx++;
         }
