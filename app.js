@@ -3,11 +3,15 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-const { checkNewTweet } = require("./utils/getTweet_new");
+const { checkNewTweet } = require("./utils/getTweet");
 
 var indexRouter = require("./routes/index");
 var apiRouter = require("./routes/api");
 var sendNotiRouter = require("./routes/sendNoti");
+
+require("./utils/instrument.js");
+
+const Sentry = require("@sentry/node");
 
 var app = express();
 
@@ -20,6 +24,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+
+Sentry.setupExpressErrorHandler(app);
 
 app.use("/", indexRouter);
 app.use("/api", apiRouter);
@@ -47,7 +53,11 @@ app.use(function (err, req, res, next) {
     res.render("error");
 });
 
-checkNewTweet();
-setInterval(checkNewTweet, 1000 * 60 * 5);
+if (process.env.NODE_ENV == "production") {
+    checkNewTweet();
+    setInterval(checkNewTweet, 1000 * 60 * 5);
+} else {
+    console.log("development mode. tweet detection is disabled");
+}
 
 module.exports = app;

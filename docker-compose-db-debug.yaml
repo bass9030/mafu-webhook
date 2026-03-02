@@ -1,0 +1,17 @@
+services:
+    mariadb:
+        image: mahook-db-dev:latest
+        container_name: mariadb
+        volumes:
+            - /mahook-db:/var/lib/mysql
+        environment:
+            TZ: Asia/Seoul
+            MARIADB_USER: ${DB_USER}
+            MARIADB_PASSWORD: ${DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+        ports:
+            - "3306:3306"
+        networks:
+            - db
+networks:
+    db:

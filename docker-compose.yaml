@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
     mahook-web:
         image: mahook-web:latest
@@ -11,7 +9,7 @@ services:
         container_name: mahook-web
         environment:
             TZ: Asia/Seoul
-            NODE_ENV: production
+            NODE_ENV: ${NODE_ENV}
             TWITTER_AUTH_TOKEN: ${TWITTER_AUTH_TOKEN}
             TWITTER_CT0: ${TWITTER_CT0}
             DEBUG_WEBHOOK_URL: ${DEBUG_WEBHOOK_URL}
@@ -22,6 +20,7 @@ services:
             DB_NAME: ${DB_NAME}
             DB_USER: ${DB_USER}
             DB_PASSWORD: ${DB_PASSWORD}
+            OTP_SECRET: ${OTP_SECRET}
         networks:
             - mahook
         depends_on:
