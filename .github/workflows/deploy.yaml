@@ -42,11 +42,12 @@ jobs:
             - name: Restarting service
               run: |
                   ssh -o StrictHostKeyChecking=no bass9030@web-server "
-                      docker-compose -f docker-compose-prod.yaml down
+                      cd /home/bass9030/mahook
+                      docker-compose down
                       docker rmi $(docker images -aq "mahook-*")
                       docker load --input /tmp/mahook-web.tar
                       docker load --input /tmp/mahook-db.tar
-                      docker-compose -f docker-compose-prod.yaml --env-file /home/bass9030/mahook.env up -d
+                      docker-compose up -d
                       rm /tmp/mahook-*.tar
                       exit
                   "
