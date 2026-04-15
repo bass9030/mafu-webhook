@@ -1,13 +1,14 @@
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('header') %>
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
 </head>
-<form action="/api/sendNoti" method="post" enctype="application/x-www-form-urlencoded">
-    <input type="text" placeholder="공지사항 제목 입력" name="title"></input>
-    <textarea placeholder="공지사항 내용 입력" name="content"></textarea>
-    <input type="password" placeholder="개쩌는 무언가 입력" name="amazing-something">
-    <input type="submit" value="전송"></input>
-</form>
-
-<script>
-    
-</script>
+<html>
+    <div class="container">
+        <form action="/api/sendNoti" method="post" enctype="application/x-www-form-urlencoded">
+            <input class="form-control" type="text" placeholder="공지사항 제목 입력" name="title"></input>
+            <textarea class="form-control" placeholder="공지사항 내용 입력" name="content"></textarea>
+            <input class="form-control" type="password" placeholder="개쩌는 무언가 입력" name="amazing-something">
+            <input class="btn btn-primary"type="submit" value="전송"></input>
+        </form>
+    </div>
+</html>
