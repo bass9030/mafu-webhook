@@ -1,10 +1,24 @@
 <head>
     <%- include('header') %>
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+
+    <style>
+        .container {
+            margin-top: 50vh;
+            transform: translateY(-50%);
+        }
+
+        .container > h2 {
+            text-align: center;
+        }
+        form > * {
+            margin: 5px 0px;
+        }
+    </style>
 </head>
 <html>
     <div class="container">
-        <form action="/api/sendNoti" method="post" enctype="application/x-www-form-urlencoded">
+        <h2>공지 전송</h2>
+        <form action="/api/sendNoti" class="align-middle" method="post" enctype="application/x-www-form-urlencoded">
             <input class="form-control" type="text" placeholder="공지사항 제목 입력" name="title"></input>
             <textarea class="form-control" placeholder="공지사항 내용 입력" name="content"></textarea>
             <input class="form-control" type="password" placeholder="개쩌는 무언가 입력" name="amazing-something">
