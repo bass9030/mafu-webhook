@@ -65,3 +65,5 @@ typings/
 lastTweet.txt
 timeline.json
 tweetData.json
+
+generate-lincense-page/opensource.ejs
