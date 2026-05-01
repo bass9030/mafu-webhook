@@ -12,7 +12,7 @@ services:
                 - action: sync+restart
                   path: ./routes/
                   target: /usr/src/app/routes
-                - action: sync+restart
+                - action: sync
                   path: ./views/
                   target: /usr/src/app/views
                 - action: sync
