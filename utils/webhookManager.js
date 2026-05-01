@@ -30,6 +30,15 @@ class WebhookNotFoundError extends Error {
     }
 }
 
+process.on("SIGTERM", onExit);
+process.on("SIGINT", onExit);
+
+function onExit() {
+    console.log("on exit called");
+    pool.end();
+    process.exit(0);
+}
+
 class WebhookManager {
     constructor() {
         this.db = null;
