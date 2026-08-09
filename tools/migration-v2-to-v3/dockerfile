@@ -1,10 +1,13 @@
-FROM node:20
-
+FROM node:20 AS build
 WORKDIR /usr/src/app
-
-COPY ./package.json .
-RUN npm i
-
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
+RUN npm run build
 
-CMD ["node", "./migration-v2-to-v3.js"]
+FROM node:20-slim
+WORKDIR /usr/src/app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY --from=build /usr/src/app/dist ./dist
+CMD ["node", "dist/migration-v2-to-v3.js"]

@@ -1,4 +1,4 @@
-const default_variables = {
+export const defaultVariables: Record<string, unknown> = {
     count: 20,
     includePromotedContent: true,
     withQuickPromoteEligibilityTweetFields: true,
@@ -6,7 +6,7 @@ const default_variables = {
     withV2Timeline: true,
 };
 
-const default_features = {
+export const defaultFeatures: Record<string, boolean> = {
     rweb_video_screen_enabled: false,
     payments_enabled: false,
     profile_label_improvements_pcf_label_in_post_enabled: true,
@@ -42,9 +42,4 @@ const default_features = {
     responsive_web_grok_imagine_annotation_enabled: true,
     responsive_web_grok_community_note_auto_translation_is_enabled: false,
     responsive_web_enhance_cards_enabled: false,
-};
-
-module.exports = {
-    default_features,
-    default_variables,
 };

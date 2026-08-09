@@ -2,16 +2,22 @@
   "name": "generate-license-page",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -p tsconfig.json",
+    "start": "tsx main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "license-checker": "^25.0.1"
+    "@types/license-checker": "^25.0.6",
+    "@types/node": "^26.2.0",
+    "license-checker": "^25.0.1",
+    "tsx": "^4.23.11",
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "ejs": "^5.0.2"

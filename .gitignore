@@ -35,6 +35,8 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+dist/
+mahook-db/
 
 # Typescript v1 declaration files
 typings/
@@ -67,3 +69,5 @@ timeline.json
 tweetData.json
 
 generate-lincense-page/opensource.ejs
+
+./mahook-db

@@ -1,6 +1,7 @@
-"use strict";
-const WEBHOOK_REGEX = /https:\/\/discord(app)?.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/;
+const WEBHOOK_REGEX =
+    /https:\/\/discord(app)?.com\/api\/webhooks\/([^\/]+)\/([^\/]+)/;
 const ROLEID_REGEX = /^[0-9]+$/;
+
 const EMBED_TEXT = [
     `나 "나 오타쿠 같아?"<br /><br />
     친구 "전혀 그렇지 않아~"<br /><br />
@@ -20,51 +21,74 @@ const EMBED_TEXT = [
     `마후사카로 신년고항회<br/><br/>사카「이 바보에는 이 츳코미가 웃기다는 계산식이 있단 말이지!」<br/><br/>마후「후후, 역시 사카탄!」<br/><br/>사카「3－4＋7이…어…7이라고 한다면?」<br/><br/>마후「7이 아니네!」<br/><br/>사카「좋은 츳코미네(キリッ」<br/><br/>마후「얼버무리지 마 33세」`,
     `달렸다!<br/>컨디션 회복해서 좋아! (⊃ ̫ )⊃<br/><br/>머리색은 감으면서 좋게 자연스러워진대! 좀 더 차분한 그레이가 되면 좋겠다˙˘˙)/<br/><br/>29일 기념일이니까 생방송<br/>31일 영상 업로드<br/>마후츠키 연말 방송<br/><br/>예정이야!<br/>연내에 다 같이 달려보자...(๑•̀ㅂ•́)و✧`,
 ];
-function requiredElement(selector) {
-    const element = document.querySelector(selector);
-    if (!element)
-        throw new Error(`Required element not found: ${selector}`);
+
+interface ApiResult<T = unknown> {
+    status: number;
+    message?: string;
+    data?: T;
+}
+
+interface Notice {
+    title: string;
+    date: string;
+    content: string;
+}
+
+function requiredElement<T extends Element>(selector: string): T {
+    const element = document.querySelector<T>(selector);
+    if (!element) throw new Error(`Required element not found: ${selector}`);
     return element;
 }
+
 window.addEventListener("load", page_onLoad);
-const popup_element = requiredElement(".popup_dim");
-const webhookInputElement = requiredElement("#webhookURL");
-const mentionIdInputElement = requiredElement("#roleId");
-const formElement = requiredElement("#registerForm");
-const allowMentionElement = requiredElement("#allowMention");
-const allowReceiveNotiElement = requiredElement("#allowReceiveNoti");
-const allowReceiveLineElement = requiredElement("#allowReceiveLINE");
+
+const popup_element = requiredElement<HTMLElement>(".popup_dim");
+const webhookInputElement = requiredElement<HTMLInputElement>("#webhookURL");
+const mentionIdInputElement = requiredElement<HTMLInputElement>("#roleId");
+const formElement = requiredElement<HTMLFormElement>("#registerForm");
+const allowMentionElement = requiredElement<HTMLInputElement>("#allowMention");
+const allowReceiveNotiElement = requiredElement<HTMLInputElement>("#allowReceiveNoti");
+const allowReceiveLineElement = requiredElement<HTMLInputElement>("#allowReceiveLINE");
+
 webhookInputElement.addEventListener("input", on_formChanged);
 mentionIdInputElement.addEventListener("input", on_formChanged);
-function changeRoleIDStatus(event) {
-    mentionIdInputElement.disabled = !event.target.checked;
+
+function changeRoleIDStatus(event: Event) {
+    mentionIdInputElement.disabled = !(event.target as HTMLInputElement).checked;
 }
+
 function vaildateValue() {
     let roleID = mentionIdInputElement.value;
     let webhookURL = webhookInputElement.value;
     let isVaildate = true;
+
     if (!!!webhookURL.match(WEBHOOK_REGEX)) {
         webhookInputElement.setCustomValidity("올바른 웹후크 URL이 아님");
         isVaildate = false;
-    }
-    else {
+    } else {
         webhookInputElement.setCustomValidity("");
     }
-    if (roleID.trim() == "@everyone" ||
+
+    if (
+        roleID.trim() == "@everyone" ||
         roleID.trim() == "@here" ||
-        !!roleID.match(ROLEID_REGEX)) {
+        !!roleID.match(ROLEID_REGEX)
+    ) {
         mentionIdInputElement.setCustomValidity("");
-    }
-    else {
+    } else {
         mentionIdInputElement.setCustomValidity("올바른 맨션 형식이 아님");
         isVaildate = false;
     }
+
     formElement.classList.add("was-validated");
+
     return isVaildate;
 }
+
 function on_formChanged() {
     vaildateValue();
 }
+
 function openRegister() {
     popup_element.classList.remove("hidden");
     webhookInputElement.value = "";
@@ -73,169 +97,232 @@ function openRegister() {
     mentionIdInputElement.disabled = true;
     allowReceiveNotiElement.checked = true;
 }
+
 function closeRegister() {
     popup_element.classList.add("hidden");
 }
-function showSuccess(text) {
-    const element = requiredElement("#success");
+
+function showSuccess(text: string) {
+    const element = requiredElement<HTMLElement>("#success");
     element.innerText = text;
     element.classList.remove("alert-hidden");
-    setTimeout(() => element.classList.add("alert-hidden"), 2000);
+    setTimeout(
+        () => element.classList.add("alert-hidden"),
+        2000,
+    );
 }
-function showError(text) {
-    const element = requiredElement("#error");
+
+function showError(text: string) {
+    const element = requiredElement<HTMLElement>("#error");
     element.innerText = text;
     element.classList.remove("alert-hidden");
-    setTimeout(() => element.classList.add("alert-hidden"), 2000);
+    setTimeout(
+        () => element.classList.add("alert-hidden"),
+        2000,
+    );
 }
+
 function enableButtons() {
-    requiredElement(".delete").disabled = false;
-    requiredElement(".subscribe").disabled = false;
-    requiredElement(".edit").disabled = false;
+    requiredElement<HTMLButtonElement>(".delete").disabled = false;
+    requiredElement<HTMLButtonElement>(".subscribe").disabled = false;
+    requiredElement<HTMLButtonElement>(".edit").disabled = false;
 }
+
 function disableButtons() {
-    requiredElement(".delete").disabled = true;
-    requiredElement(".subscribe").disabled = true;
-    requiredElement(".edit").disabled = true;
+    requiredElement<HTMLButtonElement>(".delete").disabled = true;
+    requiredElement<HTMLButtonElement>(".subscribe").disabled = true;
+    requiredElement<HTMLButtonElement>(".edit").disabled = true;
 }
-function setOptions(isLINESend, isNotiSend, isMention) {
-    let bit = `${isLINESend ? "1" : "0"}${isNotiSend ? "1" : "0"}${isMention ? "1" : "0"}`.padStart(8, "0");
+
+function setOptions(isLINESend: boolean, isNotiSend: boolean, isMention: boolean): number {
+    let bit = `${isLINESend ? "1" : "0"}${isNotiSend ? "1" : "0"}${
+        isMention ? "1" : "0"
+    }`.padStart(8, "0");
     return parseInt(bit, 2);
 }
+
 async function registerWebhook() {
     let webhookURL = webhookInputElement.value;
     let roleID = allowMentionElement.checked ? mentionIdInputElement.value : -1;
     let allowSendNoti = allowReceiveNotiElement.checked;
     let allowSendLine = allowReceiveLineElement.checked;
+
     disableButtons();
+
     if (!vaildateValue()) {
         enableButtons();
         return;
     }
+
     try {
-        const response = (await (await fetch("/api/register", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                url: webhookURL,
-                roleID: roleID,
-                options: setOptions(allowSendLine, allowSendNoti, roleID != -1),
-            }),
-        })).json());
+        const response = (await (
+            await fetch("/api/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    url: webhookURL,
+                    roleID: roleID,
+                    options: setOptions(
+                        allowSendLine,
+                        allowSendNoti,
+                        roleID != -1,
+                    ),
+                }),
+            })
+        ).json()) as ApiResult;
         if (400 <= response.status && response.status < 500)
             showError("웹후크 등록에 실패했습니다: " + response.message);
         else if (200 <= response.status && response.status < 400)
             showSuccess("웹후크 등록 성공!");
-        else
-            throw new Error();
-    }
-    catch {
-        showError("웹후크 등록에 실패했습니다: 알 수 없는 오류가 발생하였습니다.");
+        else throw new Error();
+    } catch {
+        showError(
+            "웹후크 등록에 실패했습니다: 알 수 없는 오류가 발생하였습니다.",
+        );
     }
     enableButtons();
     closeRegister();
 }
+
 async function editWebhook() {
     let webhookURL = webhookInputElement.value;
     let roleID = allowMentionElement.checked ? mentionIdInputElement.value : -1;
     let allowSendNoti = allowReceiveNotiElement.checked;
     let allowSendLine = allowReceiveLineElement.checked;
+
     disableButtons();
+
     if (!vaildateValue()) {
         enableButtons();
         return;
     }
+
     try {
-        const response = (await (await fetch("/api/edit", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                url: webhookURL,
-                roleID: roleID,
-                options: setOptions(allowSendLine, allowSendNoti, roleID != -1),
-            }),
-        })).json());
+        const response = (await (
+            await fetch("/api/edit", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    url: webhookURL,
+                    roleID: roleID,
+                    options: setOptions(
+                        allowSendLine,
+                        allowSendNoti,
+                        roleID != -1,
+                    ),
+                }),
+            })
+        ).json()) as ApiResult;
+
         if (400 <= response.status && response.status < 500)
             showError("웹후크 수정에 실패했습니다: " + response.message);
         else if (200 <= response.status && response.status < 400)
             showSuccess("웹후크 수정 성공!");
-        else
-            throw new Error();
-    }
-    catch (e) {
+        else throw new Error();
+    } catch (e) {
         console.error(e);
-        showError("웹후크 수정에 실패했습니다: 알 수 없는 오류가 발생하였습니다.");
+        showError(
+            "웹후크 수정에 실패했습니다: 알 수 없는 오류가 발생하였습니다.",
+        );
     }
     enableButtons();
     closeRegister();
 }
+
 async function unregisterWebhook() {
     let webhookURL = webhookInputElement.value;
+
     if (!!!webhookURL.match(WEBHOOK_REGEX)) {
         webhookInputElement.setCustomValidity("aw");
         formElement.classList.add("was-validate");
         return;
-    }
-    else
-        webhookInputElement.setCustomValidity("");
+    } else webhookInputElement.setCustomValidity("");
+
     try {
-        const response = (await (await fetch("/api/unregister?url=" + encodeURIComponent(webhookURL), {
-            method: "DELETE",
-        })).json());
+        const response = (await (
+            await fetch(
+                "/api/unregister?url=" + encodeURIComponent(webhookURL),
+                {
+                    method: "DELETE",
+                },
+            )
+        ).json()) as ApiResult;
+
         if (400 <= response.status && response.status < 500)
             showError("웹후크 취소에 실패했습니다: " + response.message);
         else if (200 <= response.status && response.status < 400)
             showSuccess("웹후크 취소 성공!");
-        else
-            throw new Error();
-    }
-    catch (e) {
+        else throw new Error();
+    } catch (e) {
         console.error(e);
-        showError("웹후크 취소에 실패했습니다: 알 수 없는 오류가 발생하였습니다.");
+        showError(
+            "웹후크 취소에 실패했습니다: 알 수 없는 오류가 발생하였습니다.",
+        );
     }
     closeRegister();
 }
+
 let embed_idx = 0;
+
 function page_onLoad() {
     setInterval(transform_embed_text, 5000);
     getNoticeList();
 }
-const EMBED_CONTENT = requiredElement(".embed-content");
-const EMBED_TITLE = requiredElement(".discord-embed > a");
-const EMBED_FOOTER = requiredElement(".embed-footer");
-const EMBED_ELEMENT = requiredElement(".discord-embed");
+
+const EMBED_CONTENT = requiredElement<HTMLElement>(".embed-content");
+const EMBED_TITLE = requiredElement<HTMLElement>(".discord-embed > a");
+const EMBED_FOOTER = requiredElement<HTMLElement>(".embed-footer");
+const EMBED_ELEMENT = requiredElement<HTMLElement>(".discord-embed");
+
 window.addEventListener("resize", () => {
     requestAnimationFrame(() => {
-        EMBED_ELEMENT.style.height = `calc(85px + ${EMBED_TITLE.clientHeight + EMBED_FOOTER.clientHeight}px + ${EMBED_CONTENT.clientHeight}px)`;
+        EMBED_ELEMENT.style.height = `calc(85px + ${
+            EMBED_TITLE.clientHeight + EMBED_FOOTER.clientHeight
+        }px + ${EMBED_CONTENT.clientHeight}px)`;
     });
 });
+
 function transform_embed_text() {
     EMBED_CONTENT.style.opacity = "0";
     embed_idx = (embed_idx + 1) % EMBED_TEXT.length;
     EMBED_ELEMENT.style.height = `${EMBED_ELEMENT.offsetHeight}px`; // 고정 높이 설정
+
     setTimeout(() => {
         requestAnimationFrame(() => {
             EMBED_CONTENT.innerHTML = EMBED_TEXT[embed_idx] ?? "";
-            EMBED_ELEMENT.style.height = `calc(85px + ${EMBED_TITLE.clientHeight + EMBED_FOOTER.clientHeight}px + ${EMBED_CONTENT.clientHeight}px)`;
+
+            EMBED_ELEMENT.style.height = `calc(85px + ${
+                EMBED_TITLE.clientHeight + EMBED_FOOTER.clientHeight
+            }px + ${EMBED_CONTENT.clientHeight}px)`;
             EMBED_CONTENT.style.opacity = "1";
         });
     }, 250);
 }
-function createNoticeItem(title, date, content, isLast) {
+
+function createNoticeItem(
+    title: string,
+    date: string,
+    content: string,
+    isLast: boolean,
+): HTMLDivElement {
     const noticeItem = document.createElement("div");
     const titleItem = document.createElement("span");
     titleItem.classList.add("h3");
     const dateItem = document.createElement("span");
     const contentItem = document.createElement("p");
     const splitLine = document.createElement("hr");
+
     let uploadDate = new Date(date);
+
     noticeItem.classList.add("notice-item");
     titleItem.textContent = title;
-    dateItem.textContent = `${uploadDate.getFullYear()}-${uploadDate.getMonth() + 1}-${uploadDate.getDate()}`;
+    dateItem.textContent = `${uploadDate.getFullYear()}-${
+        uploadDate.getMonth() + 1
+    }-${uploadDate.getDate()}`;
     contentItem.innerHTML = content.replace(/\n/g, "<br>");
     contentItem.style.marginTop = "10px";
     contentItem.style.width = "100%";
@@ -245,15 +332,16 @@ function createNoticeItem(title, date, content, isLast) {
     noticeItem.appendChild(document.createElement("br"));
     noticeItem.appendChild(dateItem);
     noticeItem.appendChild(contentItem);
-    if (!isLast)
-        noticeItem.appendChild(splitLine);
+    if (!isLast) noticeItem.appendChild(splitLine);
+
     return noticeItem;
 }
+
 async function getNoticeList() {
-    const noticeList = requiredElement(".notice-list");
+    const noticeList = requiredElement<HTMLElement>(".notice-list");
     try {
         let res = await fetch("/api/getNotices");
-        const notices = (await res.json());
+        const notices = (await res.json()) as ApiResult<Notice[]>;
         const data = notices.data ?? [];
         if (data.length === 0) {
             noticeList.innerHTML =
@@ -262,11 +350,17 @@ async function getNoticeList() {
         }
         let idx = 0;
         for (const notice of data) {
-            noticeList.appendChild(createNoticeItem(notice.title, notice.date, notice.content, idx === data.length - 1));
+            noticeList.appendChild(
+                createNoticeItem(
+                    notice.title,
+                    notice.date,
+                    notice.content,
+                    idx === data.length - 1,
+                ),
+            );
             idx++;
         }
-    }
-    catch (e) {
+    } catch (e) {
         console.error(e);
         noticeList.innerHTML =
             "<span>공지사항을 불러오는데 실패하였습니다.</span>";

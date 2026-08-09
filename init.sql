@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS webhooks (
     `channelID` VARCHAR(20) NOT NULL,
     `webhookToken` VARCHAR(200) NOT NULL,
     `options` TINYINT UNSIGNED NOT NULL,
-    `roleID` VARCHAR(20),
+    `roleID` VARCHAR(20)
 );
 
 CREATE TABLE IF NOT EXISTS notices (

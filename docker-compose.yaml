@@ -16,15 +16,18 @@ services:
             GEMINI_API_KEY: ${GEMINI_API_KEY}
             DEEPL_API_KEY: ${DEEPL_API_KEY}
             DEEPL_GLOSSARY_ID: ${DEEPL_GLOSSARY_ID}
+            NOTICE_TOKEN_KEY: ${NOTICE_TOKEN_KEY}
             DB_HOST: ${DB_HOST}
             DB_NAME: ${DB_NAME}
             DB_USER: ${DB_USER}
             DB_PASSWORD: ${DB_PASSWORD}
-            OTP_SECRET: ${OTP_SECRET}
+            LINE_SIGNING_PUBLIC_KEY: ${LINE_SIGNING_PUBLIC_KEY}
+            LINE_SIGNING_KEY_ID: ${LINE_SIGNING_KEY_ID:-line-2026-01}
         networks:
             - mahook
         depends_on:
-            - mahook-db
+            mahook-db:
+                condition: service_healthy
 
     mahook-db:
         image: mahook-db:latest
@@ -37,6 +40,12 @@ services:
             MARIADB_USER: ${DB_USER}
             MARIADB_PASSWORD: ${DB_PASSWORD}
             MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+        healthcheck:
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+            start_period: 10s
         networks:
             - mahook
 

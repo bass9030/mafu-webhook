@@ -3,6 +3,9 @@ build.sh
 .git
 images
 node_modules
+dist
+mahook-db
+tools/*/dist
 .gitignore
 docker*
 readme.md
