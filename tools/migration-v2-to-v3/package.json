@@ -11,6 +11,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "mariadb": "^3.4.5"
+    "mariadb": "^3.5.3"
   }
 }
