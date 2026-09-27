@@ -5,7 +5,9 @@
     "scripts": {
         "build": "npm run clean && tsc -p tsconfig.json && tsc -p tsconfig.client.json",
         "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-        "dev": "tsx watch bin/www.ts",
+        "dev": "tsx scripts/dev.ts",
+        "dev:server": "tsx watch bin/www.ts",
+        "dev:client": "tsc -p tsconfig.client.json --watch",
         "start": "node dist/bin/www.js",
         "test": "tsx --test tests/**/*.test.ts",
         "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.test.json --noEmit"

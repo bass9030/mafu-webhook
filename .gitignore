@@ -68,6 +68,10 @@ lastTweet.txt
 timeline.json
 tweetData.json
 
+*.pem
+
+mahook-line-client
+
 generate-lincense-page/opensource.ejs
 
 ./mahook-db

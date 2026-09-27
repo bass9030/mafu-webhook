@@ -60,6 +60,7 @@ function changeRoleIDStatus(event: Event) {
 function vaildateValue() {
     let roleID = mentionIdInputElement.value;
     let webhookURL = webhookInputElement.value;
+    let isMentionEnabled = allowMentionElement.checked;
     let isVaildate = true;
 
     if (!!!webhookURL.match(WEBHOOK_REGEX)) {
@@ -69,15 +70,19 @@ function vaildateValue() {
         webhookInputElement.setCustomValidity("");
     }
 
-    if (
-        roleID.trim() == "@everyone" ||
-        roleID.trim() == "@here" ||
-        !!roleID.match(ROLEID_REGEX)
-    ) {
+    if(isMentionEnabled) {
+        if (
+            roleID.trim() == "@everyone" ||
+            roleID.trim() == "@here" ||
+            !!roleID.match(ROLEID_REGEX)
+        ) {
+            mentionIdInputElement.setCustomValidity("");
+        } else {
+            mentionIdInputElement.setCustomValidity("올바른 맨션 형식이 아님");
+            isVaildate = false;
+        }
+    }else{
         mentionIdInputElement.setCustomValidity("");
-    } else {
-        mentionIdInputElement.setCustomValidity("올바른 맨션 형식이 아님");
-        isVaildate = false;
     }
 
     formElement.classList.add("was-validated");
