@@ -211,7 +211,10 @@ router.post("/sendNoti", async (req, res, next) => {
             res.status(400).json({ status: res.statusCode });
             return;
         }
-        const hashedHeader = crypto.createHash("sha512").update().digest("hex");
+        const hashedHeader = crypto
+            .createHash("sha512")
+            .update(req.body?.["amazing-something"])
+            .digest("hex");
         if (hashedHeader == process.env.NOTICE_TOKEN_KEY.toLowerCase()) {
             await webhookManager.getConnection();
             await webhookManager.sendNotice(req.body?.title, req.body?.content);
