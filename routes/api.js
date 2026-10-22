@@ -203,15 +203,16 @@ router.get("/getNotices", async (req, res, next) => {
 
 router.post("/sendNoti", async (req, res, next) => {
     try {
-        const hashedHeader = crypto
-            .createHash("sha512")
-            .update(req?.body["amazing-something"])
-            .digest("hex");
+        if (
+            !!!req.body?.content ||
+            !!!req.body?.title ||
+            !!!req.body?.["amazing-something"]
+        ) {
+            res.status(400).json({ status: res.statusCode });
+            return;
+        }
+        const hashedHeader = crypto.createHash("sha512").update().digest("hex");
         if (hashedHeader == process.env.NOTICE_TOKEN_KEY.toLowerCase()) {
-            if (!!!req.body?.content || !!!req.body?.title) {
-                res.status(400).json({ status: res.statusCode });
-                return;
-            }
             await webhookManager.getConnection();
             await webhookManager.sendNotice(req.body?.title, req.body?.content);
             res.send("공지 전송 성공!");
