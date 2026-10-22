@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <%# include('header') %>
+        <style>
+            * {
+                font-family: "Noto Sans KR", sans-serif;
+            }
+
+            body {
+                padding: 20px;
+                background-color: #2e3035;
+                color: white;
+            }
+
+            p {
+                margin: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>오픈소스 라이선스 / Open Source License</h2>
+        <% for(let key of Object.keys(packages)) { %>
+        <% let p = packages[key] %>
+        <details>
+            <summary>
+                <code><%=key%></code>
+            </summary>
+            <p><%=p["licenses"]%></p>
+            <p><pre><%=p["licenseFile"]%></pre></p>
+        </details>
+        <% } %>
+    </body>
+</html>

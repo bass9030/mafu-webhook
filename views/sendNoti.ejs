@@ -1,13 +1,28 @@
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<form action="/api/sendNoti" method="post" enctype="application/x-www-form-urlencoded">
-    <input type="text" placeholder="공지사항 제목 입력" name="title"></input>
-    <textarea placeholder="공지사항 내용 입력" name="content"></textarea>
-    <input type="password" placeholder="개쩌는 무언가 입력" name="amazing-something">
-    <input type="submit" value="전송"></input>
-</form>
+    <%- include('header') %>
 
-<script>
-    
-</script>
+    <style>
+        .container {
+            margin-top: 50vh;
+            transform: translateY(-50%);
+        }
+
+        .container > h2 {
+            text-align: center;
+        }
+        form > * {
+            margin: 5px 0px;
+        }
+    </style>
+</head>
+<html>
+    <div class="container">
+        <h2>공지 전송</h2>
+        <form action="/api/sendNoti" class="align-middle" method="post" enctype="application/x-www-form-urlencoded">
+            <input class="form-control" type="text" placeholder="공지사항 제목 입력" name="title"></input>
+            <textarea class="form-control" placeholder="공지사항 내용 입력" name="content"></textarea>
+            <input class="form-control" type="password" placeholder="개쩌는 무언가 입력" name="amazing-something">
+            <input class="btn btn-primary"type="submit" value="전송"></input>
+        </form>
+    </div>
+</html>

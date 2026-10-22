@@ -7,18 +7,18 @@
     },
     "dependencies": {
         "@google/genai": "^0.13.0",
-        "@sentry/node": "^10.32.1",
+        "@sentry/node": "^10.58.0",
         "app-root-path": "^3.1.0",
         "cookie-parser": "~1.4.7",
         "debug": "~2.6.9",
         "deepl-node": "^1.12.0",
         "discord-webhook-node": "^1.1.8",
-        "discord.js": "^14.25.1",
+        "discord.js": "^14.27.0",
         "dotenv": "^16.3.1",
         "ejs": "^3.1.10",
-        "express": "^4.22.1",
+        "express": "^5.2.1",
         "http-errors": "~1.6.3",
-        "mariadb": "^3.3.0",
-        "morgan": "~1.10.1"
+        "mariadb": "^3.5.4",
+        "morgan": "~1.12.1"
     }
 }
