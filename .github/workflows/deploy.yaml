@@ -36,8 +36,8 @@ jobs:
 
             - name: Upload images
               run: |
-                  scp -v -o StrictHostKeyChecking=no ./mahook-web.tar bass9030@web-server:/tmp
-                  scp -v -o StrictHostKeyChecking=no ./mahook-db.tar bass9030@web-server:/tmp
+                  scp -v -o StrictHostKeyChecking=no ./mahook-web.tar bass9030@web-server:/home/bass9030/docker-images
+                  scp -v -o StrictHostKeyChecking=no ./mahook-db.tar bass9030@web-server:/home/bass9030/docker-images
 
             - name: Restarting service
               run: |
@@ -45,9 +45,9 @@ jobs:
                       cd /home/bass9030/mahook
                       docker compose down
                       docker rmi $(docker images -aq "mahook-*")
-                      docker load --input /tmp/mahook-web.tar
-                      docker load --input /tmp/mahook-db.tar
+                      docker load --input /home/bass9030/docker-images/mahook-web.tar
+                      docker load --input /home/bass9030/docker-images/mahook-db.tar
                       docker compose up -d
-                      rm /tmp/mahook-*.tar
+                      rm /home/bass9030/docker-images/mahook-*.tar
                       exit
                   "
