@@ -21,21 +21,8 @@ services:
         ports:
             - "3000:3000"
         container_name: mahook-web
-        environment:
-            TZ: Asia/Seoul
-            NODE_ENV: development
-            TWITTER_AUTH_TOKEN: ${TWITTER_AUTH_TOKEN}
-            TWITTER_CT0: ${TWITTER_CT0}
-            DEBUG_WEBHOOK_URL: ${DEBUG_WEBHOOK_URL}
-            GEMINI_API_KEY: ${GEMINI_API_KEY}
-            DEEPL_API_KEY: ${DEEPL_API_KEY}
-            DEEPL_GLOSSARY_ID: ${DEEPL_GLOSSARY_ID}
-            NOTICE_TOKEN_KEY: ${NOTICE_TOKEN_KEY}
-            DB_HOST: ${DB_HOST}
-            DB_NAME: ${DB_NAME}
-            DB_USER: ${DB_USER}
-            DB_PASSWORD: ${DB_PASSWORD}
-            OTP_SECRET: ${OTP_SECRET}
+        env_file:
+            - .env
         networks:
             - mahook
         depends_on:

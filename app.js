@@ -9,10 +9,6 @@ var indexRouter = require("./routes/index");
 var apiRouter = require("./routes/api");
 var sendNotiRouter = require("./routes/sendNoti");
 
-require("./utils/instrument.js");
-
-const Sentry = require("@sentry/node");
-
 var app = express();
 
 // view engine setup
@@ -24,8 +20,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-
-Sentry.setupExpressErrorHandler(app);
 
 app.use("/", indexRouter);
 app.use("/api", apiRouter);

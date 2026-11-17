@@ -21,6 +21,7 @@ services:
             DB_USER: ${DB_USER}
             DB_PASSWORD: ${DB_PASSWORD}
             OTP_SECRET: ${OTP_SECRET}
+            SENTRY_ENDPOINT: ${SENTRY_ENDPOINT}
         networks:
             - mahook
         depends_on:
