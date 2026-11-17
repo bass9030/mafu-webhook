@@ -1,6 +1,10 @@
 const DEBUG = false;
 const { default_features, default_variables } = require("./twitterFeatures");
 const { EmbedBuilder } = require("discord.js");
+const {
+    ClientTransaction,
+    fetchXDocument,
+} = require("x-client-transaction-id");
 const { WebhookManager, WEBHOOK_TYPE } = require("./webhookManager");
 const translateText = require("./translator");
 const {
@@ -13,15 +17,32 @@ let profileURL = "";
 let prevLastTweetID = null;
 
 /**
+ * @type {ClientTransaction}
+ */
+let transaction = null;
+
+/**
  *
  * @param {BigInt|String} userId userId is not username!!
  */
-async function getTimelineByUserID(userId) {
-    const reqURL = `https://x.com/i/api/graphql/oRJs8SLCRNRbQzuZG93_oA/UserTweets?variables=${encodeURIComponent(
-        JSON.stringify(Object.assign(default_variables, { userId: userId })),
+async function getTimelineByUserID(userId, count) {
+    const reqURL = `https://x.com/i/api/graphql/FmuxExUC21Xn_C2NwtX5sQ/UserTweetsAndReplies?variables=${encodeURIComponent(
+        JSON.stringify(
+            Object.assign(default_variables, { userId: userId, count: count }),
+        ),
     )}&features=${encodeURIComponent(JSON.stringify(default_features))}`;
 
     try {
+        if (!transaction) {
+            const document = await fetchXDocument();
+            transaction = await ClientTransaction.create(document);
+        }
+
+        const transactionId = await transaction.generateTransactionId(
+            "GET",
+            "/i/api/graphql/FmuxExUC21Xn_C2NwtX5sQ/UserTweetsAndReplies",
+        );
+
         let response = await fetch(reqURL, {
             method: "GET",
             headers: {
@@ -34,6 +55,7 @@ async function getTimelineByUserID(userId) {
                 "x-csrf-token": process.env.TWITTER_CT0,
                 "x-twitter-active-user": "yes",
                 "x-twitter-client-language": "en",
+                "x-client-transaction-id": transactionId,
             },
         });
         let res_text = "";
@@ -67,12 +89,11 @@ async function getTimelineByUserID(userId) {
                     for (let j = 0; j < e.content.items.length; j++) {
                         let f = e.content.items[j];
                         if (
-                            !f.entryId.match(
+                            f.entryId.match(
                                 /^profile\-conversation\-[0-9]+\-tweet\-[0-9]+/g,
                             )
                         )
-                            continue;
-                        data.push(f.item.itemContent.tweet_results.result);
+                            data.push(f.item.itemContent.tweet_results.result);
                     }
                 }
             }
@@ -166,112 +187,122 @@ async function sendRecentTweet(id) {
     webhookManager.sendWebhook(embed, WEBHOOK_TYPE.TWITTER);
 }
 
-async function generationTweetMarkdown(tweetInfo, stack = 0, max_stack = 3) {
-    stack++;
+const MAX_TWEET_DEPTH = 3;
 
-    // console.log(JSON.stringify(tweetInfo, null, 4));
+/**
+ * 트윗 본문 추출 (장문 트윗은 note_tweet, 일반 트윗은 legacy.full_text)
+ */
+function getTweetText(tweet) {
+    let text =
+        tweet?.note_tweet?.note_tweet_results?.result?.text ??
+        tweet?.legacy?.full_text ??
+        "";
 
-    let result = "";
-
-    let isRetweet =
-        tweetInfo.legacy?.retweeted ||
-        !!tweetInfo.legacy?.retweeted_status_result;
-    let isQuote =
-        tweetInfo.legacy?.is_quote_status || !!tweetInfo.quoted_status_result;
-
-    // 인용/RT 트윗 처리
-    // 인용트를 RT | retweeted: true, is_quote_status: true, retweeted_status_result에 인용트 내용
-    // 인용트를 인용 | retweeted: false, is_quote_status: true, quoted_status_result에 인용트 내용
-    // RT | retweeted: true, is_quote_status: false, retweeted_status_result에 RT내용
-    // 인용트 | retweeted: false, is_qoute_status: true, quoted_status_result에 인용트 내용
-    if (isRetweet && stack < max_stack) {
-        // RT
-        let retweetData = tweetInfo.legacy?.retweeted_status_result.result;
-        let retweetUser = retweetData?.core?.user_results?.result.core;
-
-        // RT 트윗 사용자 정보
-        let retweetUserName = retweetUser.name;
-        let retweetUserHandle = retweetUser.screen_name;
-
-        let retweetText = "";
-
-        // RT 트윗에 인용 여부 확인
-        if (
-            (retweetData.legacy.is_quote_status ||
-                !!retweetData.quoted_status_result) &&
-            stack < max_stack
-        ) {
-            // 인용트윗
-            retweetText = await generationTweetMarkdown(
-                retweetData,
-                stack,
-                max_stack,
-            );
-        } else {
-            // 일반트윗
-            retweetText = !!retweetData.note_tweet
-                ? retweetData.note_tweet.note_tweet_results.result.text
-                : retweetData.legacy.full_text;
-
-            retweetText = await translateText(retweetText);
+    // Change t.co url to original url
+    const urls = tweet?.legacy?.entities?.urls ?? [];
+    for (let url of urls) {
+        let range = url.indices ?? [];
+        if (range.length == 2) {
+            text =
+                text.substring(0, range[0]) +
+                url.expanded_url +
+                text.substring(range[1]);
         }
+    }
 
-        result =
-            `RT: **${retweetUserName} ([@${retweetUserHandle}](https://x.com/${retweetUserHandle}))**:\n` +
-            `${retweetText}`;
-    } else if (isQuote && stack < max_stack) {
+    // Remove media urls
+    const media = tweet?.legacy?.entities?.media ?? [];
+    for (let m of media) {
+        let range = m.indices ?? [];
+        if (range.length == 2) {
+            text = text.substring(0, range[0]) + text.substring(range[1]);
+        }
+    }
+
+    return text;
+}
+
+/**
+ * 작성자를 `**이름 ([@핸들](링크))**` 형태로 변환
+ */
+function formatAuthor(tweet) {
+    const user = tweet?.core?.user_results?.result?.core ?? {};
+    const handle = user.screen_name ?? "unknown";
+    return `**${user.name ?? handle} ([@${handle}](https://x.com/${handle}))**`;
+}
+
+/**
+ * 각 줄 앞에 인용 블록(`>`) 추가
+ * (​는 빈 줄에서도 인용 블록이 유지되도록 하기 위함)
+ */
+function toBlockquote(text) {
+    return text
+        .split("\n")
+        .map((line) => `> ​${line}`)
+        .join("\n");
+}
+
+/**
+ * 트윗 정보를 번역된 Discord 마크다운으로 변환
+ *
+ * - RT: `RT: 작성자:` + 원본 트윗 (원본이 인용트윗이면 재귀 처리)
+ * - 인용: 본문 + 인용 블록으로 감싼 인용된 트윗
+ * - 답장: 맨 앞에 답장 대상 링크 추가
+ *
+ * @param {object} tweet 트윗 정보 Object
+ * @param {number} depth 현재 중첩 깊이 (RT/인용 재귀 제한용)
+ * @returns {Promise<string>}
+ */
+async function generateTweetMarkdown(tweet, depth = 1) {
+    console.log(JSON.stringify(tweet));
+    const legacy = tweet.legacy ?? {};
+    const retweeted = legacy.retweeted_status_result?.result;
+    const quoted = tweet.quoted_status_result?.result;
+    const canNest = depth < MAX_TWEET_DEPTH;
+
+    let body;
+    if (retweeted && canNest) {
+        // RT (RT한 트윗이 인용트윗일 수 있으므로 재귀 처리)
+        const inner = await generateTweetMarkdown(retweeted, depth + 1);
+        body = `RT: ${formatAuthor(retweeted)}:\n${inner}`;
+    } else if (quoted && canNest) {
         // 인용
-        let quoteData = tweetInfo.quoted_status_result.result;
-        let quoteUser = quoteData.core.user_results.result.core;
-
-        // 인용 트윗 사용자 정보
-        let quoteUserName = quoteUser.name;
-        let quoteUserHandle = quoteUser.screen_name;
-
-        // 인용 트윗 본문
-        let quoteText = !!tweetInfo.note_tweet
-            ? tweetInfo.note_tweet.note_tweet_results.result.text
-            : tweetInfo.legacy.full_text;
-
-        quoteText = await translateText(quoteText);
-
-        // 인용한 트윗 내용
-        let innerQuoteText = quoteData.note_tweet
-            ? quoteData.note_tweet.note_tweet_results.result.text
-            : quoteData.legacy.full_text;
-
-        innerQuoteText = await translateText(innerQuoteText);
-        innerQuoteText =
-            `QT: **${quoteUserName} ([@${quoteUserHandle}](https://x.com/${quoteUserHandle}))**:\n\n` +
-            innerQuoteText;
-        if (stack <= 2)
-            innerQuoteText = innerQuoteText
-                .split("\n")
-                .map((e) => "> \u200b" + e)
-                .join("\n");
-
-        result = `${quoteText}\n\n` + `${innerQuoteText}`;
+        const [text, quotedText] = await Promise.all([
+            translateText(getTweetText(tweet)),
+            translateText(getTweetText(quoted)),
+        ]);
+        const quoteBlock = toBlockquote(
+            `QT: ${formatAuthor(quoted)}:\n\n${quotedText}`,
+        );
+        body = `${text}\n\n${quoteBlock}`;
     } else {
         // 일반
-        // 트윗 본문 (장문일시 note_tweet, 일반일시 legacy.full_text)
-        let content = !!tweetInfo.note_tweet
-            ? tweetInfo.note_tweet.note_tweet_results.result.text
-            : tweetInfo.legacy.full_text;
-        result = await translateText(content);
+        body = await translateText(getTweetText(tweet));
     }
-    result = String(result).trim();
-    return result;
+    body = String(body).trim();
+
+    // 답장(타래) 트윗
+    const replyId = legacy.in_reply_to_status_id_str;
+    if (replyId) {
+        const replyHandle = legacy.in_reply_to_screen_name;
+        body =
+            `↩ [@${replyHandle}](https://x.com/${replyHandle}/status/${replyId})\n\n` +
+            body;
+    }
+
+    return body;
 }
 
 /**
  * tweetInfo 데이터를 기반으로 Discord 훅 전송
  * @param {object} tweetInfo 트윗 정보 Object
+ * @returns {Promise<EmbedBuilder[]>} Discord EmbedBuilder 배열
  */
 async function getWebhookEmbed(tweetInfo) {
     let created_at = new Date(tweetInfo.legacy?.created_at);
 
     // 번역
-    let translatedText = await generationTweetMarkdown(tweetInfo);
+    let translatedText = await generateTweetMarkdown(tweetInfo);
     // console.log(translatedText);
     // translatedText = await translateText(translatedText);
 
@@ -280,11 +311,20 @@ async function getWebhookEmbed(tweetInfo) {
     let originalLink =
         "https://x.com/uni_mafumafu/status/" + tweetInfo.legacy.id_str;
 
+    const embeds = [];
+
     // embed 메시지 생성
     let embed = new EmbedBuilder();
 
+    // console.log(JSON.stringify(tweetInfo, null, 2));
+
     embed.setTitle("New Tweet Release!");
     embed.setURL(originalLink);
+    embed.setAuthor({
+        name: `${tweetInfo.core.user_results.result.core.name} (@${tweetInfo.core.user_results.result.core.screen_name})`,
+        iconURL: profileURL,
+        url: "https://x.com/uni_mafumafu",
+    });
     embed.setFooter({
         text: originalLink,
         iconURL: profileURL,
@@ -293,16 +333,71 @@ async function getWebhookEmbed(tweetInfo) {
     embed.setDescription(translatedText);
     embed.setColor(0x1da1f2);
 
-    // 미디어 처리
     if (!!tweetInfo.legacy.entities.media?.length) {
-        if (
-            tweetInfo.legacy.entities.media[0].type == "photo" ||
-            tweetInfo.legacy.entities.media[0].type == "video"
-        )
-            embed.setImage(tweetInfo.legacy.entities.media[0].media_url_https);
+        // 미디어 처리(일반)
+        let imgCnt = tweetInfo.legacy.entities.media.length;
+        if (imgCnt > 4) imgCnt = 4;
+        for (let i = 0; i < imgCnt; i++) {
+            const media = tweetInfo.legacy.entities.media[i];
+            if (["photo", "video"].includes(media.type)) {
+                if (i == 0) embed.setImage(media.media_url_https);
+                else {
+                    let imageEmbed = new EmbedBuilder();
+                    imageEmbed.setURL(originalLink);
+                    imageEmbed.setImage(media.media_url_https);
+                    embeds.push(imageEmbed);
+                }
+            }
+        }
+    } else if (
+        !!tweetInfo.legacy.retweeted_status_result?.result?.legacy?.entities
+            ?.media?.length
+    ) {
+        // 미디어 처리(RT)
+        let imgCnt =
+            tweetInfo.legacy.retweeted_status_result.result.legacy.entities
+                .media.length;
+
+        if (imgCnt > 4) imgCnt = 4;
+        for (let i = 0; i < imgCnt; i++) {
+            const media =
+                tweetInfo.legacy.retweeted_status_result.result.legacy.entities
+                    .media[i];
+            if (["photo", "video"].includes(media.type)) {
+                if (i == 0) embed.setImage(media.media_url_https);
+                else {
+                    let imageEmbed = new EmbedBuilder();
+                    imageEmbed.setURL(originalLink);
+                    imageEmbed.setImage(media.media_url_https);
+                    embeds.push(imageEmbed);
+                }
+            }
+        }
+    } else if (
+        !!tweetInfo?.quoted_status_result &&
+        !!tweetInfo.quoted_status_result.result?.legacy?.entities?.media?.length
+    ) {
+        // 미디어 처리(인용)
+        let imgCnt =
+            tweetInfo.quoted_status_result.result.legacy.entities.media.length;
+
+        if (imgCnt > 4) imgCnt = 4;
+        for (let i = 0; i < imgCnt; i++) {
+            const media =
+                tweetInfo.quoted_status_result.result.legacy.entities.media[i];
+            if (["photo", "video"].includes(media.type)) {
+                if (i == 0) embed.setImage(media.media_url_https);
+                else {
+                    let imageEmbed = new EmbedBuilder();
+                    imageEmbed.setURL(originalLink);
+                    imageEmbed.setImage(media.media_url_https);
+                    embeds.push(imageEmbed);
+                }
+            }
+        }
     }
 
-    return embed;
+    return [embed, ...embeds];
 }
 
 async function getProfileURL() {
@@ -310,7 +405,7 @@ async function getProfileURL() {
         return profileURL;
     } else {
         try {
-            let tweetInfo = await getTimelineByUserID(268758461);
+            let tweetInfo = await getTimelineByUserID(268758461, 1);
             tweetInfo[0].core.user_results.result.avatar.image_url;
             return profileURL;
         } catch {
