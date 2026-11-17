@@ -33,9 +33,8 @@ class WebhookNotFoundError extends Error {
 process.on("SIGTERM", onExit);
 process.on("SIGINT", onExit);
 
-function onExit() {
-    console.log("on exit called");
-    pool.end();
+async function onExit() {
+    await pool.end();
     process.exit(0);
 }
 
@@ -166,7 +165,7 @@ class WebhookManager {
     }
 
     /**
-     * @param {EmbedBuilder | object} message
+     * @param {EmbedBuilder[] | object[]} message
      * @param {WEBHOOK_TYPE} type
      */
     async sendWebhook(message, type = WEBHOOK_TYPE.TWITTER) {
@@ -216,12 +215,12 @@ class WebhookManager {
                         break;
                     case WEBHOOK_TYPE.TWITTER:
                     case WEBHOOK_TYPE.LINE:
-                        profileURL = message.data["footer"]["icon_url"];
+                        profileURL = message[0].data["footer"]["icon_url"];
                         await hook.send({
                             avatarURL: profileURL,
                             username: "마훅 - 마후 트윗 번역봇",
                             content: mention,
-                            embeds: [message],
+                            embeds: message,
                         });
                         break;
                 }
@@ -229,8 +228,8 @@ class WebhookManager {
             } catch (err) {
                 err_cnt++;
                 sendErrorLog(err);
-                console.error(`Failed to send webhook to ${e.webhookURL}`);
-                console.error(err);
+                // console.error(`Failed to send webhook to ${e.webhookURL}`);
+                // console.error(err);
             }
         }
         sendInfoLog(
