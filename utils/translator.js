@@ -1,8 +1,9 @@
 const deepl = require("deepl-node");
-const glossary = require("./glossary.json");
-const systemInstruction =
-    "Translate japanese to korean. Only translated sentences should be displayed in the response. Some words should be translated as below.\n" +
-    glossary.map((e) => `${e.source} is ${e.target}`).join(". ");
+const fs = require("fs");
+const glossary = require("../data/glossary.json");
+const SYSTEM_INSTRUCTION = fs.readFileSync("./prompt/translator.md", {
+    encoding: "utf-8",
+});
 const { GoogleGenAI } = require("@google/genai");
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenAI({ apiKey });
@@ -24,7 +25,7 @@ async function translateTextDeepL(source, target, query) {
         target,
         {
             glossary: process.env.DEEPL_GLOSSARY_ID,
-        }
+        },
     );
 
     return response.text;
@@ -43,7 +44,12 @@ async function translateText(text) {
         result = await translateTextGemini(text);
     } catch (e) {
         sendErrorLog(e);
-        result = await translateTextDeepL("ja", "ko", text);
+        try {
+            result = await translateTextDeepL("ja", "ko", text);
+        } catch (e) {
+            // TODO: fallback 처리(아마 HdTrans 쓸듯?)
+            sendErrorLog(e);
+        }
     }
 
     return result;
@@ -54,9 +60,14 @@ async function translateText(text) {
  * @param {string} query 번역할 텍스트
  */
 async function translateTextGemini(query) {
+    const instruction = SYSTEM_INSTRUCTION.replace(
+        "{{GLOSSARY}}",
+        glossary.map((item) => `${item.ja} → ${item.ko}`).join("\n"),
+    ).replace("{{TEXT}}", query);
+
     const result = await genAI.models.generateContent({
-        model: "gemini-2.5-flash-lite",
-        contents: query,
+        model: "gemini-3.5-flash-lite",
+        contents: instruction,
         config: {
             safetySettings: [
                 {
@@ -76,7 +87,7 @@ async function translateTextGemini(query) {
                     threshold: "BLOCK_NONE",
                 },
             ],
-            systemInstruction: systemInstruction,
+            // systemInstruction: instruction,
         },
     });
     return result.text.replace(/\\/g, "\\\\\\");
