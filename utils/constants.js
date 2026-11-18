@@ -22,8 +22,6 @@ const EMBED_COLOR = Object.freeze({
 const LINE_URL = "https://line.me/R/ti/p/@uni_mafumafu";
 const LINE_ICON_URL =
     "https://profile.line-scdn.net/0hwr6BH-fyKF0LOwNQZWNXCjd-JjB8FS4Vc14yOixocmokW21eMVo3b34-cTp2X2sOMgpmM35ocGVy/preview";
-/** LINE 중계 서버가 보내는 user-agent */
-const LINE_RELAY_USER_AGENT = "mahook-line/3.0";
 
 /**
  * 웹후크 전송 종류. webhooks.options 비트 마스크로도 사용 (options & type = type)
@@ -45,6 +43,5 @@ module.exports = {
     EMBED_COLOR,
     LINE_URL,
     LINE_ICON_URL,
-    LINE_RELAY_USER_AGENT,
     WEBHOOK_TYPE,
 };

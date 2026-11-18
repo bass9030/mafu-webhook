@@ -11,10 +11,10 @@ const {
     createWebhookClient,
     buildWelcomeEmbed,
 } = require("../utils/discordSender");
-const getOTP = require("../utils/otpGenerator");
+const { LineSignatureVerifier } = require("../utils/lineSignature");
 const { sendHook } = require("../utils/sendLINE");
 const { sendErrorLog } = require("../utils/DebugLogger");
-const { BOT_USERNAME, LINE_RELAY_USER_AGENT } = require("../utils/constants");
+const { BOT_USERNAME } = require("../utils/constants");
 const {
     parseWebhookUrl,
     isValidWebhookUrl,
@@ -224,44 +224,71 @@ router.get("/testWebhook", async (req, res, next) => {
     }
 });
 
-router.post("/line-webhook", async (req, res, next) => {
-    if (req.headers["user-agent"] == LINE_RELAY_USER_AGENT) {
-        let otps = getOTP();
-        let req_otp = req.headers["authorization"];
-        // console.log(req.body);
-        // console.log(req_otp, otps.now);
-        if (
-            !(
-                otps.future == req_otp ||
-                otps.now == req_otp ||
-                otps.past == req_otp
-            )
-        ) {
-            res.status(403);
-            res.json({ status: res.statusCode });
-            return;
-        }
+/** @type {LineSignatureVerifier | undefined} */
+let lineSignatureVerifier;
 
-        let message = req.body?.content;
-        let time = req.body?.time;
+/** 환경 변수의 공개키로 검증기를 만든다. nonce 기록 유지를 위해 재사용한다 */
+function getLineSignatureVerifier() {
+    if (lineSignatureVerifier) return lineSignatureVerifier;
+    const publicKey = process.env.LINE_SIGNING_PUBLIC_KEY;
+    if (!publicKey) throw new Error("LINE_SIGNING_PUBLIC_KEY is required");
+    lineSignatureVerifier = new LineSignatureVerifier(publicKey, {
+        keyId: process.env.LINE_SIGNING_KEY_ID,
+    });
+    return lineSignatureVerifier;
+}
 
-        if (!!!message || !!!time) {
-            res.status(400).json({ status: res.statusCode });
-            return;
-        }
-
-        sendHook({
-            time,
-            message,
-        });
-
-        res.json({
-            status: res.statusCode,
-        });
-    } else {
-        next(createError(404));
+router.post("/line-webhook", async (req, res) => {
+    const rawBody = req.rawBody;
+    const timestamp = req.get("x-timestamp");
+    const nonce = req.get("x-nonce");
+    const contentDigest = req.get("content-digest");
+    const signature = req.get("x-signature");
+    if (!rawBody || !timestamp || !nonce || !contentDigest || !signature) {
+        res.status(401).json({ status: res.statusCode });
         return;
     }
+
+    let isValid;
+    try {
+        isValid = getLineSignatureVerifier().verify({
+            method: req.method,
+            path: req.originalUrl.split("?", 1)[0],
+            rawBody,
+            headers: {
+                keyId: req.get("x-key-id"),
+                timestamp,
+                nonce,
+                contentDigest,
+                signature,
+            },
+        });
+    } catch (e) {
+        sendErrorLog(e);
+        res.status(500).json({ status: res.statusCode });
+        return;
+    }
+    if (!isValid) {
+        res.status(401).json({ status: res.statusCode });
+        return;
+    }
+
+    let message = req.body?.content;
+    let time = req.body?.time;
+
+    if (!!!message || !!!time) {
+        res.status(400).json({ status: res.statusCode });
+        return;
+    }
+
+    sendHook({
+        time,
+        message,
+    });
+
+    res.json({
+        status: res.statusCode,
+    });
 });
 
 module.exports = router;

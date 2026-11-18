@@ -98,7 +98,6 @@ function installStubs(opts = {}) {
 
     process.env.TZ = "UTC";
     process.env.NODE_ENV = process.env.NODE_ENV ?? "test";
-    process.env.OTP_SECRET = "test-otp-secret";
     process.env.GEMINI_API_KEY = "test-gemini-key";
     process.env.DEEPL_API_KEY = "test-deepl-key";
     process.env.DEEPL_GLOSSARY_ID = "test-glossary-id";

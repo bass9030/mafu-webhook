@@ -20,8 +20,19 @@ process.env.NOTICE_TOKEN_KEY = crypto
     .digest("hex")
     .toUpperCase(); // 비교 시 toLowerCase() 처리되는지 확인용
 
+// LINE 웹훅 서명 검증용 키 (검증기는 첫 요청 때 환경 변수로 생성된다)
+const LINE_KEY_ID = "line-test-key";
+const lineKeys = crypto.generateKeyPairSync("ed25519");
+process.env.LINE_SIGNING_PUBLIC_KEY = lineKeys.publicKey
+    .export({ format: "der", type: "spki" })
+    .toString("base64");
+process.env.LINE_SIGNING_KEY_ID = LINE_KEY_ID;
+
 const app = require("../app");
-const getOTP = require("../utils/otpGenerator");
+const {
+    createContentDigest,
+    createLineSignatureBase,
+} = require("../utils/lineSignature");
 
 const LOGO = "https://mahook.bass9030.dev/logo.png";
 const MSG_ROLE =
@@ -477,32 +488,79 @@ test("testWebhook(development): 성공 / 실패", async () => {
 
 // ---------------------------------------------------------------- /api/line-webhook
 
-const LINE_UA = { "user-agent": "mahook-line/3.0" };
+/**
+ * Go 클라이언트(tools/line-webhook-client)와 같은 방식으로 서명한 헤더.
+ * req()가 JSON.stringify(json)을 body로 보내므로 같은 바이트로 digest를 만든다.
+ */
+function lineHeaders(json, overrides = {}) {
+    const body = Buffer.from(JSON.stringify(json));
+    const timestamp = overrides.timestamp ?? String(Math.floor(Date.now() / 1000));
+    const nonce = overrides.nonce ?? crypto.randomBytes(24).toString("base64url");
+    const contentDigest = createContentDigest(body);
+    const base = createLineSignatureBase(
+        "POST",
+        overrides.path ?? "/api/line-webhook",
+        timestamp,
+        nonce,
+        contentDigest,
+    );
+    return {
+        "content-digest": contentDigest,
+        "x-key-id": overrides.keyId ?? LINE_KEY_ID,
+        "x-timestamp": timestamp,
+        "x-nonce": nonce,
+        "x-signature": crypto
+            .sign(null, Buffer.from(base), lineKeys.privateKey)
+            .toString("base64"),
+    };
+}
 
-test("line-webhook: user-agent 불일치 → 404 에러 페이지", async () => {
-    const r = await req("POST", "/api/line-webhook", {
-        json: { content: "x", time: "1" },
-        headers: { authorization: getOTP().now },
-    });
-    assert.equal(r.status, 404);
-    assert.match(r.type, /text\/html/);
+test("line-webhook: 서명 헤더 누락 → 401", async () => {
+    const json = { content: "x", time: 1 };
+    const full = lineHeaders(json);
+    for (const missing of Object.keys(full).filter((k) => k !== "x-key-id")) {
+        const headers = { ...full };
+        delete headers[missing];
+        const r = await req("POST", "/api/line-webhook", { json, headers });
+        assert.equal(r.status, 401, missing);
+        assert.deepEqual(r.body, { status: 401 });
+    }
+    // JSON이 아니면 원본 body가 없으므로 401
+    const r = await req("POST", "/api/line-webhook", { form: json, headers: full });
+    assert.equal(r.status, 401);
 });
 
-test("line-webhook: OTP 불일치 → 403", async () => {
-    const r = await req("POST", "/api/line-webhook", {
-        json: { content: "x", time: "1" },
-        headers: { ...LINE_UA, authorization: "000000x" },
-    });
-    assert.equal(r.status, 403);
-    assert.deepEqual(r.body, { status: 403 });
+test("line-webhook: 서명 검증 실패 → 401", async () => {
+    const json = { content: "x", time: 1 };
+    const cases = {
+        "다른 키 ID": lineHeaders(json, { keyId: "unknown" }),
+        "만료된 timestamp": lineHeaders(json, {
+            timestamp: String(Math.floor(Date.now() / 1000) - 301),
+        }),
+        "다른 경로로 서명": lineHeaders(json, { path: "/api/other" }),
+        "body 변조": lineHeaders({ content: "changed", time: 1 }),
+        "서명 변조": { ...lineHeaders(json), "x-signature": "A".repeat(86) + "==" },
+    };
+    for (const [name, headers] of Object.entries(cases)) {
+        const r = await req("POST", "/api/line-webhook", { json, headers });
+        assert.equal(r.status, 401, name);
+        assert.deepEqual(r.body, { status: 401 });
+    }
+    assert.deepEqual(state.sent, []);
 });
 
-test("line-webhook: past/now/future OTP 모두 허용, 필드 누락 → 400", async () => {
-    const otps = getOTP();
-    for (const otp of [otps.past, otps.now, otps.future]) {
+test("line-webhook: 같은 nonce 재사용 → 401", async () => {
+    const json = { content: "x" }; // 검증 통과 후 time 누락으로 400
+    const headers = lineHeaders(json);
+    assert.equal((await req("POST", "/api/line-webhook", { json, headers })).status, 400);
+    assert.equal((await req("POST", "/api/line-webhook", { json, headers })).status, 401);
+});
+
+test("line-webhook: 서명은 유효하나 필드 누락 → 400", async () => {
+    for (const json of [{ content: "x" }, { time: 1 }, { content: "", time: 1 }]) {
         const r = await req("POST", "/api/line-webhook", {
-            json: { content: "x" },
-            headers: { ...LINE_UA, authorization: otp },
+            json,
+            headers: lineHeaders(json),
         });
         assert.equal(r.status, 400);
         assert.deepEqual(r.body, { status: 400 });
@@ -515,8 +573,8 @@ test("line-webhook: 즉시 200 응답 후 LINE 수신 웹후크에 번역 embed 
         { channelID: "2", webhookToken: "t", options: 5, roleID: "@here" },
     ];
     const r = await req("POST", "/api/line-webhook", {
-        json: { content: "こんにちは", time: "1700000000000" },
-        headers: { ...LINE_UA, authorization: getOTP().now },
+        json: { content: "こんにちは", time: 1700000000000 },
+        headers: lineHeaders({ content: "こんにちは", time: 1700000000000 }),
     });
     assert.equal(r.status, 200);
     assert.deepEqual(r.body, { status: 200 });

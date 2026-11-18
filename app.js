@@ -16,7 +16,16 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 app.set("trust proxy", true);
 app.use(logger(app.get("env") == "development" ? "dev" : "common"));
-app.use(express.json());
+app.use(
+    express.json({
+        // LINE 웹훅 서명(Content-Digest) 검증에 원본 바이트가 필요하다
+        verify: (req, res, buf) => {
+            if (req.originalUrl.startsWith("/api/line-webhook")) {
+                req.rawBody = Buffer.from(buf);
+            }
+        },
+    }),
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));

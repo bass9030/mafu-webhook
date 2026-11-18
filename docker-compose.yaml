@@ -20,7 +20,8 @@ services:
             DB_NAME: ${DB_NAME}
             DB_USER: ${DB_USER}
             DB_PASSWORD: ${DB_PASSWORD}
-            OTP_SECRET: ${OTP_SECRET}
+            LINE_SIGNING_PUBLIC_KEY: ${LINE_SIGNING_PUBLIC_KEY}
+            LINE_SIGNING_KEY_ID: ${LINE_SIGNING_KEY_ID:-line-2026-01}
             SENTRY_ENDPOINT: ${SENTRY_ENDPOINT}
         networks:
             - mahook
