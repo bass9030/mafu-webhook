@@ -67,3 +67,8 @@ timeline.json
 tweetData.json
 
 generate-lincense-page/opensource.ejs
+
+# LINE 웹훅 Go 클라이언트 빌드 결과물, 상태 파일, 개인키
+tools/line-webhook-client/mahook-line-client
+tools/line-webhook-client/.mahook-line/
+tools/line-webhook-client/*.pem

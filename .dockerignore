@@ -7,3 +7,5 @@ node_modules
 docker*
 readme.md
 nodemon.json
+# LINE 웹훅 Go 클라이언트 (서버 이미지에는 불필요)
+tools/line-webhook-client
