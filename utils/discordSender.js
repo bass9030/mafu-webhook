@@ -81,7 +81,7 @@ function buildWebhookPayload(message, type, mention) {
             };
         case WEBHOOK_TYPE.TWITTER:
         case WEBHOOK_TYPE.LINE:
-            profileURL = message[0].data["footer"]["icon_url"];
+            profileURL = message[0].data["author"]["icon_url"];
             return {
                 avatarURL: profileURL,
                 username: BOT_USERNAME,
