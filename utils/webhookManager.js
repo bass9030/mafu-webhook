@@ -68,23 +68,6 @@ class WebhookManager {
         }
     }
 
-    async sendWelcomeWebhook(channelID, webhookToken) {
-        let embed = new EmbedBuilder();
-        embed.setTitle("마훅 구독 완료!");
-        embed.setDescription(
-            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!",
-        );
-        embed.setColor(0x1da1f2);
-
-        let hook = new WebhookClient({ id: channelID, token: webhookToken });
-        await hook.send({
-            content: "",
-            username: "마훅 - 마후 트윗 번역봇",
-            avatarURL: await getProfileURL(),
-            embeds: [embed],
-        });
-    }
-
     static getOptions(optionNumber) {
         // 00000111
         // 3rd bit - isLINESend
