@@ -21,7 +21,7 @@ async function sendHook(data) {
     embed.setColor(EMBED_COLOR.LINE);
 
     await WebhookManager.withConnection(async (webhookManager) => {
-        await webhookManager.sendWebhook(embed, WEBHOOK_TYPE.LINE);
+        await webhookManager.sendWebhook([embed], WEBHOOK_TYPE.LINE);
     });
 }
 

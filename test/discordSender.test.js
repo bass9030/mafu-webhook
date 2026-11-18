@@ -67,23 +67,30 @@ test("buildWebhookPayload: NOTI", () => {
     assert.deepEqual(p.embeds.map((e) => e.toJSON()), [buildNoticeEmbed("t", "c").toJSON()]);
 });
 
-test("buildWebhookPayload: TWITTER / LINE은 embed 배열 그대로, author 아이콘이 avatar", () => {
+test("buildWebhookPayload: TWITTER / LINE은 embed 배열 그대로 전송", () => {
     const embeds = [
         new EmbedBuilder()
-            .setAuthor({ name: "a", iconURL: "https://icon" })
+            .setAuthor({ name: "a", iconURL: "https://author-icon" })
             .setFooter({ text: "f", iconURL: "https://footer-icon" }),
         new EmbedBuilder().setImage("https://img"),
     ];
     for (const type of [WEBHOOK_TYPE.TWITTER, WEBHOOK_TYPE.LINE]) {
-        const p = buildWebhookPayload(embeds, type, "");
-        assert.deepEqual(p, {
-            avatarURL: "https://icon",
-            username: USERNAME,
-            content: "",
-            embeds,
-        });
+        const p = buildWebhookPayload(embeds, type, "@here");
+        assert.deepEqual(Object.keys(p), ["avatarURL", "username", "content", "embeds"]);
+        assert.equal(p.username, USERNAME);
+        assert.equal(p.content, "@here");
         assert.equal(p.embeds, embeds);
     }
+});
+
+test("buildWebhookPayload: avatar는 TWITTER면 author 아이콘(X 프로필), LINE이면 footer 아이콘(LINE 프로필)", () => {
+    const embeds = [
+        new EmbedBuilder()
+            .setAuthor({ name: "a", iconURL: "https://author-icon" })
+            .setFooter({ text: "f", iconURL: "https://footer-icon" }),
+    ];
+    assert.equal(buildWebhookPayload(embeds, WEBHOOK_TYPE.TWITTER, "").avatarURL, "https://author-icon");
+    assert.equal(buildWebhookPayload(embeds, WEBHOOK_TYPE.LINE, "").avatarURL, "https://footer-icon");
 });
 
 test("[현재 동작] buildWebhookPayload: 배열이 아닌 embed 하나면 TypeError", () => {
@@ -93,15 +100,18 @@ test("[현재 동작] buildWebhookPayload: 배열이 아닌 embed 하나면 Type
     );
 });
 
-test("[현재 동작] buildWebhookPayload: author가 없는 embed(LINE embed 등)는 배열이어도 TypeError", () => {
+test("buildWebhookPayload: author가 없는 LINE embed도 전송 가능", () => {
     // utils/sendLINE.js의 LINE embed는 footer만 있고 author가 없음
     const lineEmbed = new EmbedBuilder()
         .setTitle("New LINE Release!")
         .setFooter({ text: "f", iconURL: "https://line-icon" });
-    assert.throws(
-        () => buildWebhookPayload([lineEmbed], WEBHOOK_TYPE.LINE, ""),
-        TypeError,
-    );
+    const p = buildWebhookPayload([lineEmbed], WEBHOOK_TYPE.LINE, "");
+    assert.equal(p.avatarURL, "https://line-icon");
+});
+
+test("[현재 동작] buildWebhookPayload: author가 없는 embed를 TWITTER로 보내면 TypeError", () => {
+    const embed = new EmbedBuilder().setFooter({ text: "f", iconURL: "https://x" });
+    assert.throws(() => buildWebhookPayload([embed], WEBHOOK_TYPE.TWITTER, ""), TypeError);
 });
 
 test("buildWebhookPayload: 알 수 없는 type은 null", () => {

@@ -237,13 +237,13 @@ test("sendWebhook(NOTI): 공지 수신 비트로 조회, 공지 embed 생성", a
     matchSnapshot("webhookManager.noti-embed", state.sent[0].payload.embeds);
 });
 
-test("sendWebhook(LINE): LINE 수신 비트로 조회", async () => {
+test("sendWebhook(LINE): LINE 수신 비트로 조회, footer 아이콘(LINE 프로필)을 avatar로 사용", async () => {
     const m = await connected();
     state.queryHandler = () => [ROWS[3]];
     await m.sendWebhook(twitterEmbeds(), WEBHOOK_TYPE.LINE);
     assert.deepEqual(state.queries[0].params, [4, 4]);
     assert.equal(state.sent.length, 1);
-    assert.equal(state.sent[0].payload.avatarURL, "https://icon/author.png");
+    assert.equal(state.sent[0].payload.avatarURL, "https://icon/footer.png");
 });
 
 test("[현재 동작] sendWebhook(LINE)에 배열이 아닌 EmbedBuilder 하나를 주면 모든 수신자에서 실패", async () => {

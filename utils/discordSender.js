@@ -61,9 +61,9 @@ function buildNoticeEmbed(title, content) {
 /**
  * WebhookManager.sendWebhook이 수신자마다 보내는 페이로드
  * - NOTI: message = { title, content }
- * - TWITTER, LINE: message = EmbedBuilder[] (첫 embed의 author 아이콘을 avatar로 사용)
- *   author가 없는 embed는 TypeError (현재 LINE embed가 해당)
- *   LINE에 EmbedBuilder 하나만 넘기면 message[0]에서 TypeError (기존 동작)
+ * - TWITTER, LINE: message = EmbedBuilder[] (배열이 아니면 TypeError)
+ *   avatar는 마후마후 프로필 이미지:
+ *   TWITTER는 첫 embed의 author 아이콘(X 프로필), LINE은 footer 아이콘(LINE 프로필)
  * @param {EmbedBuilder[] | {title: string, content: string}} message
  * @param {number} type WEBHOOK_TYPE
  * @param {string} mention
@@ -82,7 +82,10 @@ function buildWebhookPayload(message, type, mention) {
             };
         case WEBHOOK_TYPE.TWITTER:
         case WEBHOOK_TYPE.LINE:
-            profileURL = message[0].data["author"]["icon_url"];
+            profileURL =
+                type == WEBHOOK_TYPE.LINE
+                    ? message[0].data["footer"]["icon_url"]
+                    : message[0].data["author"]["icon_url"];
             return {
                 avatarURL: profileURL,
                 username: BOT_USERNAME,
