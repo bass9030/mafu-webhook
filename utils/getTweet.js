@@ -198,25 +198,21 @@ function getTweetText(tweet) {
         tweet?.legacy?.full_text ??
         "";
 
+    // console.log(text);
+
     // Change t.co url to original url
-    const urls = tweet?.legacy?.entities?.urls ?? [];
+    const urls =
+        (!!tweet?.note_tweet?.note_tweet_results?.result?.text
+            ? tweet?.note_tweet?.note_tweet_results?.result?.entity_set?.urls
+            : tweet?.legacy?.entities?.urls) ?? [];
     for (let url of urls) {
-        let range = url.indices ?? [];
-        if (range.length == 2) {
-            text =
-                text.substring(0, range[0]) +
-                url.expanded_url +
-                text.substring(range[1]);
-        }
+        text = text.replace(url.url, url.expanded_url);
     }
 
     // Remove media urls
     const media = tweet?.legacy?.entities?.media ?? [];
     for (let m of media) {
-        let range = m.indices ?? [];
-        if (range.length == 2) {
-            text = text.substring(0, range[0]) + text.substring(range[1]);
-        }
+        text = text.replace(m.url, "");
     }
 
     return text;
@@ -254,7 +250,7 @@ function toBlockquote(text) {
  * @returns {Promise<string>}
  */
 async function generateTweetMarkdown(tweet, depth = 1) {
-    console.log(JSON.stringify(tweet));
+    // console.log(JSON.stringify(tweet));
     const legacy = tweet.legacy ?? {};
     const retweeted = legacy.retweeted_status_result?.result;
     const quoted = tweet.quoted_status_result?.result;
@@ -326,65 +322,39 @@ async function getWebhookEmbed(tweetInfo) {
         url: "https://x.com/uni_mafumafu",
     });
     embed.setFooter({
-        text: originalLink,
+        text: "마훅 - 한글 번역된 마후마후 트윗을 디스코드에서",
         iconURL: profileURL,
     });
     embed.setTimestamp(created_at);
     embed.setDescription(translatedText);
     embed.setColor(0x1da1f2);
 
+    let medias = null;
+
     if (!!tweetInfo.legacy.entities.media?.length) {
         // 미디어 처리(일반)
-        let imgCnt = tweetInfo.legacy.entities.media.length;
-        if (imgCnt > 4) imgCnt = 4;
-        for (let i = 0; i < imgCnt; i++) {
-            const media = tweetInfo.legacy.entities.media[i];
-            if (["photo", "video"].includes(media.type)) {
-                if (i == 0) embed.setImage(media.media_url_https);
-                else {
-                    let imageEmbed = new EmbedBuilder();
-                    imageEmbed.setURL(originalLink);
-                    imageEmbed.setImage(media.media_url_https);
-                    embeds.push(imageEmbed);
-                }
-            }
-        }
+        medias = tweetInfo.legacy.entities.media;
     } else if (
         !!tweetInfo.legacy.retweeted_status_result?.result?.legacy?.entities
             ?.media?.length
     ) {
         // 미디어 처리(RT)
-        let imgCnt =
-            tweetInfo.legacy.retweeted_status_result.result.legacy.entities
-                .media.length;
-
-        if (imgCnt > 4) imgCnt = 4;
-        for (let i = 0; i < imgCnt; i++) {
-            const media =
-                tweetInfo.legacy.retweeted_status_result.result.legacy.entities
-                    .media[i];
-            if (["photo", "video"].includes(media.type)) {
-                if (i == 0) embed.setImage(media.media_url_https);
-                else {
-                    let imageEmbed = new EmbedBuilder();
-                    imageEmbed.setURL(originalLink);
-                    imageEmbed.setImage(media.media_url_https);
-                    embeds.push(imageEmbed);
-                }
-            }
-        }
+        medias =
+            tweetInfo.legacy.retweeted_status_result?.result?.legacy?.entities
+                ?.media;
     } else if (
         !!tweetInfo?.quoted_status_result &&
         !!tweetInfo.quoted_status_result.result?.legacy?.entities?.media?.length
     ) {
         // 미디어 처리(인용)
-        let imgCnt =
-            tweetInfo.quoted_status_result.result.legacy.entities.media.length;
+        medias = tweetInfo.quoted_status_result.result.legacy.entities.media;
+    }
 
+    if (!!medias) {
+        let imgCnt = medias.length;
         if (imgCnt > 4) imgCnt = 4;
         for (let i = 0; i < imgCnt; i++) {
-            const media =
-                tweetInfo.quoted_status_result.result.legacy.entities.media[i];
+            const media = medias[i];
             if (["photo", "video"].includes(media.type)) {
                 if (i == 0) embed.setImage(media.media_url_https);
                 else {
@@ -420,11 +390,3 @@ module.exports = {
     sendRecentTweet,
     getTimelineByUserID,
 };
-
-// async function test() {
-//     console.log(await getTimelineByUserID(268758461));
-// }
-
-// if (require.main === module) {
-//     test();
-// }
