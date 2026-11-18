@@ -205,6 +205,10 @@ class WebhookManager {
                             value: message.content,
                         });
                         embed.setColor(4037805);
+                        embed.setFooter({
+                            text: "마훅 - 한글 번역된 마후마후 트윗을 디스코드에서",
+                            iconURL: "https://mahook.bass9030.dev/logo.png",
+                        });
 
                         await hook.send({
                             avatarURL: profileURL,
