@@ -1,0 +1,16 @@
+[
+  {
+    "title": "마훅 공지사항",
+    "fields": [
+      {
+        "name": "제목",
+        "value": "내용"
+      }
+    ],
+    "color": 4037805,
+    "footer": {
+      "text": "마훅 - 한글 번역된 마후마후 트윗을 디스코드에서",
+      "icon_url": "https://mahook.bass9030.dev/logo.png"
+    }
+  }
+]

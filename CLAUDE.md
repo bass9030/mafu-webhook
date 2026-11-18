@@ -8,7 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-There is no build step, linter, or test suite.
+There is no build step or linter.
+
+- `npm test`: runs the characterization tests in `test/` (`node:test`, no extra deps, no DB or network needed). `test/helpers/stub.js` swaps external modules (mariadb, discord.js `WebhookClient`, Gemini, DeepL, Sentry, `fetch`) via `require.cache`, so `installStubs()` must run before any app module is required. Tests marked `[현재 동작]` lock in known bugs on purpose; change those expectations only when deliberately fixing the bug. Snapshots live in `test/__snapshots__/`; regenerate with `UPDATE_SNAPSHOTS=1 npm test` (a missing snapshot fails instead of being created).
 
 - `npm start`: runs `nodemon ./bin/www` locally (watches `.js`/`.ejs` per `nodemon.json`). Needs a reachable MariaDB and a populated `.env`.
 - `./run.sh`: the usual dev loop. It runs `docker compose -f docker-compose-dev.yaml up --build --watch` (web + MariaDB; `app.js`, `utils/` and `routes/` sync and restart, `views/` and `public/` sync only).

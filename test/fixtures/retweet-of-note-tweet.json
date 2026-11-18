@@ -1,0 +1,1039 @@
+{
+    "__typename": "Tweet",
+    "core": {
+        "user_results": {
+            "result": {
+                "__typename": "User",
+                "action_counts": { "favorites_count": 3542 },
+                "affiliates_highlighted_label": {},
+                "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/2031299346155843584/yjIK57-6_normal.jpg"
+                },
+                "banner": {
+                    "image_url": "https://pbs.twimg.com/profile_banners/268758461/1554973240"
+                },
+                "core": {
+                    "created_at": "Sat Mar 19 12:05:43 +0000 2011",
+                    "name": "まふまふ",
+                    "screen_name": "uni_mafumafu"
+                },
+                "follow_request_sent": false,
+                "has_graduated_access": true,
+                "id": "VXNlcjoyNjg3NTg0NjE=",
+                "is_blue_verified": true,
+                "location": { "location": "夢の中" },
+                "media_permissions": { "can_media_tag": false },
+                "notifications_settings": { "notifications_enabled": false },
+                "parody_commentary_fan_label": "None",
+                "pinned_items": { "tweet_ids_str": ["1825857996876034162"] },
+                "possibly_sensitive": false,
+                "privacy": { "protected": false },
+                "profile_bio": {
+                    "description": "何でも屋です。ねむり After the Rain/ネオポルテ運営 ▶️YouTube https://t.co/rJzDs0Uz9d ▶️https://t.co/gdmowrQKWn #まふあーと",
+                    "entities": {
+                        "description": {
+                            "urls": [
+                                {
+                                    "display_url": "youtube.com/c/uni_mafumafu",
+                                    "expanded_url": "http://youtube.com/c/uni_mafumafu",
+                                    "indices": [44, 67],
+                                    "url": "https://t.co/rJzDs0Uz9d"
+                                },
+                                {
+                                    "display_url": "nicovideo.jp/user/18874531/…",
+                                    "expanded_url": "https://www.nicovideo.jp/user/18874531/mylist/22993832",
+                                    "indices": [70, 93],
+                                    "url": "https://t.co/gdmowrQKWn"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "urls": [
+                                {
+                                    "display_url": "uni-mafumafu.jp",
+                                    "expanded_url": "http://uni-mafumafu.jp/",
+                                    "indices": [0, 23],
+                                    "url": "https://t.co/OqYercCVSN"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "profile_description_language": "ja",
+                "profile_image_shape": "Circle",
+                "profile_metadata": { "profile_interstitial_type": "" },
+                "profile_translation": { "translator_type": "none" },
+                "relationship_counts": {
+                    "followers": 1954119,
+                    "following": 467
+                },
+                "relationship_perspectives": {
+                    "blocked_by": false,
+                    "blocking": false,
+                    "followed_by": false,
+                    "following": false,
+                    "live_following": false,
+                    "muting": false
+                },
+                "rest_id": "268758461",
+                "super_follow_eligible": false,
+                "super_followed_by": false,
+                "super_following": false,
+                "tipjar_settings": { "is_enabled": true },
+                "tweet_counts": { "media_tweets": 3480, "tweets": 57030 },
+                "verification": { "verified": false },
+                "website": { "url": "https://t.co/OqYercCVSN" }
+            }
+        }
+    },
+    "edit_control": {
+        "edit_tweet_ids": ["2115008056144924994"],
+        "editable_until_msecs": "1793095790191",
+        "edits_remaining": "5",
+        "is_edit_eligible": false
+    },
+    "grok_analysis_button": true,
+    "is_translatable": true,
+    "legacy": {
+        "bookmark_count": 0,
+        "bookmarked": false,
+        "conversation_id_str": "2115008056144924994",
+        "created_at": "Tue Oct 27 09:09:50 +0000 2026",
+        "display_text_range": [0, 146],
+        "entities": {
+            "user_mentions": [
+                {
+                    "id_str": "864820472554242049",
+                    "indices": [3, 17],
+                    "name": "まふまふの何でも屋さん",
+                    "screen_name": "uni_nandemoya"
+                }
+            ]
+        },
+        "favorite_count": 0,
+        "favorited": false,
+        "full_text": "RT @uni_nandemoya: 【LIVE DVD &amp; Blu-ray 購入者限定 オンラインミート＆グリート開催決定！】\n2026年12月23日発売\nLIVE DVD &amp; Blu-ray\n「すーぱーまふまふわーるど - LIVE COLLECTION 2025 -」…",
+        "id_str": "2115008056144924994",
+        "is_quote_status": false,
+        "lang": "ja",
+        "quote_count": 0,
+        "reply_count": 0,
+        "retweet_count": 764,
+        "retweeted": false,
+        "retweeted_status_result": {
+            "result": {
+                "__typename": "Tweet",
+                "core": {
+                    "user_results": {
+                        "result": {
+                            "__typename": "User",
+                            "action_counts": { "favorites_count": 9 },
+                            "affiliates_highlighted_label": {},
+                            "avatar": {
+                                "image_url": "https://pbs.twimg.com/profile_images/868390118691700736/hO2Q7GtX_normal.jpg"
+                            },
+                            "banner": {
+                                "image_url": "https://pbs.twimg.com/profile_banners/864820472554242049/1495875627"
+                            },
+                            "core": {
+                                "created_at": "Wed May 17 12:30:43 +0000 2017",
+                                "name": "まふまふの何でも屋さん",
+                                "screen_name": "uni_nandemoya"
+                            },
+                            "follow_request_sent": false,
+                            "has_graduated_access": true,
+                            "id": "VXNlcjo4NjQ4MjA0NzI1NTQyNDIwNDk=",
+                            "is_blue_verified": true,
+                            "location": { "location": "" },
+                            "media_permissions": { "can_media_tag": false },
+                            "notifications_settings": {
+                                "notifications_enabled": false
+                            },
+                            "parody_commentary_fan_label": "None",
+                            "pinned_items": {
+                                "tweet_ids_str": ["2115006840878838134"]
+                            },
+                            "possibly_sensitive": false,
+                            "privacy": { "protected": false },
+                            "profile_bio": {
+                                "description": "まふまふの公式スタッフアカウント 各SNSはこちらから→https://t.co/VffeB7mo29",
+                                "entities": {
+                                    "description": {
+                                        "urls": [
+                                            {
+                                                "display_url": "lit.link/nandemoya",
+                                                "expanded_url": "http://lit.link/nandemoya",
+                                                "indices": [28, 51],
+                                                "url": "https://t.co/VffeB7mo29"
+                                            }
+                                        ]
+                                    },
+                                    "url": {
+                                        "urls": [
+                                            {
+                                                "display_url": "uni-mafumafu.com",
+                                                "expanded_url": "https://uni-mafumafu.com/",
+                                                "indices": [0, 23],
+                                                "url": "https://t.co/MCzOEKogOO"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "profile_description_language": "ja",
+                            "profile_image_shape": "Circle",
+                            "profile_metadata": {
+                                "profile_interstitial_type": ""
+                            },
+                            "profile_translation": {
+                                "translator_type": "none"
+                            },
+                            "relationship_counts": {
+                                "followers": 145327,
+                                "following": 3
+                            },
+                            "relationship_perspectives": {
+                                "blocked_by": false,
+                                "blocking": false,
+                                "followed_by": false,
+                                "following": false,
+                                "live_following": false,
+                                "muting": false
+                            },
+                            "rest_id": "864820472554242049",
+                            "super_follow_eligible": false,
+                            "super_followed_by": false,
+                            "super_following": false,
+                            "tipjar_settings": {},
+                            "tweet_counts": {
+                                "media_tweets": 181,
+                                "tweets": 866
+                            },
+                            "verification": { "verified": false },
+                            "website": { "url": "https://t.co/MCzOEKogOO" }
+                        }
+                    }
+                },
+                "edit_control": {
+                    "edit_tweet_ids": ["2115006840878838134"],
+                    "editable_until_msecs": "1793095500000",
+                    "edits_remaining": "5",
+                    "is_edit_eligible": true
+                },
+                "grok_analysis_button": true,
+                "is_translatable": true,
+                "legacy": {
+                    "bookmark_count": 319,
+                    "bookmarked": false,
+                    "conversation_id_str": "2115006840878838134",
+                    "created_at": "Tue Oct 27 09:05:00 +0000 2026",
+                    "display_text_range": [0, 188],
+                    "entities": {
+                        "media": [
+                            {
+                                "display_url": "pic.x.com/xY5lHUdNKG",
+                                "expanded_url": "https://x.com/uni_nandemoya/status/2115006840878838134/photo/1",
+                                "ext_media_availability": {
+                                    "status": "Available"
+                                },
+                                "features": {
+                                    "large": { "faces": [] },
+                                    "medium": { "faces": [] },
+                                    "orig": { "faces": [] },
+                                    "small": { "faces": [] }
+                                },
+                                "id_str": "2115003601768833024",
+                                "indices": [189, 212],
+                                "media_key": "3_2115003601768833024",
+                                "media_results": {
+                                    "result": {
+                                        "media_key": "3_2115003601768833024"
+                                    }
+                                },
+                                "media_url_https": "https://pbs.twimg.com/media/HVoAke4aYAAC85R.jpg",
+                                "original_info": {
+                                    "focus_rects": [
+                                        { "h": 378, "w": 675, "x": 0, "y": 21 },
+                                        { "h": 675, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 770, "w": 675, "x": 0, "y": 0 },
+                                        {
+                                            "h": 1200,
+                                            "w": 600,
+                                            "x": 30,
+                                            "y": 0
+                                        },
+                                        { "h": 1200, "w": 675, "x": 0, "y": 0 }
+                                    ],
+                                    "height": 1200,
+                                    "width": 675
+                                },
+                                "sizes": {
+                                    "large": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "medium": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "small": {
+                                        "h": 680,
+                                        "resize": "fit",
+                                        "w": 383
+                                    },
+                                    "thumb": {
+                                        "h": 150,
+                                        "resize": "crop",
+                                        "w": 150
+                                    }
+                                },
+                                "type": "photo",
+                                "url": "https://t.co/xY5lHUdNKG"
+                            },
+                            {
+                                "display_url": "pic.x.com/xY5lHUdNKG",
+                                "expanded_url": "https://x.com/uni_nandemoya/status/2115006840878838134/photo/2",
+                                "ext_media_availability": {
+                                    "status": "Available"
+                                },
+                                "features": {
+                                    "large": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 492,
+                                                "y": 696
+                                            },
+                                            {
+                                                "h": 571,
+                                                "w": 571,
+                                                "x": 56,
+                                                "y": 42
+                                            }
+                                        ]
+                                    },
+                                    "medium": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 492,
+                                                "y": 696
+                                            },
+                                            {
+                                                "h": 571,
+                                                "w": 571,
+                                                "x": 56,
+                                                "y": 42
+                                            }
+                                        ]
+                                    },
+                                    "orig": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 492,
+                                                "y": 696
+                                            },
+                                            {
+                                                "h": 571,
+                                                "w": 571,
+                                                "x": 56,
+                                                "y": 42
+                                            }
+                                        ]
+                                    },
+                                    "small": {
+                                        "faces": [
+                                            {
+                                                "h": 24,
+                                                "w": 24,
+                                                "x": 279,
+                                                "y": 394
+                                            },
+                                            {
+                                                "h": 323,
+                                                "w": 323,
+                                                "x": 31,
+                                                "y": 23
+                                            }
+                                        ]
+                                    }
+                                },
+                                "id_str": "2115003601819197440",
+                                "indices": [189, 212],
+                                "media_key": "3_2115003601819197440",
+                                "media_results": {
+                                    "result": {
+                                        "media_key": "3_2115003601819197440"
+                                    }
+                                },
+                                "media_url_https": "https://pbs.twimg.com/media/HVoAkfEa4AAZsX0.jpg",
+                                "original_info": {
+                                    "focus_rects": [
+                                        { "h": 378, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 675, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 770, "w": 675, "x": 0, "y": 0 },
+                                        {
+                                            "h": 1200,
+                                            "w": 600,
+                                            "x": 30,
+                                            "y": 0
+                                        },
+                                        { "h": 1200, "w": 675, "x": 0, "y": 0 }
+                                    ],
+                                    "height": 1200,
+                                    "width": 675
+                                },
+                                "sizes": {
+                                    "large": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "medium": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "small": {
+                                        "h": 680,
+                                        "resize": "fit",
+                                        "w": 383
+                                    },
+                                    "thumb": {
+                                        "h": 150,
+                                        "resize": "crop",
+                                        "w": 150
+                                    }
+                                },
+                                "type": "photo",
+                                "url": "https://t.co/xY5lHUdNKG"
+                            },
+                            {
+                                "display_url": "pic.x.com/xY5lHUdNKG",
+                                "expanded_url": "https://x.com/uni_nandemoya/status/2115006840878838134/photo/3",
+                                "ext_media_availability": {
+                                    "status": "Available"
+                                },
+                                "features": {
+                                    "large": { "faces": [] },
+                                    "medium": { "faces": [] },
+                                    "orig": { "faces": [] },
+                                    "small": { "faces": [] }
+                                },
+                                "id_str": "2115003601823383552",
+                                "indices": [189, 212],
+                                "media_key": "3_2115003601823383552",
+                                "media_results": {
+                                    "result": {
+                                        "media_key": "3_2115003601823383552"
+                                    }
+                                },
+                                "media_url_https": "https://pbs.twimg.com/media/HVoAkfFawAAE297.jpg",
+                                "original_info": {
+                                    "focus_rects": [
+                                        { "h": 378, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 675, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 770, "w": 675, "x": 0, "y": 0 },
+                                        {
+                                            "h": 1200,
+                                            "w": 600,
+                                            "x": 30,
+                                            "y": 0
+                                        },
+                                        { "h": 1200, "w": 675, "x": 0, "y": 0 }
+                                    ],
+                                    "height": 1200,
+                                    "width": 675
+                                },
+                                "sizes": {
+                                    "large": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "medium": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "small": {
+                                        "h": 680,
+                                        "resize": "fit",
+                                        "w": 383
+                                    },
+                                    "thumb": {
+                                        "h": 150,
+                                        "resize": "crop",
+                                        "w": 150
+                                    }
+                                },
+                                "type": "photo",
+                                "url": "https://t.co/xY5lHUdNKG"
+                            },
+                            {
+                                "display_url": "pic.x.com/xY5lHUdNKG",
+                                "expanded_url": "https://x.com/uni_nandemoya/status/2115006840878838134/photo/4",
+                                "ext_media_availability": {
+                                    "status": "Available"
+                                },
+                                "features": {
+                                    "large": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 431,
+                                                "y": 284
+                                            },
+                                            {
+                                                "h": 228,
+                                                "w": 228,
+                                                "x": 11,
+                                                "y": 908
+                                            }
+                                        ]
+                                    },
+                                    "medium": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 431,
+                                                "y": 284
+                                            },
+                                            {
+                                                "h": 228,
+                                                "w": 228,
+                                                "x": 11,
+                                                "y": 908
+                                            }
+                                        ]
+                                    },
+                                    "orig": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 431,
+                                                "y": 284
+                                            },
+                                            {
+                                                "h": 228,
+                                                "w": 228,
+                                                "x": 11,
+                                                "y": 908
+                                            }
+                                        ]
+                                    },
+                                    "small": {
+                                        "faces": [
+                                            {
+                                                "h": 24,
+                                                "w": 24,
+                                                "x": 244,
+                                                "y": 161
+                                            },
+                                            {
+                                                "h": 129,
+                                                "w": 129,
+                                                "x": 6,
+                                                "y": 515
+                                            }
+                                        ]
+                                    }
+                                },
+                                "id_str": "2115003601760423937",
+                                "indices": [189, 212],
+                                "media_key": "3_2115003601760423937",
+                                "media_results": {
+                                    "result": {
+                                        "media_key": "3_2115003601760423937"
+                                    }
+                                },
+                                "media_url_https": "https://pbs.twimg.com/media/HVoAke2aEAEP_oh.jpg",
+                                "original_info": {
+                                    "focus_rects": [
+                                        {
+                                            "h": 378,
+                                            "w": 675,
+                                            "x": 0,
+                                            "y": 141
+                                        },
+                                        { "h": 675, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 770, "w": 675, "x": 0, "y": 0 },
+                                        {
+                                            "h": 1200,
+                                            "w": 600,
+                                            "x": 37,
+                                            "y": 0
+                                        },
+                                        { "h": 1200, "w": 675, "x": 0, "y": 0 }
+                                    ],
+                                    "height": 1200,
+                                    "width": 675
+                                },
+                                "sizes": {
+                                    "large": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "medium": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "small": {
+                                        "h": 680,
+                                        "resize": "fit",
+                                        "w": 383
+                                    },
+                                    "thumb": {
+                                        "h": 150,
+                                        "resize": "crop",
+                                        "w": 150
+                                    }
+                                },
+                                "type": "photo",
+                                "url": "https://t.co/xY5lHUdNKG"
+                            }
+                        ]
+                    },
+                    "extended_entities": {
+                        "media": [
+                            {
+                                "display_url": "pic.x.com/xY5lHUdNKG",
+                                "expanded_url": "https://x.com/uni_nandemoya/status/2115006840878838134/photo/1",
+                                "ext_media_availability": {
+                                    "status": "Available"
+                                },
+                                "features": {
+                                    "large": { "faces": [] },
+                                    "medium": { "faces": [] },
+                                    "orig": { "faces": [] },
+                                    "small": { "faces": [] }
+                                },
+                                "id_str": "2115003601768833024",
+                                "indices": [189, 212],
+                                "media_key": "3_2115003601768833024",
+                                "media_results": {
+                                    "result": {
+                                        "media_key": "3_2115003601768833024"
+                                    }
+                                },
+                                "media_url_https": "https://pbs.twimg.com/media/HVoAke4aYAAC85R.jpg",
+                                "original_info": {
+                                    "focus_rects": [
+                                        { "h": 378, "w": 675, "x": 0, "y": 21 },
+                                        { "h": 675, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 770, "w": 675, "x": 0, "y": 0 },
+                                        {
+                                            "h": 1200,
+                                            "w": 600,
+                                            "x": 30,
+                                            "y": 0
+                                        },
+                                        { "h": 1200, "w": 675, "x": 0, "y": 0 }
+                                    ],
+                                    "height": 1200,
+                                    "width": 675
+                                },
+                                "sizes": {
+                                    "large": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "medium": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "small": {
+                                        "h": 680,
+                                        "resize": "fit",
+                                        "w": 383
+                                    },
+                                    "thumb": {
+                                        "h": 150,
+                                        "resize": "crop",
+                                        "w": 150
+                                    }
+                                },
+                                "type": "photo",
+                                "url": "https://t.co/xY5lHUdNKG"
+                            },
+                            {
+                                "display_url": "pic.x.com/xY5lHUdNKG",
+                                "expanded_url": "https://x.com/uni_nandemoya/status/2115006840878838134/photo/2",
+                                "ext_media_availability": {
+                                    "status": "Available"
+                                },
+                                "features": {
+                                    "large": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 492,
+                                                "y": 696
+                                            },
+                                            {
+                                                "h": 571,
+                                                "w": 571,
+                                                "x": 56,
+                                                "y": 42
+                                            }
+                                        ]
+                                    },
+                                    "medium": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 492,
+                                                "y": 696
+                                            },
+                                            {
+                                                "h": 571,
+                                                "w": 571,
+                                                "x": 56,
+                                                "y": 42
+                                            }
+                                        ]
+                                    },
+                                    "orig": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 492,
+                                                "y": 696
+                                            },
+                                            {
+                                                "h": 571,
+                                                "w": 571,
+                                                "x": 56,
+                                                "y": 42
+                                            }
+                                        ]
+                                    },
+                                    "small": {
+                                        "faces": [
+                                            {
+                                                "h": 24,
+                                                "w": 24,
+                                                "x": 279,
+                                                "y": 394
+                                            },
+                                            {
+                                                "h": 323,
+                                                "w": 323,
+                                                "x": 31,
+                                                "y": 23
+                                            }
+                                        ]
+                                    }
+                                },
+                                "id_str": "2115003601819197440",
+                                "indices": [189, 212],
+                                "media_key": "3_2115003601819197440",
+                                "media_results": {
+                                    "result": {
+                                        "media_key": "3_2115003601819197440"
+                                    }
+                                },
+                                "media_url_https": "https://pbs.twimg.com/media/HVoAkfEa4AAZsX0.jpg",
+                                "original_info": {
+                                    "focus_rects": [
+                                        { "h": 378, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 675, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 770, "w": 675, "x": 0, "y": 0 },
+                                        {
+                                            "h": 1200,
+                                            "w": 600,
+                                            "x": 30,
+                                            "y": 0
+                                        },
+                                        { "h": 1200, "w": 675, "x": 0, "y": 0 }
+                                    ],
+                                    "height": 1200,
+                                    "width": 675
+                                },
+                                "sizes": {
+                                    "large": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "medium": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "small": {
+                                        "h": 680,
+                                        "resize": "fit",
+                                        "w": 383
+                                    },
+                                    "thumb": {
+                                        "h": 150,
+                                        "resize": "crop",
+                                        "w": 150
+                                    }
+                                },
+                                "type": "photo",
+                                "url": "https://t.co/xY5lHUdNKG"
+                            },
+                            {
+                                "display_url": "pic.x.com/xY5lHUdNKG",
+                                "expanded_url": "https://x.com/uni_nandemoya/status/2115006840878838134/photo/3",
+                                "ext_media_availability": {
+                                    "status": "Available"
+                                },
+                                "features": {
+                                    "large": { "faces": [] },
+                                    "medium": { "faces": [] },
+                                    "orig": { "faces": [] },
+                                    "small": { "faces": [] }
+                                },
+                                "id_str": "2115003601823383552",
+                                "indices": [189, 212],
+                                "media_key": "3_2115003601823383552",
+                                "media_results": {
+                                    "result": {
+                                        "media_key": "3_2115003601823383552"
+                                    }
+                                },
+                                "media_url_https": "https://pbs.twimg.com/media/HVoAkfFawAAE297.jpg",
+                                "original_info": {
+                                    "focus_rects": [
+                                        { "h": 378, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 675, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 770, "w": 675, "x": 0, "y": 0 },
+                                        {
+                                            "h": 1200,
+                                            "w": 600,
+                                            "x": 30,
+                                            "y": 0
+                                        },
+                                        { "h": 1200, "w": 675, "x": 0, "y": 0 }
+                                    ],
+                                    "height": 1200,
+                                    "width": 675
+                                },
+                                "sizes": {
+                                    "large": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "medium": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "small": {
+                                        "h": 680,
+                                        "resize": "fit",
+                                        "w": 383
+                                    },
+                                    "thumb": {
+                                        "h": 150,
+                                        "resize": "crop",
+                                        "w": 150
+                                    }
+                                },
+                                "type": "photo",
+                                "url": "https://t.co/xY5lHUdNKG"
+                            },
+                            {
+                                "display_url": "pic.x.com/xY5lHUdNKG",
+                                "expanded_url": "https://x.com/uni_nandemoya/status/2115006840878838134/photo/4",
+                                "ext_media_availability": {
+                                    "status": "Available"
+                                },
+                                "features": {
+                                    "large": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 431,
+                                                "y": 284
+                                            },
+                                            {
+                                                "h": 228,
+                                                "w": 228,
+                                                "x": 11,
+                                                "y": 908
+                                            }
+                                        ]
+                                    },
+                                    "medium": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 431,
+                                                "y": 284
+                                            },
+                                            {
+                                                "h": 228,
+                                                "w": 228,
+                                                "x": 11,
+                                                "y": 908
+                                            }
+                                        ]
+                                    },
+                                    "orig": {
+                                        "faces": [
+                                            {
+                                                "h": 44,
+                                                "w": 44,
+                                                "x": 431,
+                                                "y": 284
+                                            },
+                                            {
+                                                "h": 228,
+                                                "w": 228,
+                                                "x": 11,
+                                                "y": 908
+                                            }
+                                        ]
+                                    },
+                                    "small": {
+                                        "faces": [
+                                            {
+                                                "h": 24,
+                                                "w": 24,
+                                                "x": 244,
+                                                "y": 161
+                                            },
+                                            {
+                                                "h": 129,
+                                                "w": 129,
+                                                "x": 6,
+                                                "y": 515
+                                            }
+                                        ]
+                                    }
+                                },
+                                "id_str": "2115003601760423937",
+                                "indices": [189, 212],
+                                "media_key": "3_2115003601760423937",
+                                "media_results": {
+                                    "result": {
+                                        "media_key": "3_2115003601760423937"
+                                    }
+                                },
+                                "media_url_https": "https://pbs.twimg.com/media/HVoAke2aEAEP_oh.jpg",
+                                "original_info": {
+                                    "focus_rects": [
+                                        {
+                                            "h": 378,
+                                            "w": 675,
+                                            "x": 0,
+                                            "y": 141
+                                        },
+                                        { "h": 675, "w": 675, "x": 0, "y": 0 },
+                                        { "h": 770, "w": 675, "x": 0, "y": 0 },
+                                        {
+                                            "h": 1200,
+                                            "w": 600,
+                                            "x": 37,
+                                            "y": 0
+                                        },
+                                        { "h": 1200, "w": 675, "x": 0, "y": 0 }
+                                    ],
+                                    "height": 1200,
+                                    "width": 675
+                                },
+                                "sizes": {
+                                    "large": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "medium": {
+                                        "h": 1200,
+                                        "resize": "fit",
+                                        "w": 675
+                                    },
+                                    "small": {
+                                        "h": 680,
+                                        "resize": "fit",
+                                        "w": 383
+                                    },
+                                    "thumb": {
+                                        "h": 150,
+                                        "resize": "crop",
+                                        "w": 150
+                                    }
+                                },
+                                "type": "photo",
+                                "url": "https://t.co/xY5lHUdNKG"
+                            }
+                        ]
+                    },
+                    "favorite_count": 3832,
+                    "favorited": false,
+                    "full_text": "【LIVE DVD &amp; Blu-ray 購入者限定 オンラインミート＆グリート開催決定！】\n2026年12月23日発売\nLIVE DVD &amp; Blu-ray\n「すーぱーまふまふわーるど - LIVE COLLECTION 2025 -」\n\nオンラインによる、まふまふとの個別トークイベントとなります！\nお一人様につき、100秒程度のお時間でのトークとなります。 https://t.co/xY5lHUdNKG",
+                    "id_str": "2115006840878838134",
+                    "is_quote_status": false,
+                    "lang": "ja",
+                    "possibly_sensitive": false,
+                    "possibly_sensitive_editable": true,
+                    "quote_count": 169,
+                    "reply_count": 19,
+                    "retweet_count": 764,
+                    "retweeted": false,
+                    "user_id_str": "864820472554242049"
+                },
+                "note_tweet": {
+                    "is_expandable": true,
+                    "note_tweet_results": {
+                        "result": {
+                            "entity_set": {
+                                "hashtags": [],
+                                "symbols": [],
+                                "urls": [
+                                    {
+                                        "display_url": "mg.withlive-app.com/event/lottery/…",
+                                        "expanded_url": "https://mg.withlive-app.com/event/lottery/super_mafumafu_world",
+                                        "indices": [195, 218],
+                                        "url": "https://t.co/vFXHYzeFtx"
+                                    },
+                                    {
+                                        "display_url": "a-sketch-inc.lnk.to/supermafumafuw…",
+                                        "expanded_url": "https://a-sketch-inc.lnk.to/supermafumafuworld",
+                                        "indices": [275, 298],
+                                        "url": "https://t.co/eFrVwswuL1"
+                                    }
+                                ],
+                                "user_mentions": []
+                            },
+                            "id": "Tm90ZVR3ZWV0OjIxMTUwMDY4NDA3NzM5ODQyNTY=",
+                            "text": "【LIVE DVD & Blu-ray 購入者限定 オンラインミート＆グリート開催決定！】\n2026年12月23日発売\nLIVE DVD & Blu-ray\n「すーぱーまふまふわーるど - LIVE COLLECTION 2025 -」\n\nオンラインによる、まふまふとの個別トークイベントとなります！\nお一人様につき、100秒程度のお時間でのトークとなります。\n\n詳細・応募サイトはこちら\nhttps://t.co/vFXHYzeFtx\n\nライブ音源集CDが付属する15周年記念盤の受注予約受付期間は【11月2日(月)】まで！\n\nご予約はこちらから\nhttps://t.co/eFrVwswuL1"
+                        }
+                    }
+                },
+                "rest_id": "2115006840878838134",
+                "unmention_data": {},
+                "views": { "count": "161074", "state": "EnabledWithCount" }
+            }
+        },
+        "user_id_str": "268758461"
+    },
+    "quick_promote_eligibility": { "eligibility": "IneligibleNotVerified" },
+    "rest_id": "2115008056144924994",
+    "source": "<a href=\"http://twitter.com/download/iphone\" rel=\"nofollow\">Twitter for iPhone</a>",
+    "unmention_data": {},
+    "views": { "count": "34520", "state": "EnabledWithCount" }
+}

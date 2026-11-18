@@ -397,4 +397,10 @@ module.exports = {
     getProfileURL,
     sendRecentTweet,
     getTimelineByUserID,
+    // 테스트용 export
+    getTweetText,
+    formatAuthor,
+    toBlockquote,
+    generateTweetMarkdown,
+    getWebhookEmbed,
 };

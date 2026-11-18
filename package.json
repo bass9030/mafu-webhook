@@ -3,7 +3,8 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "start": "nodemon ./bin/www"
+        "start": "nodemon ./bin/www",
+        "test": "node --test \"test/**/*.test.js\""
     },
     "dependencies": {
         "@google/genai": "^2.32.0",
