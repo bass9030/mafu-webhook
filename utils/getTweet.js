@@ -12,6 +12,13 @@ const {
     sendInfoLog,
     sendResponseDataLog,
 } = require("./DebugLogger");
+const {
+    MAFU_USER_ID,
+    MAFU_SCREEN_NAME,
+    LOGO_URL,
+    FOOTER_TEXT,
+    EMBED_COLOR,
+} = require("./constants");
 
 let profileURL = "";
 let prevLastTweetID = null;
@@ -85,7 +92,7 @@ async function getTimelineByUserID(userId, count) {
                 // 마후마후 트윗만 필터링
                 if (
                     e.content.itemContent.tweet_results.result.core.user_results
-                        .result.core.screen_name != "uni_mafumafu"
+                        .result.core.screen_name != MAFU_SCREEN_NAME
                 )
                     continue;
 
@@ -147,7 +154,7 @@ async function checkNewTweet() {
 
     let timelineInfo;
     try {
-        timelineInfo = await getTimelineByUserID(268758461);
+        timelineInfo = await getTimelineByUserID(MAFU_USER_ID);
         let lastTweetID = BigInt(timelineInfo[0].legacy.id_str);
 
         if (lastTweetID > prevLastTweetID || DEBUG) {
@@ -182,7 +189,7 @@ async function checkNewTweet() {
 }
 
 async function sendRecentTweet(id) {
-    let timelineInfo = await getTimelineByUserID(268758461);
+    let timelineInfo = await getTimelineByUserID(MAFU_USER_ID);
     const webhookManager = new WebhookManager();
     await webhookManager.getConnection();
 
@@ -313,7 +320,7 @@ async function getWebhookEmbed(tweetInfo) {
     //프로필 URL
     profileURL = tweetInfo.core.user_results.result.avatar.image_url;
     let originalLink =
-        "https://x.com/uni_mafumafu/status/" + tweetInfo.legacy.id_str;
+        `https://x.com/${MAFU_SCREEN_NAME}/status/` + tweetInfo.legacy.id_str;
 
     const embeds = [];
 
@@ -327,15 +334,15 @@ async function getWebhookEmbed(tweetInfo) {
     embed.setAuthor({
         name: `${tweetInfo.core.user_results.result.core.name} (@${tweetInfo.core.user_results.result.core.screen_name})`,
         iconURL: profileURL,
-        url: "https://x.com/uni_mafumafu",
+        url: `https://x.com/${MAFU_SCREEN_NAME}`,
     });
     embed.setFooter({
-        text: "마훅 - 한글 번역된 마후마후 트윗을 디스코드에서",
-        iconURL: "https://mahook.bass9030.dev/logo.png",
+        text: FOOTER_TEXT,
+        iconURL: LOGO_URL,
     });
     embed.setTimestamp(created_at);
     embed.setDescription(translatedText);
-    embed.setColor(0x1da1f2);
+    embed.setColor(EMBED_COLOR.TWITTER);
 
     let medias = null;
 
@@ -383,11 +390,11 @@ async function getProfileURL() {
         return profileURL;
     } else {
         try {
-            let tweetInfo = await getTimelineByUserID(268758461, 1);
+            let tweetInfo = await getTimelineByUserID(MAFU_USER_ID, 1);
             tweetInfo[0].core.user_results.result.avatar.image_url;
             return profileURL;
         } catch {
-            return "https://mahook.bass9030.dev/logo.png";
+            return LOGO_URL;
         }
     }
 }

@@ -11,6 +11,11 @@ const { WebhookClient, EmbedBuilder } = require("discord.js");
 const getOTP = require("../utils/otpGenerator");
 const { sendHook } = require("../utils/sendLINE");
 const { sendErrorLog } = require("../utils/DebugLogger");
+const {
+    BOT_USERNAME,
+    EMBED_COLOR,
+    LINE_RELAY_USER_AGENT,
+} = require("../utils/constants");
 
 const webhookManager = new WebhookManager();
 
@@ -62,7 +67,7 @@ router.post("/register", async function (req, res, next) {
         embed.setDescription(
             "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!",
         );
-        embed.setColor(0x1da1f2);
+        embed.setColor(EMBED_COLOR.TWITTER);
 
         let hook = new WebhookClient({
             id: channelID,
@@ -71,7 +76,7 @@ router.post("/register", async function (req, res, next) {
 
         await hook.send({
             content: "",
-            username: "마훅 - 마후 트윗 번역봇",
+            username: BOT_USERNAME,
             avatarURL: await getProfileURL(),
             embeds: [embed],
         });
@@ -244,7 +249,7 @@ router.get("/testWebhook", async (req, res, next) => {
 });
 
 router.post("/line-webhook", async (req, res, next) => {
-    if (req.headers["user-agent"] == "mahook-line/3.0") {
+    if (req.headers["user-agent"] == LINE_RELAY_USER_AGENT) {
         let otps = getOTP();
         let req_otp = req.headers["authorization"];
         // console.log(req.body);

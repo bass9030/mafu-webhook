@@ -1,6 +1,12 @@
 const mariadb = require("mariadb");
 const { WebhookClient, EmbedBuilder } = require("discord.js");
 const { sendErrorLog, sendInfoLog } = require("./DebugLogger");
+const {
+    LOGO_URL,
+    BOT_USERNAME,
+    FOOTER_TEXT,
+    EMBED_COLOR,
+} = require("./constants");
 
 /**
  * @typedef { Number } WEBHOOK_TYPES
@@ -180,22 +186,22 @@ class WebhookManager {
                 let profileURL;
                 switch (type) {
                     case WEBHOOK_TYPE.NOTI:
-                        profileURL = "https://mahook.bass9030.dev/logo.png";
+                        profileURL = LOGO_URL;
                         const embed = new EmbedBuilder();
                         embed.setTitle("마훅 공지사항");
                         embed.setFields({
                             name: message.title,
                             value: message.content,
                         });
-                        embed.setColor(4037805);
+                        embed.setColor(EMBED_COLOR.NOTICE);
                         embed.setFooter({
-                            text: "마훅 - 한글 번역된 마후마후 트윗을 디스코드에서",
-                            iconURL: "https://mahook.bass9030.dev/logo.png",
+                            text: FOOTER_TEXT,
+                            iconURL: LOGO_URL,
                         });
 
                         await hook.send({
                             avatarURL: profileURL,
-                            username: "마훅 - 마후 트윗 번역봇",
+                            username: BOT_USERNAME,
                             content: mention,
                             embeds: [embed],
                         });
@@ -205,7 +211,7 @@ class WebhookManager {
                         profileURL = message[0].data["footer"]["icon_url"];
                         await hook.send({
                             avatarURL: profileURL,
-                            username: "마훅 - 마후 트윗 번역봇",
+                            username: BOT_USERNAME,
                             content: mention,
                             embeds: message,
                         });
