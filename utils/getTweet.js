@@ -81,6 +81,14 @@ async function getTimelineByUserID(userId, count) {
             let data = [];
             for (let i = 0; i < tweets.length; i++) {
                 let e = tweets[i];
+
+                // 마후마후 트윗만 필터링
+                if (
+                    e.content.itemContent.tweet_results.result.core.user_results
+                        .result.core.screen_name != "uni_mafumafu"
+                )
+                    continue;
+
                 if (e.entryId.match(/^tweet\-[0-9]+/g)) {
                     // 일반 트윗
                     data.push(e.content.itemContent.tweet_results.result);
@@ -234,7 +242,7 @@ function formatAuthor(tweet) {
 function toBlockquote(text) {
     return text
         .split("\n")
-        .map((line) => `> ​${line}`)
+        .map((line) => `> \u200b${line}`)
         .join("\n");
 }
 
@@ -282,7 +290,7 @@ async function generateTweetMarkdown(tweet, depth = 1) {
     if (replyId) {
         const replyHandle = legacy.in_reply_to_screen_name;
         body =
-            `↩ [@${replyHandle}](https://x.com/${replyHandle}/status/${replyId})\n\n` +
+            `↩ [@${replyHandle}](https://x.com/${replyHandle}/status/${replyId})님에게 보내는 답글\n\n` +
             body;
     }
 
@@ -323,7 +331,7 @@ async function getWebhookEmbed(tweetInfo) {
     });
     embed.setFooter({
         text: "마훅 - 한글 번역된 마후마후 트윗을 디스코드에서",
-        iconURL: profileURL,
+        iconURL: "https://mahook.bass9030.dev/logo.png",
     });
     embed.setTimestamp(created_at);
     embed.setDescription(translatedText);
