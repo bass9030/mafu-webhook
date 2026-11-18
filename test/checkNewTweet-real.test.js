@@ -47,6 +47,11 @@ test("대화 묶음이 섞인 실제 응답에서도 새 트윗을 오래된 순
     // 자기 답글은 답글 접두사가 붙음
     const reply = state.sent[3].payload.embeds[0];
     assert.ok(reply.description.startsWith("↩ [@uni_mafumafu](https://x.com/uni_mafumafu/status/"));
+    // 웹후크 avatar는 로고가 아니라 마후마후 프로필 이미지 (embed author 아이콘)
+    for (const s of state.sent) {
+        assert.equal(s.payload.avatarURL, s.payload.embeds[0].author.icon_url);
+        assert.match(s.payload.avatarURL, /^https:\/\/pbs\.twimg\.com\/profile_images\//);
+    }
     // 모든 embed 작성자가 마후마후
     assert.ok(state.sent.every((s) => s.payload.embeds[0].author.name.endsWith("(@uni_mafumafu)")));
     assert.deepEqual(state.queries.find((q) => q.sql.startsWith("REPLACE")).params, [

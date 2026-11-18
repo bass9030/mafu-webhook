@@ -165,12 +165,13 @@ function twitterEmbeds() {
     return [
         new EmbedBuilder()
             .setTitle("New Tweet Release!")
+            .setAuthor({ name: "author", iconURL: "https://icon/author.png" })
             .setFooter({ text: "footer", iconURL: "https://icon/footer.png" }),
         new EmbedBuilder().setImage("https://img/2.jpg"),
     ];
 }
 
-test("sendWebhook(TWITTER): 전체 웹후크 조회, 멘션 계산, footer 아이콘을 avatar로 사용", async () => {
+test("sendWebhook(TWITTER): 전체 웹후크 조회, 멘션 계산, author 아이콘을 avatar로 사용", async () => {
     const m = await connected();
     state.queryHandler = () => ROWS;
     const embeds = twitterEmbeds();
@@ -188,7 +189,7 @@ test("sendWebhook(TWITTER): 전체 웹후크 조회, 멘션 계산, footer 아�
         ],
     );
     for (const s of state.sent) {
-        assert.equal(s.payload.avatarURL, "https://icon/footer.png");
+        assert.equal(s.payload.avatarURL, "https://icon/author.png");
         assert.equal(s.payload.username, USERNAME);
         assert.deepEqual(s.payload.embeds, embeds.map((e) => e.toJSON()));
     }
@@ -242,7 +243,7 @@ test("sendWebhook(LINE): LINE 수신 비트로 조회", async () => {
     await m.sendWebhook(twitterEmbeds(), WEBHOOK_TYPE.LINE);
     assert.deepEqual(state.queries[0].params, [4, 4]);
     assert.equal(state.sent.length, 1);
-    assert.equal(state.sent[0].payload.avatarURL, "https://icon/footer.png");
+    assert.equal(state.sent[0].payload.avatarURL, "https://icon/author.png");
 });
 
 test("[현재 동작] sendWebhook(LINE)에 배열이 아닌 EmbedBuilder 하나를 주면 모든 수신자에서 실패", async () => {

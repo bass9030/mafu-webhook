@@ -67,9 +67,11 @@ test("buildWebhookPayload: NOTI", () => {
     assert.deepEqual(p.embeds.map((e) => e.toJSON()), [buildNoticeEmbed("t", "c").toJSON()]);
 });
 
-test("buildWebhookPayload: TWITTER / LINE은 embed 배열 그대로, footer 아이콘이 avatar", () => {
+test("buildWebhookPayload: TWITTER / LINE은 embed 배열 그대로, author 아이콘이 avatar", () => {
     const embeds = [
-        new EmbedBuilder().setFooter({ text: "f", iconURL: "https://icon" }),
+        new EmbedBuilder()
+            .setAuthor({ name: "a", iconURL: "https://icon" })
+            .setFooter({ text: "f", iconURL: "https://footer-icon" }),
         new EmbedBuilder().setImage("https://img"),
     ];
     for (const type of [WEBHOOK_TYPE.TWITTER, WEBHOOK_TYPE.LINE]) {
@@ -87,6 +89,17 @@ test("buildWebhookPayload: TWITTER / LINE은 embed 배열 그대로, footer 아�
 test("[현재 동작] buildWebhookPayload: 배열이 아닌 embed 하나면 TypeError", () => {
     assert.throws(
         () => buildWebhookPayload(new EmbedBuilder(), WEBHOOK_TYPE.LINE, ""),
+        TypeError,
+    );
+});
+
+test("[현재 동작] buildWebhookPayload: author가 없는 embed(LINE embed 등)는 배열이어도 TypeError", () => {
+    // utils/sendLINE.js의 LINE embed는 footer만 있고 author가 없음
+    const lineEmbed = new EmbedBuilder()
+        .setTitle("New LINE Release!")
+        .setFooter({ text: "f", iconURL: "https://line-icon" });
+    assert.throws(
+        () => buildWebhookPayload([lineEmbed], WEBHOOK_TYPE.LINE, ""),
         TypeError,
     );
 });
