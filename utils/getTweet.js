@@ -190,16 +190,16 @@ async function checkNewTweet() {
 
 async function sendRecentTweet(id) {
     let timelineInfo = await getTimelineByUserID(MAFU_USER_ID);
-    const webhookManager = new WebhookManager();
-    await webhookManager.getConnection();
+    await WebhookManager.withConnection(async (webhookManager) => {
+        const embed = await getWebhookEmbed(
+            !!id
+                ? timelineInfo.filter((e) => e["rest_id"] == id)[0]
+                : timelineInfo[0],
+        );
 
-    const embed = await getWebhookEmbed(
-        !!id
-            ? timelineInfo.filter((e) => e["rest_id"] == id)[0]
-            : timelineInfo[0],
-    );
-
-    webhookManager.sendWebhook(embed, WEBHOOK_TYPE.TWITTER);
+        // 전송은 await 하지 않음 (기존 동작 유지)
+        webhookManager.sendWebhook(embed, WEBHOOK_TYPE.TWITTER);
+    });
 }
 
 const MAX_TWEET_DEPTH = 3;

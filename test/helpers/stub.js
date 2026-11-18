@@ -28,6 +28,8 @@ const state = {
     queries: [],
     acquired: 0,
     released: 0,
+    /** release된 커넥션 번호 (커넥션마다 1부터 증가) */
+    releasedConns: [],
     /** @type {(sql: string, params?: any[]) => any} */
     queryHandler: () => [],
     /** @type {null | (() => any)} */
@@ -61,6 +63,7 @@ function reset() {
     state.queries = [];
     state.acquired = 0;
     state.released = 0;
+    state.releasedConns = [];
     state.queryHandler = () => [];
     state.getConnectionHandler = null;
     state.webhookClients = [];
@@ -120,13 +123,16 @@ function installStubs(opts = {}) {
             getConnection: async () => {
                 if (state.getConnectionHandler) await state.getConnectionHandler();
                 state.acquired++;
+                const connId = state.acquired;
                 return {
+                    connId,
                     query: async (sql, params) => {
                         state.queries.push({ sql, params });
                         return state.queryHandler(sql, params);
                     },
                     release: () => {
                         state.released++;
+                        state.releasedConns.push(connId);
                         return Promise.resolve();
                     },
                 };

@@ -20,10 +20,9 @@ async function sendHook(data) {
     embed.setDescription(translatedText.trim());
     embed.setColor(EMBED_COLOR.LINE);
 
-    const webhookManager = new WebhookManager();
-    await webhookManager.getConnection();
-    await webhookManager.sendWebhook(embed, WEBHOOK_TYPE.LINE);
-    webhookManager.releaseConnection();
+    await WebhookManager.withConnection(async (webhookManager) => {
+        await webhookManager.sendWebhook(embed, WEBHOOK_TYPE.LINE);
+    });
 }
 
 module.exports = {

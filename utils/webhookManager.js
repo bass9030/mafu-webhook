@@ -58,6 +58,23 @@ class WebhookManager {
         this.db = null;
     }
 
+    /**
+     * 커넥션을 받은 새 인스턴스로 fn을 실행하고, 성공/실패와 관계없이 커넥션을 반환
+     * fn 안에서 await 하지 않은 쿼리는 반환 전에 발행만 되어 있으면 계속 진행됨
+     * @template T
+     * @param {(manager: WebhookManager) => Promise<T>} fn
+     * @returns {Promise<T>}
+     */
+    static async withConnection(fn) {
+        const manager = new WebhookManager();
+        await manager.getConnection();
+        try {
+            return await fn(manager);
+        } finally {
+            await manager.releaseConnection();
+        }
+    }
+
     async setLastTweetID(id) {
         await this.db.query(
             "REPLACE INTO lastTweet (key_str, id) VALUES (?, ?);",

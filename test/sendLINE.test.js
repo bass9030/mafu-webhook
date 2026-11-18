@@ -51,3 +51,18 @@ test("[현재 동작] 번역 결과가 null이면 TypeError, 전송하지 않음
     assert.equal(calls.length, 0);
     assert.equal(state.acquired, 0);
 });
+
+test("전송 중 오류가 나도 커넥션을 반환하고 오류는 전파", async () => {
+    const err = new Error("query failed");
+    const original = WebhookManager.prototype.sendWebhook;
+    WebhookManager.prototype.sendWebhook = async () => {
+        throw err;
+    };
+    try {
+        await assert.rejects(sendHook({ message: "x", time: "1" }), err);
+    } finally {
+        WebhookManager.prototype.sendWebhook = original;
+    }
+    assert.equal(state.acquired, 1);
+    assert.equal(state.released, 1);
+});

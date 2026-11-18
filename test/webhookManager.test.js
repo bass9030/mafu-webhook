@@ -277,3 +277,54 @@ test("sendNotice: notices INSERT 후 공지 전송 (전송은 await 하지 않�
     assert.equal(state.sent.length, 1);
     assert.equal(state.sent[0].payload.embeds[0].fields[0].name, "제목");
 });
+
+test("withConnection: 성공 시 결과 반환 후 커넥션 반환", async () => {
+    let inside;
+    const result = await WebhookManager.withConnection(async (m) => {
+        inside = m;
+        assert.ok(m instanceof WebhookManager);
+        assert.ok(m.db);
+        assert.equal(state.released, 0);
+        return 42;
+    });
+    assert.equal(result, 42);
+    assert.equal(state.acquired, 1);
+    assert.deepEqual(state.releasedConns, [1]);
+    assert.equal(inside.db, null);
+});
+
+test("withConnection: fn 오류 시 커넥션 반환 후 오류 전파", async () => {
+    const err = new Error("x");
+    await assert.rejects(
+        WebhookManager.withConnection(async () => {
+            throw err;
+        }),
+        err,
+    );
+    assert.equal(state.released, 1);
+});
+
+test("withConnection: 커넥션 획득 실패 시 fn을 실행하지 않음", async () => {
+    const err = new Error("pool");
+    state.getConnectionHandler = () => {
+        throw err;
+    };
+    let called = false;
+    await assert.rejects(
+        WebhookManager.withConnection(async () => {
+            called = true;
+        }),
+        err,
+    );
+    assert.equal(called, false);
+    assert.equal(state.released, 0);
+});
+
+test("withConnection: 호출마다 별도 인스턴스/커넥션", async () => {
+    const managers = await Promise.all([
+        WebhookManager.withConnection(async (m) => m),
+        WebhookManager.withConnection(async (m) => m),
+    ]);
+    assert.notEqual(managers[0], managers[1]);
+    assert.deepEqual([...state.releasedConns].sort(), [1, 2]);
+});

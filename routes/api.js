@@ -23,8 +23,6 @@ const {
 } = require("../utils/webhookInput");
 const MESSAGES = require("./messages");
 
-const webhookManager = new WebhookManager();
-
 router.post("/register", async function (req, res, next) {
     if (!!!req.body && !!!req.body?.url) {
         res.status(400).json({ status: res.statusCode });
@@ -75,15 +73,15 @@ router.post("/register", async function (req, res, next) {
             embeds: [embed],
         });
 
-        await webhookManager.getConnection();
-        await webhookManager.addWebhook(
-            channelID,
-            webhookToken,
-            data.options,
-            data.roleID,
-        );
-        res.json({ status: res.statusCode });
-        webhookManager.releaseConnection();
+        await WebhookManager.withConnection(async (webhookManager) => {
+            await webhookManager.addWebhook(
+                channelID,
+                webhookToken,
+                data.options,
+                data.roleID,
+            );
+            res.json({ status: res.statusCode });
+        });
     } catch (e) {
         if (e.errno == 1062) {
             res.status(409);
@@ -124,15 +122,15 @@ router.post("/edit", async (req, res, next) => {
     try {
         let { channelID, webhookToken } = parseWebhookUrl(data.url);
 
-        await webhookManager.getConnection();
-        await webhookManager.editWebhook(
-            channelID,
-            webhookToken,
-            data.options,
-            data.roleID,
-        );
-        res.json({ status: res.statusCode });
-        webhookManager.releaseConnection();
+        await WebhookManager.withConnection(async (webhookManager) => {
+            await webhookManager.editWebhook(
+                channelID,
+                webhookToken,
+                data.options,
+                data.roleID,
+            );
+            res.json({ status: res.statusCode });
+        });
     } catch (e) {
         if (e instanceof WebhookNotFoundError) {
             res.status(404);
@@ -157,10 +155,10 @@ router.delete("/unregister", async (req, res, next) => {
     // try 밖에서 파싱: 형식 오류는 에러 핸들러(HTML 500)로 감 (현재 동작 유지)
     let { channelID, webhookToken } = parseWebhookUrl(data.url);
     try {
-        await webhookManager.getConnection();
-        await webhookManager.removeWebhook(channelID, webhookToken);
-        res.json({ status: res.statusCode });
-        await webhookManager.releaseConnection();
+        await WebhookManager.withConnection(async (webhookManager) => {
+            await webhookManager.removeWebhook(channelID, webhookToken);
+            res.json({ status: res.statusCode });
+        });
     } catch (e) {
         if (e instanceof WebhookNotFoundError) {
             res.status(404);
@@ -178,10 +176,10 @@ router.delete("/unregister", async (req, res, next) => {
 
 router.get("/getNotices", async (req, res, next) => {
     try {
-        await webhookManager.getConnection();
-        let data = await webhookManager.getNotices();
-        res.json({ status: res.statusCode, data });
-        webhookManager.releaseConnection();
+        await WebhookManager.withConnection(async (webhookManager) => {
+            let data = await webhookManager.getNotices();
+            res.json({ status: res.statusCode, data });
+        });
     } catch (e) {
         sendErrorLog(e);
         res.status(500);
@@ -204,10 +202,14 @@ router.post("/sendNoti", async (req, res, next) => {
             .update(req.body?.["amazing-something"])
             .digest("hex");
         if (hashedHeader == process.env.NOTICE_TOKEN_KEY.toLowerCase()) {
-            await webhookManager.getConnection();
-            await webhookManager.sendNotice(req.body?.title, req.body?.content);
-            res.send(MESSAGES.NOTICE_SENT);
-            webhookManager.releaseConnection();
+            await WebhookManager.withConnection(async (webhookManager) => {
+                // sendNotice 내부의 공지 전송은 await 되지 않음 (응답 후 백그라운드로 진행)
+                await webhookManager.sendNotice(
+                    req.body?.title,
+                    req.body?.content,
+                );
+                res.send(MESSAGES.NOTICE_SENT);
+            });
         } else {
             res.status(403).json({ status: res.statusCode });
         }

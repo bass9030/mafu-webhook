@@ -531,3 +531,72 @@ test("[현재 동작] line-webhook: 즉시 200 응답, 백그라운드 전송은
     assert.equal(state.acquired, 1);
     assert.equal(state.released, 1);
 });
+
+// ---------------------------------------------------------------- 커넥션 관리 (4단계)
+// 응답은 위 테스트들로 고정하고, 여기서는 커넥션 획득/반환 수지만 검사한다.
+
+async function connBalance(method, path, opts, setup) {
+    resetAll();
+    setup?.();
+    const r = await req(method, path, opts);
+    await flush();
+    return { r, acquired: state.acquired, released: state.released };
+}
+
+test("오류 경로에서도 커넥션을 반환", async () => {
+    const throwing = (err) => () => {
+        state.queryHandler = () => {
+            throw err;
+        };
+    };
+    const cases = [
+        ["POST", "/api/register", { json: { url: HOOK_URL, roleID: -1 } }, throwing(Object.assign(new Error("dup"), { errno: 1062 })), 409],
+        ["POST", "/api/register", { json: { url: HOOK_URL, roleID: -1 } }, throwing(new Error("db")), 500],
+        ["POST", "/api/edit", { json: { url: HOOK_URL, roleID: -1 } }, () => (state.queryHandler = () => ({ affectedRows: 0 })), 404],
+        ["POST", "/api/edit", { json: { url: HOOK_URL, roleID: -1 } }, throwing(new Error("db")), 500],
+        ["DELETE", "/api/unregister?url=" + encodeURIComponent(HOOK_URL), {}, () => (state.queryHandler = () => ({ affectedRows: 0 })), 404],
+        ["DELETE", "/api/unregister?url=" + encodeURIComponent(HOOK_URL), {}, throwing(new Error("db")), 500],
+        ["POST", "/api/sendNoti", { form: { title: "t", content: "c", "amazing-something": NOTICE_TOKEN } }, throwing(new Error("db")), 500],
+    ];
+    for (const [method, path, opts, setup, status] of cases) {
+        const { r, acquired, released } = await connBalance(method, path, opts, setup);
+        assert.equal(r.status, status, `${method} ${path}`);
+        assert.equal(acquired, 1, `${method} ${path}`);
+        assert.equal(released, 1, `${method} ${path}`);
+    }
+});
+
+test("커넥션 획득 전에 끝나는 경로는 커넥션을 쓰지 않음", async () => {
+    const cases = [
+        // Discord가 웹후크를 찾지 못함
+        ["POST", "/api/register", { json: { url: HOOK_URL, roleID: -1 } }, () => (state.sendHandler = () => { throw Object.assign(new Error("x"), { code: 10015 }); })],
+        // 커넥션 획득 실패
+        ["GET", "/api/getNotices", {}, () => (state.getConnectionHandler = () => { throw new Error("pool"); })],
+        ["POST", "/api/register", { json: { url: HOOK_URL, roleID: -1 } }, () => (state.getConnectionHandler = () => { throw new Error("pool"); })],
+    ];
+    for (const [method, path, opts, setup] of cases) {
+        const { acquired, released } = await connBalance(method, path, opts, setup);
+        assert.equal(acquired, 0);
+        assert.equal(released, 0);
+    }
+});
+
+test("동시 요청이 서로의 커넥션을 덮어쓰지 않음", async () => {
+    // 두 요청이 모두 커넥션을 받은 뒤에야 진행되도록 대기
+    let waiting = [];
+    state.getConnectionHandler = () =>
+        new Promise((resolve) => {
+            waiting.push(resolve);
+            if (waiting.length === 2) waiting.forEach((r) => r());
+        });
+    state.queryHandler = () => ({ affectedRows: 1 });
+    const [a, b] = await Promise.all([
+        req("POST", "/api/edit", { json: { url: HOOK_URL, roleID: -1, options: 1 } }),
+        req("POST", "/api/edit", { json: { url: HOOK_URL, roleID: -1, options: 2 } }),
+    ]);
+    await flush();
+    assert.equal(a.status, 200);
+    assert.equal(b.status, 200);
+    assert.equal(state.acquired, 2);
+    assert.deepEqual([...state.releasedConns].sort(), [1, 2]);
+});

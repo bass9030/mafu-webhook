@@ -155,10 +155,21 @@ test("sendRecentTweet(id): 지정한 rest_id의 트윗 전송", async () => {
     ]);
 });
 
-test("sendRecentTweet(id): 없는 id면 TypeError", async () => {
+test("sendRecentTweet(id): 없는 id면 TypeError, 커넥션은 반환", async () => {
     timeline(90, 80);
     await assert.rejects(sendRecentTweet("1"), TypeError);
     assert.equal(state.sent.length, 0);
+    assert.equal(state.acquired, 1);
+    assert.equal(state.released, 1);
+});
+
+test("sendRecentTweet: 전송 후 커넥션 반환", async () => {
+    timeline(90);
+    await sendRecentTweet();
+    await flush();
+    assert.equal(state.sent.length, 2);
+    assert.equal(state.acquired, 1);
+    assert.equal(state.released, 1);
 });
 
 test("sendRecentTweet: 타임라인 조회 실패는 그대로 전파", async () => {
