@@ -1,24 +1,11 @@
 const { pool } = require("./db");
-const { WebhookClient, EmbedBuilder } = require("discord.js");
 const { sendErrorLog, sendInfoLog } = require("./DebugLogger");
+const { WEBHOOK_TYPE } = require("./constants");
 const {
-    LOGO_URL,
-    BOT_USERNAME,
-    FOOTER_TEXT,
-    EMBED_COLOR,
-} = require("./constants");
-
-/**
- * @typedef { Number } WEBHOOK_TYPES
- */
-/**
- * @enum { WEBHOOK_TYPES } WEBHOOK_TYPE
- */
-const WEBHOOK_TYPE = {
-    TWITTER: 0,
-    NOTI: 2,
-    LINE: 4,
-};
+    createWebhookClient,
+    buildMention,
+    buildWebhookPayload,
+} = require("./discordSender");
 
 class WebhookNotFoundError extends Error {
     constructor(message) {
@@ -154,7 +141,7 @@ class WebhookManager {
     }
 
     /**
-     * @param {EmbedBuilder[] | object[]} message
+     * @param {import("discord.js").EmbedBuilder[] | {title: string, content: string}} message
      * @param {WEBHOOK_TYPE} type
      */
     async sendWebhook(message, type = WEBHOOK_TYPE.TWITTER) {
@@ -170,53 +157,13 @@ class WebhookManager {
         for (let i = 0; i < webhooks.length; i++) {
             let e = webhooks[i];
             try {
-                const hook = new WebhookClient({
-                    id: e.channelID,
-                    token: e.webhookToken,
-                });
+                const hook = createWebhookClient(e.channelID, e.webhookToken);
                 let webhookOptions = WebhookManager.getOptions(e.options);
-                let mention = "";
-                if (webhookOptions.isMention) {
-                    if (e.roleID != -1) {
-                        if (e.roleID == "@everyone" || e.roleID == "@here")
-                            mention = e.roleID;
-                        else mention = "<@&" + e.roleID + ">";
-                    }
-                }
-                let profileURL;
-                switch (type) {
-                    case WEBHOOK_TYPE.NOTI:
-                        profileURL = LOGO_URL;
-                        const embed = new EmbedBuilder();
-                        embed.setTitle("마훅 공지사항");
-                        embed.setFields({
-                            name: message.title,
-                            value: message.content,
-                        });
-                        embed.setColor(EMBED_COLOR.NOTICE);
-                        embed.setFooter({
-                            text: FOOTER_TEXT,
-                            iconURL: LOGO_URL,
-                        });
-
-                        await hook.send({
-                            avatarURL: profileURL,
-                            username: BOT_USERNAME,
-                            content: mention,
-                            embeds: [embed],
-                        });
-                        break;
-                    case WEBHOOK_TYPE.TWITTER:
-                    case WEBHOOK_TYPE.LINE:
-                        profileURL = message[0].data["footer"]["icon_url"];
-                        await hook.send({
-                            avatarURL: profileURL,
-                            username: BOT_USERNAME,
-                            content: mention,
-                            embeds: message,
-                        });
-                        break;
-                }
+                let mention = webhookOptions.isMention
+                    ? buildMention(e.roleID)
+                    : "";
+                const payload = buildWebhookPayload(message, type, mention);
+                if (payload) await hook.send(payload);
                 success_cnt++;
             } catch (err) {
                 err_cnt++;

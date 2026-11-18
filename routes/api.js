@@ -7,15 +7,14 @@ const {
 } = require("../utils/webhookManager");
 var createError = require("http-errors");
 const { getProfileURL, sendRecentTweet } = require("../utils/getTweet");
-const { WebhookClient, EmbedBuilder } = require("discord.js");
+const {
+    createWebhookClient,
+    buildWelcomeEmbed,
+} = require("../utils/discordSender");
 const getOTP = require("../utils/otpGenerator");
 const { sendHook } = require("../utils/sendLINE");
 const { sendErrorLog } = require("../utils/DebugLogger");
-const {
-    BOT_USERNAME,
-    EMBED_COLOR,
-    LINE_RELAY_USER_AGENT,
-} = require("../utils/constants");
+const { BOT_USERNAME, LINE_RELAY_USER_AGENT } = require("../utils/constants");
 const {
     parseWebhookUrl,
     isValidWebhookUrl,
@@ -54,17 +53,9 @@ router.post("/register", async function (req, res, next) {
 
         let { channelID, webhookToken } = parseWebhookUrl(data.url);
 
-        let embed = new EmbedBuilder();
-        embed.setTitle("마훅 구독 완료!");
-        embed.setDescription(
-            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!",
-        );
-        embed.setColor(EMBED_COLOR.TWITTER);
+        let embed = buildWelcomeEmbed();
 
-        let hook = new WebhookClient({
-            id: channelID,
-            token: webhookToken,
-        });
+        let hook = createWebhookClient(channelID, webhookToken);
 
         await hook.send({
             content: "",

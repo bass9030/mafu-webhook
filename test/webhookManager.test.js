@@ -328,3 +328,39 @@ test("withConnection: 호출마다 별도 인스턴스/커넥션", async () => {
     assert.notEqual(managers[0], managers[1]);
     assert.deepEqual([...state.releasedConns].sort(), [1, 2]);
 });
+
+test("[현재 동작] sendWebhook: 알 수 없는 type이면 비트 마스크로 조회하고, 전송 없이 성공으로 집계", async () => {
+    const m = await connected();
+    state.queryHandler = () => [ROWS[0], ROWS[1]];
+    await m.sendWebhook(twitterEmbeds(), 1);
+    assert.deepEqual(state.queries[0].params, [1, 1]);
+    assert.equal(state.sent.length, 0);
+    assert.equal(state.webhookClients.length, 2);
+    assert.deepEqual(state.infoLogs, [
+        "Webhook sended. \nTotal: 2 | Success: 2 | Fail: 0",
+    ]);
+});
+
+test("[현재 동작] sendWebhook: 멘션 켜짐 + roleID가 null/숫자 -1이면", async () => {
+    const m = await connected();
+    state.queryHandler = () => [
+        { channelID: "1", webhookToken: "t", options: 1, roleID: null },
+        { channelID: "2", webhookToken: "t", options: 1, roleID: -1 },
+    ];
+    await m.sendWebhook(twitterEmbeds());
+    assert.deepEqual(state.sent.map((s) => s.payload.content), ["<@&null>", ""]);
+});
+
+test("[현재 동작] sendWebhook: options가 null이면 해당 수신자만 실패", async () => {
+    const m = await connected();
+    state.queryHandler = () => [
+        { channelID: "9", webhookToken: "t", options: null, roleID: "-1" },
+        ROWS[0],
+    ];
+    await m.sendWebhook(twitterEmbeds());
+    assert.deepEqual(state.sent.map((s) => s.id), ["1"]);
+    assert.equal(state.captured.length, 1);
+    assert.ok(state.captured[0] instanceof TypeError);
+    // 클라이언트는 옵션 해석 전에 생성됨
+    assert.equal(state.webhookClients.length, 2);
+});

@@ -25,6 +25,17 @@ const LINE_ICON_URL =
 /** LINE 중계 서버가 보내는 user-agent */
 const LINE_RELAY_USER_AGENT = "mahook-line/3.0";
 
+/**
+ * 웹후크 전송 종류. webhooks.options 비트 마스크로도 사용 (options & type = type)
+ * TWITTER(0)는 마스크가 0이라 전체 웹후크가 대상
+ * @enum {number}
+ */
+const WEBHOOK_TYPE = {
+    TWITTER: 0,
+    NOTI: 2,
+    LINE: 4,
+};
+
 module.exports = {
     MAFU_USER_ID,
     MAFU_SCREEN_NAME,
@@ -35,4 +46,5 @@ module.exports = {
     LINE_URL,
     LINE_ICON_URL,
     LINE_RELAY_USER_AGENT,
+    WEBHOOK_TYPE,
 };
