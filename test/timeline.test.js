@@ -7,6 +7,7 @@ const { tweet, timelineResponse, tweetEntry } = require("./helpers/tweets");
 installStubs({ translator: async (t) => t });
 const { getTimelineByUserID } = require("../utils/getTweet");
 const { default_variables, default_features } = require("../utils/twitterFeatures");
+const realTimeline = require("./fixtures/UserTweetsAndReplies.json");
 
 beforeEach(() => reset());
 
@@ -87,62 +88,76 @@ test("TimelineAddEntries가 여러 개면 첫 번째만 사용", async () => {
     assert.deepEqual(data.map((t) => t.rest_id), ["1"]);
 });
 
-test("[현재 동작] profile-conversation(타래) 엔트리가 있으면 작성자 필터에서 TypeError → ReferenceError로 실패", async () => {
-    // 실제 타래 모듈 엔트리는 content.itemContent 없이 content.items만 가짐
-    respond([
-        tweetEntry(tweet({ id: "10" })),
-        {
-            entryId: "profile-conversation-20",
-            content: {
-                items: [
-                    {
-                        entryId: "profile-conversation-20-tweet-21",
-                        item: { itemContent: { tweet_results: { result: tweet({ id: "21" }) } } },
-                    },
-                    {
-                        entryId: "profile-conversation-20-tweet-22",
-                        item: { itemContent: { tweet_results: { result: tweet({ id: "22" }) } } },
-                    },
-                ],
-            },
-        },
-    ]);
-    await assert.rejects(getTimelineByUserID(268758461), {
-        name: "ReferenceError",
-        message: /res_text/,
-    });
-    assert.equal(state.captured.length, 2);
-    assert.ok(state.captured.every((e) => e instanceof TypeError));
-});
+function conversationItem(convId, t) {
+    return {
+        entryId: `profile-conversation-${convId}-tweet-${t.rest_id}`,
+        item: { itemContent: { tweet_results: { result: t } } },
+    };
+}
 
-test("profile-conversation 엔트리에 itemContent도 있으면 타래 안의 tweet 항목을 펼침", async () => {
-    // 위 테스트와 달리 작성자 필터를 통과할 수 있는 형태일 때 타래 처리 로직 고정
+test("profile-conversation(대화 묶음) 엔트리는 안의 마후마후 트윗만 펼침", async () => {
+    // 실제 대화 묶음 엔트리는 content.itemContent 없이 content.items만 가짐
     respond([
         tweetEntry(tweet({ id: "10" })),
         {
             entryId: "profile-conversation-20",
             content: {
-                itemContent: { tweet_results: { result: tweet({ id: "20" }) } },
                 items: [
-                    {
-                        entryId: "profile-conversation-20-tweet-21",
-                        item: { itemContent: { tweet_results: { result: tweet({ id: "21" }) } } },
-                    },
-                    {
-                        entryId: "profile-conversation-20-cursor-showmore-1",
-                        item: {},
-                    },
-                    {
-                        entryId: "profile-conversation-20-tweet-22",
-                        item: { itemContent: { tweet_results: { result: tweet({ id: "22", screenName: "other" }) } } },
-                    },
+                    conversationItem(20, tweet({ id: "21" })),
+                    // 다른 사람의 답글은 제외
+                    conversationItem(20, tweet({ id: "22", screenName: "_amatsuki_" })),
+                    conversationItem(20, tweet({ id: "23", replyTo: { id: "22", screenName: "_amatsuki_" } })),
+                    // tweet 항목이 아닌 것은 무시
+                    { entryId: "profile-conversation-20-cursor-showmore-1", item: {} },
                 ],
             },
         },
     ]);
     const data = await getTimelineByUserID(268758461);
-    // 타래 안의 항목은 작성자 필터를 거치지 않음
-    assert.deepEqual(data.map((t) => t.rest_id), ["22", "21", "10"]);
+    assert.deepEqual(data.map((t) => t.rest_id), ["23", "21", "10"]);
+    assert.equal(state.captured.length, 0);
+});
+
+test("작성자 정보가 없는 트윗(삭제된 트윗 등)은 건너뜀", async () => {
+    respond([
+        tweetEntry(tweet({ id: "10" })),
+        { entryId: "tweet-11", content: { itemContent: { tweet_results: { result: { __typename: "TweetTombstone" } } } } },
+        {
+            entryId: "profile-conversation-20",
+            content: {
+                items: [
+                    conversationItem(20, { __typename: "TweetTombstone", rest_id: "21" }),
+                    { entryId: "profile-conversation-20-tweet-22", item: { itemContent: { tweet_results: {} } } },
+                    conversationItem(20, tweet({ id: "23" })),
+                ],
+            },
+        },
+    ]);
+    const data = await getTimelineByUserID(268758461);
+    assert.deepEqual(data.map((t) => t.rest_id), ["23", "10"]);
+});
+
+test("실제 응답 fixture: 대화 묶음 포함 마후마후 트윗 20개, 다른 사람 트윗 제외", async () => {
+    state.fetchHandler = () => jsonResponse(realTimeline);
+    const data = await getTimelineByUserID(268758461);
+    assert.deepEqual(
+        data.map((t) => t.rest_id),
+        [
+            "2120450976679358725", "2120123773789880449", "2119366392671834522",
+            "2118312539243397442", "2118307031992226201", "2117937235647709349",
+            "2117599140662448305", "2117186256375586949", "2116475117865943390",
+            "2116038835704655885", "2115742979302592712", "2115738706485416117",
+            "2115736416575693269", "2115373904822952072", "2115008056144924994",
+            "2114660946165784594", "2114285923756294554", "2113931603278008374",
+            "2113601289741603182", "2113599430767341640",
+        ],
+    );
+    assert.ok(data.every((t) => t.core.user_results.result.core.screen_name === "uni_mafumafu"));
+    // 아마츠키의 답글(대화 묶음 안)은 제외
+    assert.ok(!data.some((t) => t.rest_id === "2115404374612857258"));
+    // 고정 트윗(TimelinePinEntry)은 포함하지 않음
+    assert.ok(!data.some((t) => t.rest_id === "1825857996876034162"));
+    assert.equal(state.captured.length, 0);
 });
 
 test("[현재 동작] 응답이 ok가 아니면 원래 오류를 두 번 기록하고 ReferenceError를 던짐", async () => {
