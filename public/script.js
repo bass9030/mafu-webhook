@@ -296,9 +296,11 @@ function createNoticeItem(title, date, content, isLast) {
 
     noticeItem.classList.add("notice-item");
     titleItem.textContent = title;
-    dateItem.textContent = `${uploadDate.getFullYear()}-${
+    dateItem.textContent = `${uploadDate.getFullYear()}-${(
         uploadDate.getMonth() + 1
-    }-${uploadDate.getDate()}`;
+    )
+        .toString()
+        .padStart(2, "0")}-${uploadDate.getDate().toString().padStart(2, "0")}`;
     contentItem.innerHTML = content.replace(/\n/g, "<br>");
     contentItem.style.marginTop = "10px";
     contentItem.style.width = "100%";
