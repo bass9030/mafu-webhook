@@ -1,6 +1,5 @@
 // LINE 게시물 → embed 생성 (utils/sendLINE.js)
-// 실제 전송은 sendWebhook의 단일 embed 처리 버그로 실패하므로(webhookManager.test.js 참고)
-// 여기서는 sendWebhook에 넘기는 인자만 고정한다.
+// sendWebhook에 넘기는 인자를 검사한다. 실제 전송 결과는 api.test.js의 /api/line-webhook 테스트에서 확인.
 const { test, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 const { installStubs, reset, state } = require("./helpers/stub");
@@ -27,9 +26,10 @@ test("번역한 본문으로 LINE embed를 만들어 LINE 타입으로 전송, �
     assert.equal(calls.length, 1);
     assert.equal(calls[0].type, WEBHOOK_TYPE.LINE);
     assert.equal(calls[0].connected, true);
-    // 배열이 아니라 EmbedBuilder 하나를 넘김 (현재 동작)
-    assert.ok(!Array.isArray(calls[0].message));
-    assert.deepEqual(calls[0].message.toJSON(), {
+    // sendWebhook은 embed 배열을 받음
+    assert.ok(Array.isArray(calls[0].message));
+    assert.equal(calls[0].message.length, 1);
+    assert.deepEqual(calls[0].message[0].toJSON(), {
         title: "New LINE Release!",
         url: "https://line.me/R/ti/p/@uni_mafumafu",
         footer: {

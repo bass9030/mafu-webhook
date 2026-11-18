@@ -509,7 +509,7 @@ test("line-webhook: past/now/future OTP 모두 허용, 필드 누락 → 400", a
     }
 });
 
-test("[현재 동작] line-webhook: 즉시 200 응답, 백그라운드 전송은 모든 수신자에서 실패", async () => {
+test("line-webhook: 즉시 200 응답 후 LINE 수신 웹후크에 번역 embed 전송", async () => {
     state.queryHandler = () => [
         { channelID: "1", webhookToken: "t", options: 4, roleID: "-1" },
         { channelID: "2", webhookToken: "t", options: 5, roleID: "@here" },
@@ -525,9 +525,28 @@ test("[현재 동작] line-webhook: 즉시 200 응답, 백그라운드 전송은
     assert.deepEqual(state.queries, [
         { sql: "SELECT * FROM webhooks WHERE options & ? = ?;", params: [4, 4] },
     ]);
-    assert.equal(state.sent.length, 0);
-    assert.equal(state.captured.length, 2);
-    assert.deepEqual(state.infoLogs, ["Webhook sended. \nTotal: 2 | Success: 0 | Fail: 2"]);
+    assert.deepEqual(state.captured, []);
+    assert.deepEqual(state.infoLogs, ["Webhook sended. \nTotal: 2 | Success: 2 | Fail: 0"]);
+    assert.deepEqual(state.sent.map((s) => [s.id, s.payload.content]), [
+        ["1", ""], // 멘션 꺼짐
+        ["2", "@here"],
+    ]);
+    const LINE_ICON =
+        "https://profile.line-scdn.net/0hwr6BH-fyKF0LOwNQZWNXCjd-JjB8FS4Vc14yOixocmokW21eMVo3b34-cTp2X2sOMgpmM35ocGVy/preview";
+    for (const s of state.sent) {
+        assert.equal(s.payload.username, "마훅 - 마후 트윗 번역봇");
+        assert.equal(s.payload.avatarURL, LINE_ICON);
+        assert.deepEqual(s.payload.embeds, [
+            {
+                title: "New LINE Release!",
+                url: "https://line.me/R/ti/p/@uni_mafumafu",
+                footer: { text: "https://line.me/R/ti/p/@uni_mafumafu", icon_url: LINE_ICON },
+                timestamp: "2023-11-14T22:13:20.000Z",
+                description: "[KO]こんにちは",
+                color: 0x06c755,
+            },
+        ]);
+    }
     assert.equal(state.acquired, 1);
     assert.equal(state.released, 1);
 });
