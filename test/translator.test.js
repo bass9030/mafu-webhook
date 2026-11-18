@@ -8,14 +8,21 @@ const glossary = require("../data/glossary.json");
 
 beforeEach(() => reset());
 
-test("모듈 로드 시 GEMINI_API_KEY로 GoogleGenAI 생성", () => {
-    assert.deepEqual(state.genAIOptions, { apiKey: "test-gemini-key" });
+test("모듈 로드 시에는 GoogleGenAI를 생성하지 않음", () => {
+    assert.equal(state.genAIOptions, null);
 });
 
 test("빈 문자열은 API 호출 없이 빈 문자열", async () => {
     assert.equal(await translateText(""), "");
     assert.equal(state.geminiCalls.length, 0);
     assert.equal(state.deeplCalls.length, 0);
+    assert.equal(state.genAIOptions, null);
+});
+
+test("첫 번역 시 GEMINI_API_KEY로 GoogleGenAI 생성", async () => {
+    state.geminiHandler = () => ({ text: "x" });
+    await translateText("a");
+    assert.deepEqual(state.genAIOptions, { apiKey: "test-gemini-key" });
 });
 
 test("Gemini 성공: 결과 반환, 프롬프트에 용어집과 원문 치환", async () => {
@@ -72,14 +79,15 @@ test("Gemini 실패 시 DeepL(ja→ko, glossary)로 폴백", async () => {
     ]);
 });
 
-test("DeepL은 호출마다 Translator를 새로 생성", async () => {
+test("DeepL Translator는 한 번 생성 후 재사용", async () => {
     state.geminiHandler = () => {
         throw new Error("x");
     };
-    const before = state.deeplKeys.length;
+    state.deeplHandler = (q) => ({ text: `[딥엘]${q}` });
     await translateText("a");
     await translateText("b");
-    assert.equal(state.deeplKeys.length - before, 2);
+    assert.deepEqual(state.deeplKeys, ["test-deepl-key"]);
+    assert.equal(state.deeplCalls.length, 2);
 });
 
 test("[현재 동작] Gemini, DeepL 모두 실패하면 null", async () => {

@@ -180,6 +180,8 @@ function installStubs(opts = {}) {
     setModule("deepl-node", {
         Translator: class {
             constructor(key) {
+                // 실제 deepl-node처럼 키가 비어 있으면 생성 시 예외
+                if (!key) throw new Error("authKey must be a non-empty string");
                 state.deeplKeys.push(key);
             }
             async translateText(...args) {

@@ -1,4 +1,4 @@
-const mariadb = require("mariadb");
+const { pool } = require("./db");
 const { WebhookClient, EmbedBuilder } = require("discord.js");
 const { sendErrorLog, sendInfoLog } = require("./DebugLogger");
 const {
@@ -20,28 +20,11 @@ const WEBHOOK_TYPE = {
     LINE: 4,
 };
 
-const pool = mariadb.createPool({
-    host: process.env.DB_HOST,
-    port: 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    connectionLimit: 30,
-});
-
 class WebhookNotFoundError extends Error {
     constructor(message) {
         super(message);
         this.name = "WebhookNotFoundError";
     }
-}
-
-process.on("SIGTERM", onExit);
-process.on("SIGINT", onExit);
-
-async function onExit() {
-    await pool.end();
-    process.exit(0);
 }
 
 class WebhookManager {
