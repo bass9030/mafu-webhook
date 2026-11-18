@@ -1,13 +1,29 @@
 const deepl = require("deepl-node");
 const fs = require("fs");
+const path = require("path");
 const glossary = require("../data/glossary.json");
-const SYSTEM_INSTRUCTION = fs.readFileSync("./prompt/translator.md", {
-    encoding: "utf-8",
-});
+const SYSTEM_INSTRUCTION = fs.readFileSync(
+    path.join(__dirname, "..", "prompt", "translator.md"),
+    { encoding: "utf-8" },
+);
 const { GoogleGenAI } = require("@google/genai");
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenAI({ apiKey });
 const { sendErrorLog } = require("./DebugLogger");
+
+/** @type {GoogleGenAI | null} 첫 번역 시 생성 */
+let genAI = null;
+/** @type {deepl.Translator | null} 첫 생성 성공 후 재사용 (키가 없으면 생성 시 예외 → 매번 재시도) */
+let deeplTranslator = null;
+
+function getGenAI() {
+    if (!genAI) genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    return genAI;
+}
+
+function getDeepLTranslator() {
+    if (!deeplTranslator)
+        deeplTranslator = new deepl.Translator(process.env.DEEPL_API_KEY);
+    return deeplTranslator;
+}
 
 /**
  * 번역 (DeepL 번역)
@@ -16,7 +32,7 @@ const { sendErrorLog } = require("./DebugLogger");
  * @param {string} query 번역할 텍스트
  */
 async function translateTextDeepL(source, target, query) {
-    const translator = new deepl.Translator(process.env.DEEPL_API_KEY);
+    const translator = getDeepLTranslator();
 
     // query = convertToHalf(query);
     let response = await translator.translateText(
@@ -65,7 +81,7 @@ async function translateTextGemini(query) {
         glossary.map((item) => `${item.ja} → ${item.ko}`).join("\n"),
     ).replace("{{TEXT}}", query);
 
-    const result = await genAI.models.generateContent({
+    const result = await getGenAI().models.generateContent({
         model: "gemini-3.5-flash-lite",
         contents: instruction,
         config: {

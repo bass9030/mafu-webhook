@@ -7,12 +7,20 @@ const {
 } = require("../utils/webhookManager");
 var createError = require("http-errors");
 const { getProfileURL, sendRecentTweet } = require("../utils/getTweet");
-const { WebhookClient, EmbedBuilder } = require("discord.js");
+const {
+    createWebhookClient,
+    buildWelcomeEmbed,
+} = require("../utils/discordSender");
 const getOTP = require("../utils/otpGenerator");
 const { sendHook } = require("../utils/sendLINE");
 const { sendErrorLog } = require("../utils/DebugLogger");
-
-const webhookManager = new WebhookManager();
+const { BOT_USERNAME, LINE_RELAY_USER_AGENT } = require("../utils/constants");
+const {
+    parseWebhookUrl,
+    isValidWebhookUrl,
+    isValidRoleID,
+} = require("../utils/webhookInput");
+const MESSAGES = require("./messages");
 
 router.post("/register", async function (req, res, next) {
     if (!!!req.body && !!!req.body?.url) {
@@ -24,79 +32,59 @@ router.post("/register", async function (req, res, next) {
 
     try {
         // role id check
-        if (
-            data.roleID != "@everyone" &&
-            data.roleID != "@here" &&
-            !!!String(data.roleID).match(/[0-9]+/g) &&
-            data.roleID != -1
-        ) {
+        if (!isValidRoleID(data.roleID)) {
             res.status(400);
             res.json({
                 status: res.statusCode,
-                message:
-                    "역할 ID가 올바르지 않습니다.\n역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다.",
+                message: MESSAGES.INVALID_ROLE_ID,
             });
             return;
         }
 
         // webhook url check
-        if (
-            !!!data.url.match(
-                /discord(app)?\.com\/api\/webhooks\/[0-9]+\/[A-z0-9_\.\-]+/g,
-            )
-        ) {
+        if (!isValidWebhookUrl(data.url)) {
             res.status(400);
             res.json({
                 status: res.statusCode,
-                message: "올바르지 않은 웹후크 URL 입니다.",
+                message: MESSAGES.INVALID_WEBHOOK_URL,
             });
             return;
         }
 
-        data.url = data.url.split("//")[1];
-        let channelID = data.url.split("/")[3];
-        let webhookToken = data.url.split("/")[4];
+        let { channelID, webhookToken } = parseWebhookUrl(data.url);
 
-        let embed = new EmbedBuilder();
-        embed.setTitle("마훅 구독 완료!");
-        embed.setDescription(
-            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!",
-        );
-        embed.setColor(0x1da1f2);
+        let embed = buildWelcomeEmbed();
 
-        let hook = new WebhookClient({
-            id: channelID,
-            token: webhookToken,
-        });
+        let hook = createWebhookClient(channelID, webhookToken);
 
         await hook.send({
             content: "",
-            username: "마훅 - 마후 트윗 번역봇",
+            username: BOT_USERNAME,
             avatarURL: await getProfileURL(),
             embeds: [embed],
         });
 
-        await webhookManager.getConnection();
-        await webhookManager.addWebhook(
-            channelID,
-            webhookToken,
-            data.options,
-            data.roleID,
-        );
-        res.json({ status: res.statusCode });
-        webhookManager.releaseConnection();
+        await WebhookManager.withConnection(async (webhookManager) => {
+            await webhookManager.addWebhook(
+                channelID,
+                webhookToken,
+                data.options,
+                data.roleID,
+            );
+            res.json({ status: res.statusCode });
+        });
     } catch (e) {
         if (e.errno == 1062) {
             res.status(409);
             res.json({
                 status: res.statusCode,
-                message: "이미 등록된 웹후크 URL 입니다.",
+                message: MESSAGES.DUPLICATED_WEBHOOK,
             });
         } else if (e.code == 10015 || e.status == 404) {
             res.status(400);
             res.json({
                 status: res.statusCode,
-                message: "올바르지 않은 웹후크 URL 입니다.",
+                message: MESSAGES.INVALID_WEBHOOK_URL,
             });
         } else {
             sendErrorLog(e);
@@ -113,42 +101,33 @@ router.post("/edit", async (req, res, next) => {
         return;
     }
 
-    if (
-        data.roleID != "@everyone" &&
-        data.roleID != "@here" &&
-        data.roleID != "-1" &&
-        !!!String(data.roleID).match(/[0-9]+/g)
-    ) {
+    if (!isValidRoleID(data.roleID)) {
         res.status(400);
         res.json({
             status: res.statusCode,
-            message:
-                "역할 ID가 올바르지 않습니다.\n역할 ID는 @everyone, @here 또는 숫자로된 역할 ID여야 합니다.",
+            message: MESSAGES.INVALID_ROLE_ID,
         });
         return;
     }
 
     try {
-        data.url = data.url.split("//")[1];
-        let channelID = data.url.split("/")[3];
-        let webhookToken = data.url.split("/")[4];
+        let { channelID, webhookToken } = parseWebhookUrl(data.url);
 
-        await webhookManager.getConnection();
-        await webhookManager.editWebhook(
-            channelID,
-            webhookToken,
-            data.options,
-            data.roleID,
-        );
-        res.json({ status: res.statusCode });
-        webhookManager.releaseConnection();
+        await WebhookManager.withConnection(async (webhookManager) => {
+            await webhookManager.editWebhook(
+                channelID,
+                webhookToken,
+                data.options,
+                data.roleID,
+            );
+            res.json({ status: res.statusCode });
+        });
     } catch (e) {
         if (e instanceof WebhookNotFoundError) {
             res.status(404);
             res.json({
                 status: res.statusCode,
-                message:
-                    "웹후크를 찾을 수 없습니다. 올바른 웹후크 URL인지 확인해주세요.",
+                message: MESSAGES.EDIT_WEBHOOK_NOT_FOUND,
             });
         } else {
             sendErrorLog(e);
@@ -164,21 +143,19 @@ router.delete("/unregister", async (req, res, next) => {
         res.status(400).json({ status: res.statusCode });
         return;
     }
-    data.url = data.url.split("//")[1];
-    let channelID = data.url.split("/")[3];
-    let webhookToken = data.url.split("/")[4];
+    // try 밖에서 파싱: 형식 오류는 에러 핸들러(HTML 500)로 감 (현재 동작 유지)
+    let { channelID, webhookToken } = parseWebhookUrl(data.url);
     try {
-        await webhookManager.getConnection();
-        await webhookManager.removeWebhook(channelID, webhookToken);
-        res.json({ status: res.statusCode });
-        await webhookManager.releaseConnection();
+        await WebhookManager.withConnection(async (webhookManager) => {
+            await webhookManager.removeWebhook(channelID, webhookToken);
+            res.json({ status: res.statusCode });
+        });
     } catch (e) {
         if (e instanceof WebhookNotFoundError) {
             res.status(404);
             res.json({
                 status: res.statusCode,
-                message:
-                    "웹후크를 찾을 수 없습니다. 등록된 웹후크인지 확인해주세요.",
+                message: MESSAGES.UNREGISTER_WEBHOOK_NOT_FOUND,
             });
         } else {
             sendErrorLog(e);
@@ -190,10 +167,10 @@ router.delete("/unregister", async (req, res, next) => {
 
 router.get("/getNotices", async (req, res, next) => {
     try {
-        await webhookManager.getConnection();
-        let data = await webhookManager.getNotices();
-        res.json({ status: res.statusCode, data });
-        webhookManager.releaseConnection();
+        await WebhookManager.withConnection(async (webhookManager) => {
+            let data = await webhookManager.getNotices();
+            res.json({ status: res.statusCode, data });
+        });
     } catch (e) {
         sendErrorLog(e);
         res.status(500);
@@ -216,10 +193,14 @@ router.post("/sendNoti", async (req, res, next) => {
             .update(req.body?.["amazing-something"])
             .digest("hex");
         if (hashedHeader == process.env.NOTICE_TOKEN_KEY.toLowerCase()) {
-            await webhookManager.getConnection();
-            await webhookManager.sendNotice(req.body?.title, req.body?.content);
-            res.send("공지 전송 성공!");
-            webhookManager.releaseConnection();
+            await WebhookManager.withConnection(async (webhookManager) => {
+                // sendNotice 내부의 공지 전송은 await 되지 않음 (응답 후 백그라운드로 진행)
+                await webhookManager.sendNotice(
+                    req.body?.title,
+                    req.body?.content,
+                );
+                res.send(MESSAGES.NOTICE_SENT);
+            });
         } else {
             res.status(403).json({ status: res.statusCode });
         }
@@ -236,7 +217,7 @@ router.get("/testWebhook", async (req, res, next) => {
     }
     try {
         await sendRecentTweet(req.query.id);
-        res.send("웹훅 전송 성공");
+        res.send(MESSAGES.TEST_WEBHOOK_SENT);
     } catch (e) {
         sendErrorLog(e);
         res.status(500).send(`<pre><code>${e.stack}</code></pre>`);
@@ -244,7 +225,7 @@ router.get("/testWebhook", async (req, res, next) => {
 });
 
 router.post("/line-webhook", async (req, res, next) => {
-    if (req.headers["user-agent"] == "mahook-line/3.0") {
+    if (req.headers["user-agent"] == LINE_RELAY_USER_AGENT) {
         let otps = getOTP();
         let req_otp = req.headers["authorization"];
         // console.log(req.body);

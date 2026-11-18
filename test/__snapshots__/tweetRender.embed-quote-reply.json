@@ -1,0 +1,21 @@
+[
+  {
+    "title": "New Tweet Release!",
+    "url": "https://x.com/uni_mafumafu/status/3",
+    "author": {
+      "name": "まふまふ (@uni_mafumafu)",
+      "url": "https://x.com/uni_mafumafu",
+      "icon_url": "https://pbs.twimg.com/uni_mafumafu.jpg"
+    },
+    "footer": {
+      "text": "마훅 - 한글 번역된 마후마후 트윗을 디스코드에서",
+      "icon_url": "https://mahook.bass9030.dev/logo.png"
+    },
+    "timestamp": "2026-10-27T09:05:00.000Z",
+    "description": "↩ [@uni_mafumafu](https://x.com/uni_mafumafu/status/1)님에게 보내는 답글\n\n[KO]本文\n\n> ​QT: **Q ([@q](https://x.com/q))**:\n> ​\n> ​[KO]引用",
+    "color": 1942002,
+    "image": {
+      "url": "https://pbs.twimg.com/media/photo-1.jpg"
+    }
+  }
+]

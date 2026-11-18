@@ -12,6 +12,19 @@ require('../utils/instrument');
 var app = require('../app');
 var debug = require('debug')('mafu-webhook:server');
 var http = require('http');
+const { closePool } = require('../utils/db');
+
+/**
+ * Close DB pool and exit on termination signals.
+ */
+
+process.on('SIGTERM', onExit);
+process.on('SIGINT', onExit);
+
+async function onExit() {
+  await closePool();
+  process.exit(0);
+}
 
 /**
  * Get port from environment and store in Express.

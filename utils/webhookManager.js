@@ -1,41 +1,17 @@
-const mariadb = require("mariadb");
-const { WebhookClient, EmbedBuilder } = require("discord.js");
+const { pool } = require("./db");
 const { sendErrorLog, sendInfoLog } = require("./DebugLogger");
-
-/**
- * @typedef { Number } WEBHOOK_TYPES
- */
-/**
- * @enum { WEBHOOK_TYPES } WEBHOOK_TYPE
- */
-const WEBHOOK_TYPE = {
-    TWITTER: 0,
-    NOTI: 2,
-    LINE: 4,
-};
-
-const pool = mariadb.createPool({
-    host: process.env.DB_HOST,
-    port: 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    connectionLimit: 30,
-});
+const { WEBHOOK_TYPE } = require("./constants");
+const {
+    createWebhookClient,
+    buildMention,
+    buildWebhookPayload,
+} = require("./discordSender");
 
 class WebhookNotFoundError extends Error {
     constructor(message) {
         super(message);
         this.name = "WebhookNotFoundError";
     }
-}
-
-process.on("SIGTERM", onExit);
-process.on("SIGINT", onExit);
-
-async function onExit() {
-    await pool.end();
-    process.exit(0);
 }
 
 class WebhookManager {
@@ -52,6 +28,23 @@ class WebhookManager {
         this.db = null;
     }
 
+    /**
+     * 커넥션을 받은 새 인스턴스로 fn을 실행하고, 성공/실패와 관계없이 커넥션을 반환
+     * fn 안에서 await 하지 않은 쿼리는 반환 전에 발행만 되어 있으면 계속 진행됨
+     * @template T
+     * @param {(manager: WebhookManager) => Promise<T>} fn
+     * @returns {Promise<T>}
+     */
+    static async withConnection(fn) {
+        const manager = new WebhookManager();
+        await manager.getConnection();
+        try {
+            return await fn(manager);
+        } finally {
+            await manager.releaseConnection();
+        }
+    }
+
     async setLastTweetID(id) {
         await this.db.query(
             "REPLACE INTO lastTweet (key_str, id) VALUES (?, ?);",
@@ -66,23 +59,6 @@ class WebhookManager {
         } catch (err) {
             return null;
         }
-    }
-
-    async sendWelcomeWebhook(channelID, webhookToken) {
-        let embed = new EmbedBuilder();
-        embed.setTitle("마훅 구독 완료!");
-        embed.setDescription(
-            "마훅 구독이 완료되었습니다!\n이제부터 마후마후 트윗을 한국어로 즐겨보세요!",
-        );
-        embed.setColor(0x1da1f2);
-
-        let hook = new WebhookClient({ id: channelID, token: webhookToken });
-        await hook.send({
-            content: "",
-            username: "마훅 - 마후 트윗 번역봇",
-            avatarURL: await getProfileURL(),
-            embeds: [embed],
-        });
     }
 
     static getOptions(optionNumber) {
@@ -165,7 +141,7 @@ class WebhookManager {
     }
 
     /**
-     * @param {EmbedBuilder[] | object[]} message
+     * @param {import("discord.js").EmbedBuilder[] | {title: string, content: string}} message
      * @param {WEBHOOK_TYPE} type
      */
     async sendWebhook(message, type = WEBHOOK_TYPE.TWITTER) {
@@ -181,53 +157,13 @@ class WebhookManager {
         for (let i = 0; i < webhooks.length; i++) {
             let e = webhooks[i];
             try {
-                const hook = new WebhookClient({
-                    id: e.channelID,
-                    token: e.webhookToken,
-                });
+                const hook = createWebhookClient(e.channelID, e.webhookToken);
                 let webhookOptions = WebhookManager.getOptions(e.options);
-                let mention = "";
-                if (webhookOptions.isMention) {
-                    if (e.roleID != -1) {
-                        if (e.roleID == "@everyone" || e.roleID == "@here")
-                            mention = e.roleID;
-                        else mention = "<@&" + e.roleID + ">";
-                    }
-                }
-                let profileURL;
-                switch (type) {
-                    case WEBHOOK_TYPE.NOTI:
-                        profileURL = "https://mahook.bass9030.dev/logo.png";
-                        const embed = new EmbedBuilder();
-                        embed.setTitle("마훅 공지사항");
-                        embed.setFields({
-                            name: message.title,
-                            value: message.content,
-                        });
-                        embed.setColor(4037805);
-                        embed.setFooter({
-                            text: "마훅 - 한글 번역된 마후마후 트윗을 디스코드에서",
-                            iconURL: "https://mahook.bass9030.dev/logo.png",
-                        });
-
-                        await hook.send({
-                            avatarURL: profileURL,
-                            username: "마훅 - 마후 트윗 번역봇",
-                            content: mention,
-                            embeds: [embed],
-                        });
-                        break;
-                    case WEBHOOK_TYPE.TWITTER:
-                    case WEBHOOK_TYPE.LINE:
-                        profileURL = message[0].data["footer"]["icon_url"];
-                        await hook.send({
-                            avatarURL: profileURL,
-                            username: "마훅 - 마후 트윗 번역봇",
-                            content: mention,
-                            embeds: message,
-                        });
-                        break;
-                }
+                let mention = webhookOptions.isMention
+                    ? buildMention(e.roleID)
+                    : "";
+                const payload = buildWebhookPayload(message, type, mention);
+                if (payload) await hook.send(payload);
                 success_cnt++;
             } catch (err) {
                 err_cnt++;
